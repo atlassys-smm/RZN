@@ -78,10 +78,22 @@ nav:
   - Архитектура подсистем:
     - Обзор: subsystems.md
     - Идентификация и регистрация: subsystems/identification.md
+    - Аналитика и отчётность:
+      - Описание: subsystems/analytics.md
+      - Дашборды:
+        - Обзор: subsystems/analytics/dashboards.md
+        - Главный Dashboard: subsystems/analytics/dashboards/general.md
+        - Сводная по ПАК: subsystems/analytics/dashboards/paks-summary.md
+        - Детальная по ПАК: subsystems/analytics/dashboards/pak-detail.md
+        - Посетители: subsystems/analytics/dashboards/visitors.md
+      - Публичный LED: subsystems/analytics/led-dashboard.md
   - Сущности:
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
     - Профессии: entities/professions.md
+    - Организации: entities/organizations.md
+    - Внешние идентификаторы: entities/external-identifiers.md
+    - Аватар профессий: entities/profession-avatar.md
     - Викторина: entities/quiz.md
     - Видеосценарий: entities/video-scenario.md
     - Командная игра: entities/team-game.md

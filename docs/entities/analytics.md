@@ -13,17 +13,36 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID | Уникальный идентификатор события (используется для идемпотентности) |
-| `event_type` | string | Тип события (например, `quiz_answer`, `test_completed`, `survey_submitted`, `session_started`) |
-| `source` | string | Источник события (например, `led_platform`, `profstart`, `team_game`, `feedback`, `external_pak`) |
-| `session_id` | UUID, nullable | ID сессии (если применимо) |
+| `source` | string | Источник события (например, `led_platform`, `profstart`, `tree_of_professions`, `regional_map`, `profbattle`, `feedback`) |
+| `session_id` | UUID, nullable | ID локальной сессии на терминале (от авторизации до выхода) |
 | `user_id` | UUID, nullable | ID пользователя (если авторизован) |
-| `guest_id` | UUID, nullable | ID гостевой сессии (если не авторизован) |
-| `entity_type` | string, nullable | Тип сущности (например, `question`, `profession`, `survey`) |
-| `entity_id` | UUID, nullable | ID сущности |
-| `result` | string, nullable | Результат действия (например, `correct`, `incorrect`, `completed`) |
-| `duration` | integer, nullable | Длительность в миллисекундах |
-| `payload` | json, nullable | Дополнительные параметры (произвольный JSON) |
+| `guest_id` | UUID, nullable | ID гостевой сессии (если не авторизован, сохраняется на телефоне) |
+| `payload` | json | Дополнительные параметры события (action_type, entity_type, entity_id, result, duration, content_version и другие данные) |
 | `created_at` | timestamp | Дата и время события |
+
+### Структура payload
+
+Поле `payload` содержит произвольные данные события, которые зависят от типа события. Примеры:
+
+```json
+{
+  "action_type": "user_action",
+  "entity_type": "profession",
+  "entity_id": "uuid-profession-123",
+  "result": "selected",
+  "duration": 45000,
+  "content_version": "1.2"
+}
+```
+
+| Поле в payload | Тип | Описание |
+|----------------|-----|----------|
+| `action_type` | enum | Тип действия: `user_action`, `system_action` |
+| `entity_type` | string | Тип сущности: `profession`, `industry`, `direction`, `employer`, `educational_institution`, `question`, `survey` |
+| `entity_id` | UUID | ID сущности |
+| `result` | string | Результат: `correct`, `incorrect`, `completed`, `viewed`, `selected`, `recommended` |
+| `duration` | integer | Длительность в миллисекундах |
+| `content_version` | string | Версия контента |
 
 ### Связи
 
