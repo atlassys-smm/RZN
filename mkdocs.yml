@@ -1,0 +1,90 @@
+site_name: ПрофНавигатор 62 — Документация
+site_description: Единая цифровая профориентационная платформа для Центра занятости населения Рязанской области
+site_url: ''
+
+theme:
+  name: material
+  language: ru
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Переключиться на тёмную тему
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Переключиться на светлую тему
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search:
+      lang: ru
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Главная:
+    - Обзор: index.md
+    - Вопросы к Заказчику: questions.md
+  - Техническое задание:
+    - Обзор: tech-spec/index.md
+    - Концепция (10 дней): tech-spec/concept.md
+    - 1. Общие положения: tech-spec/01-general.md
+    - 2. Стандарт оказания услуг: tech-spec/02-standards.md
+    - 3. Состав и содержание ПАК: tech-spec/03-composition.md
+    - 4. Структура программного обеспечения: tech-spec/04-software-structure.md
+    - 5. Требования к оборудованию: tech-spec/05-equipment.md
+    - 6. Интеграция с LED-экраном: tech-spec/06-led-integration.md
+    - 7. Порядок создания и ввода: tech-spec/07-implementation.md
+    - 8. Установка и настройка: tech-spec/08-installation.md
+    - 9. Испытания и приемка: tech-spec/09-testing.md
+    - 10. Инструктаж персонала: tech-spec/10-training.md
+    - 11. Документирование: tech-spec/11-documentation.md
+    - 12. Гарантии: tech-spec/12-warranty.md
+    - 13. Безопасность: tech-spec/13-security.md
+    - 14. Материалы и оборудование: tech-spec/14-materials.md
+    - 15. Нормативные ссылки: tech-spec/15-regulatory.md
+
+  - Архитектура подсистем:
+    - Обзор: subsystems.md
+    - Идентификация и регистрация: subsystems/identification.md
+  - Сущности:
+    - Пользователи: entities/users.md
+    - Файлы: entities/files.md
+    - Профессии: entities/professions.md
+    - Викторина: entities/quiz.md
+    - Видеосценарий: entities/video-scenario.md
+    - Командная игра: entities/team-game.md
+    - ПрофСтарт: entities/test.md
+    - Обратная связь: entities/survey.md
+    - Аналитика: entities/analytics.md
