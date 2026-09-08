@@ -1,0 +1,2721 @@
+
+<!doctype html>
+<html lang="ru" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Единая цифровая профориентационная платформа для Центра занятости населения Рязанской области">
+      
+      
+      
+        <link rel="canonical" href="http://sg.atlassys.tech/rz/docs/subsystems.html">
+      
+      
+        <link rel="prev" href="tech-spec/15-regulatory.html">
+      
+      
+        <link rel="next" href="subsystems/identification.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Обзор - ПрофНавигатор 62 — Документация</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Перейти к содержанию
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Верхний колонтитул">
+    <a href="." title="ПрофНавигатор 62 — Документация" class="md-header__button md-logo" aria-label="ПрофНавигатор 62 — Документация" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ПрофНавигатор 62 — Документация
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Обзор
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Переключиться на тёмную тему"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Переключиться на тёмную тему" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Переключиться на светлую тему"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Переключиться на светлую тему" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Поиск" placeholder="Поиск" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Поиск">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Очистить" aria-label="Очистить" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Инициализация поиска
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Вкладки" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="index.html" class="md-tabs__link">
+          
+  
+  
+  Главная
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="tech-spec/index.html" class="md-tabs__link">
+          
+  
+  
+  Техническое задание
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="subsystems.html" class="md-tabs__link">
+          
+  
+  
+  Архитектура подсистем
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="entities/users.html" class="md-tabs__link">
+          
+  
+  
+  Сущности
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Навигация" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="ПрофНавигатор 62 — Документация" class="md-nav__button md-logo" aria-label="ПрофНавигатор 62 — Документация" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    ПрофНавигатор 62 — Документация
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Главная
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Главная
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="questions.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Вопросы к Заказчику
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Техническое задание
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Техническое задание
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/concept.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Концепция (10 дней)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/01-general.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Общие положения
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/02-standards.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. Стандарт оказания услуг
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/03-composition.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Состав и содержание ПАК
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/04-software-structure.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Структура программного обеспечения
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/05-equipment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Требования к оборудованию
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/06-led-integration.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. Интеграция с LED-экраном
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/07-implementation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Порядок создания и ввода
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/08-installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Установка и настройка
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/09-testing.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9. Испытания и приемка
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/10-training.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10. Инструктаж персонала
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/11-documentation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11. Документирование
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/12-warranty.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12. Гарантии
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/13-security.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    13. Безопасность
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/14-materials.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    14. Материалы и оборудование
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tech-spec/15-regulatory.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    15. Нормативные ссылки
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Архитектура подсистем
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Архитектура подсистем
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="subsystems.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Содержание">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Содержание
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Принцип разбиения
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Подсистемы
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Подсистемы">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-led-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. LED-медиаплатформа
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. ПрофСтарт
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Идентификация и регистрация
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Цифровой профиль и личный кабинет
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Система администрирования
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Обратная связь
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Клиентские интерфейсы
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Клиентские интерфейсы">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-led-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Основное приложение LED-экрана
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Панель оператора
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Киоск «ПрофСтарт»
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Личный кабинет (веб-портал)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Административный портал
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Схема взаимодействия
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/identification.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Идентификация и регистрация
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Аналитика и отчётность
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Аналитика и отчётность
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Описание
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_2" id="__nav_3_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Дашборды
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Дашборды
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/dashboards.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/dashboards/general.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Главный Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/dashboards/paks-summary.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Сводная по ПАК
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_2_4" id="__nav_3_3_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Детальная по ПАК
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_3_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Детальная по ПАК
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/dashboards/pak-detail.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/dashboards/pak-detail/led-platform.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LED-медиаплатформа
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/dashboards/visitors.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Посетители
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="subsystems/analytics/led-dashboard.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Публичный LED
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Сущности
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Сущности
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/users.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Пользователи
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/files.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Файлы
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/professions.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Профессии
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/organizations.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Организации
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/external-identifiers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Внешние идентификаторы
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/profession-avatar.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Аватар профессий
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/quiz.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Викторина
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/video-scenario.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Видеосценарий
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/team-game.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Командная игра
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/test.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ПрофСтарт
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/survey.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обратная связь
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="entities/analytics.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Аналитика
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Содержание">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Содержание
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Принцип разбиения
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Подсистемы
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Подсистемы">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-led-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. LED-медиаплатформа
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. ПрофСтарт
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Идентификация и регистрация
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Цифровой профиль и личный кабинет
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Система администрирования
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Обратная связь
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Клиентские интерфейсы
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Клиентские интерфейсы">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-led-_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Основное приложение LED-экрана
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Панель оператора
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Киоск «ПрофСтарт»
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Личный кабинет (веб-портал)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Административный портал
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Схема взаимодействия
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="_1">Архитектура подсистем<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>На этой странице описано разбиение платформы «ПрофНавигатор 62» на подсистемы и клиентские интерфейсы.</p>
+<hr />
+<h2 id="_2">Принцип разбиения<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>Каждая подсистема — это функционально завершённый домен с собственной бизнес-логикой, который можно разрабатывать и развёртывать относительно независимо. Клиентские интерфейсы выделены отдельно как фронтондовая часть экосистемы — точки доступа к подсистемам.</p>
+<hr />
+<h2 id="_3">Подсистемы<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h3 id="1-led-">1. LED-медиаплатформа<a class="headerlink" href="#1-led-" title="Permanent link">&para;</a></h3>
+<p>Ядро системы. Всё, что происходит на большом LED-экране. Три основных режима:</p>
+<h4 id="_4">Заставка (режим ожидания)<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
+<p>Режим по умолчанию, когда не идёт активная сессия. Несколько вариаций контента, которые можно назначать и комбинировать:</p>
+<ul>
+<li><strong>Видеоплейлист</strong> — зацикленный показ видеороликов, карточек профессий, анонсов</li>
+<li><strong>«Профессии в действии»</strong> — интерактивный видеосценарий с точками выбора. Система берёт случайную профессию и показывает видеоролик о ней. QR-код всегда виден на экране, чтобы новые зрители могли подключиться в любой момент. В определённые моменты видео зрители голосуют за вариант продолжения через мобильные устройства. Если таймер истёк и никто не выбрал — система выбирает продолжение сама. Если голоса есть — побеждает вариант с большинством голосов. Оператор может запустить эту вариацию целенаправленно и указать, сколько профессий нужно показать</li>
+<li><strong>«Мой карьерный маршрут»</strong> — анимированный экран с QR-кодом перехода в цифровой профиль для получения персональных рекомендаций</li>
+<li><strong>Публичная аналитика</strong> — агрегированные показатели платформы (популярность профессий, количество сессий, активность) без персональных данных и служебной информации</li>
+</ul>
+<h4 id="_5">Индивидуальная викторина<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
+<p>Вопросы с вариантами ответов на LED-экране, зрители отвечают с мобильных устройств. Запускается пользователями через QR-код на заставке (самообслуживание в режиме ожидания).</p>
+<h4 id="_6">Командная игра<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p>Основной сценарный режим. Профориентационная игра на LED-экране: формирование команд, раунды заданий, обсуждения, приём ответов, рейтинг, итоговый результат.</p>
+<h4 id="_7">Роль оператора<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
+<p>Оператор управляет LED-медиаплатформой через панель управления:</p>
+<ul>
+<li>Выбор режима и сценарных параметров</li>
+<li>Запуск и остановка сессий</li>
+<li>Формирование команд и управление участниками (в командной игре)</li>
+<li>Управление этапами: старт, пауза, продолжение, таймеры, приём ответов</li>
+<li>Принудительный запуск индивидуальной викторины или «Профессий в действии» с настройкой параметров (количество профессий)</li>
+<li>Экстренный возврат LED в режим ожидания</li>
+</ul>
+<p><strong>Взаимодействие:</strong></p>
+<ul>
+<li>Получает контент из <strong>Системы администрирования</strong> (сценарии, вопросы, медиа)</li>
+<li>Отправляет события в <strong>Аналитику</strong> (результаты сессий, ответы, тайминги)</li>
+<li>Использует <strong>Идентификацию</strong> для авторизации участников и привязки событий к профилям</li>
+<li>Обслуживает <strong>Панель оператора</strong> и <strong>Мобильный веб-клиент</strong> (в рамках Личного кабинета)</li>
+</ul>
+<hr />
+<h3 id="2">2. ПрофСтарт<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<p>Индивидуальный профориентационный тест школьника на сенсорной интерактивной панели. Собственный банк вопросов, весовая методика расчёта, генерация цифрового профориентационного портрета. Работает автономно, но интегрируется с профилем и аналитикой.</p>
+<p><strong>Функциональная область:</strong></p>
+<ul>
+<li>Банк вопросов (одиночный/множественный выбор, шкала согласия, выбор изображения, ранжирование, ситуационный кейс)</li>
+<li>Возрастные версии теста (не менее двух: 12–14 и 15–17 лет)</li>
+<li>Расчётный модуль по документированной весовой матрице (8 профессиональных направлений)</li>
+<li>Генератор цифрового профориентационного портрета (диаграмма, ведущие направления, рекомендуемые профессии)</li>
+<li>Одноразовый QR-код результата (срок действия — по умолчанию 24 часа)</li>
+</ul>
+<p><strong>Взаимодействие:</strong></p>
+<ul>
+<li>Отправляет результаты теста в <strong>Цифровой профиль</strong> (при авторизации)</li>
+<li>Отправляет события в <strong>Аналитику</strong></li>
+<li>Получает справочник профессий и направлений из <strong>Системы администрирования</strong></li>
+<li>Использует <strong>Идентификацию</strong> для привязки результата к профилю</li>
+</ul>
+<hr />
+<h3 id="3">3. Идентификация и регистрация<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<p>Инфраструктурный auth-сервис. Встраивается во все точки взаимодействия: терминалы, мобильные устройства, сенсорные стойки, LED. Выдаёт токены, проверяет credentials, обслуживает OAuth 2.0 через внешних провайдеров. Не имеет собственного клиентского фасада — его используют все подсистемы.</p>
+<p>→ <a href="subsystems/identification.html">Детальное описание подсистемы</a></p>
+<p><strong>Функциональная область:</strong></p>
+<ul>
+<li>OAuth 2.0 через Яндекс ID и VK ID</li>
+<li>Гостевой режим по QR-коду с возможностью привязки к профилю</li>
+<li>JWT-токены, централизованный API для всех подсистем</li>
+<li>Гостевой Wi-Fi для оффлайн-сценариев</li>
+</ul>
+<p><strong>Взаимодействие:</strong></p>
+<ul>
+<li>Обслуживает все подсистемы и клиентские интерфейсы</li>
+<li>Передаёт данные профиля в <strong>Цифровой профиль</strong></li>
+<li>Сенсорные стойки подключаются к единому auth через QR-код</li>
+</ul>
+<hr />
+<h3 id="4">4. Цифровой профиль и личный кабинет<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
+<p>Веб-портал (личный кабинет), где пользователь видит всю информацию о себе: историю прохождения сценариев, результаты тестов и игр, рекомендации по профессиям, учебным заведениям и работодателям, достижения. ПАКам отдаёт данные профиля по настроенным правам доступа.</p>
+<p><strong>Функциональная область:</strong></p>
+<ul>
+<li>Сводный цифровой профиль (история сценариев, результаты тестов, выбранные профессии, компетенции)</li>
+<li>Личный кабинет с визуализацией интересов и рекомендаций</li>
+<li>Рекомендательная модель по профессиям, учебным заведениям и работодателям (на основе выборов и результатов пользователя)</li>
+<li>Управление профилем (смена пароля, удаление, обезличивание)</li>
+<li>Модуль привязки межсистемных событий к ID профиля (идемпотентный приём)</li>
+<li>Предоставление данных профиля внешним ПАК по настроенным правам доступа</li>
+<li>Версионируемые согласия пользователя</li>
+</ul>
+<p><strong>Взаимодействие:</strong></p>
+<ul>
+<li>Получает данные от <strong>LED-медиаплатформы</strong>, <strong>ПрофСтарт</strong>, <strong>Обратной связи</strong>, внешних ПАК</li>
+<li>Использует <strong>Идентификацию</strong> для аутентификации</li>
+<li>Обслуживает <strong>Личный кабинет (веб-портал)</strong></li>
+</ul>
+<hr />
+<h3 id="5">5. Система администрирования<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
+<p>Единый портал для сотрудников с двумя модулями: управление контентом (CMS) и аналитика с отчётностью. Один вход, одна навигация, но внутри — два функционально различных домена.</p>
+<h4 id="cms">Модуль «Управление контентом» (CMS)<a class="headerlink" href="#cms" title="Permanent link">&para;</a></h4>
+<p><strong>Функциональная область:</strong></p>
+<ul>
+<li>Библиотека медиа-ресурсов (видеоролики, изображения)</li>
+<li>Конструктор вопросов всех типов с тегами (профессия, отрасль, компетенция, возраст, сложность)</li>
+<li>Конструктор сценариев и раундов (линейные/нелинейные, ветвление, таймеры)</li>
+<li>Карточки профессий и отраслей (создание, редактирование, копирование, архивирование)</li>
+<li>Управление плейлистами и порядком показа</li>
+<li>Назначение привязок QR/NFC/RFID</li>
+<li>Экспорт и импорт сценарных пакетов</li>
+<li>Журнал изменений</li>
+</ul>
+<p><strong>Роли:</strong> Администратор, Контент-менеджер, Оператор, Просмотр отчётов</p>
+<h4 id="_8">Модуль «Аналитика и отчётность»<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h4>
+<p><strong>Функциональная область:</strong></p>
+<ul>
+<li>Приём и хранение статистических событий (не менее 100 000 событий/сутки, 10 000 000 в хранилище)</li>
+<li>Раздельные слои хранения: сырые события, нормализованные данные, агрегаты, справочники</li>
+<li>Единая модель статистического события (event_id, source, session_id, profile_id, type, payload)</li>
+<li>Нормализация и справочники (иерархия: отрасль → направление → профессия → компетенция)</li>
+<li>Аналитические дашборды (обзор экспозиции, профессиональные интересы, эффективность контента, игровые результаты, воронка взаимодействия, состояние интеграций)</li>
+<li>Формирование отчётов за произвольный период (CSV, XLSX, PDF)</li>
+<li>Публичный аналитический режим LED (агрегированные показатели на LED-экран)</li>
+<li>Выгрузка данных без персональных данных</li>
+</ul>
+<p><strong>Взаимодействие:</strong></p>
+<ul>
+<li>Поставляет контент в <strong>LED-медиаплатформу</strong> и <strong>ПрофСтарт</strong></li>
+<li>Получает события от <strong>LED-медиаплатформы</strong>, <strong>ПрофСтарт</strong>, <strong>Обратной связи</strong>, внешних ПАК</li>
+<li>Обслуживает <strong>Административный портал</strong></li>
+</ul>
+<hr />
+<h3 id="6">6. Обратная связь<a class="headerlink" href="#6" title="Permanent link">&para;</a></h3>
+<p>Модуль добровольной обратной связи и оценки качества. Не отдельный терминал, а встраиваемый модуль, который размещается в разных точках: на ПАК, в личном кабинете, как отдельное приложение на сенсорной стойке в зоне «Видеорезюме».</p>
+<p><strong>Функциональная область:</strong></p>
+<ul>
+<li>Конструктор анкет с версионированием</li>
+<li>Оценочные шкалы (по умолчанию 1–5), условные вопросы</li>
+<li>Базовая анкета (60–90 секунд), полная анкета (не более 2 минут)</li>
+<li>Выбор профессий из справочника</li>
+<li>Управление мероприятиями и точками сбора (не менее 20 точек)</li>
+<li>Собственная аналитика и сопоставление с общей статистикой</li>
+<li>Хранение не менее 100 000 анкет</li>
+</ul>
+<p><strong>Взаимодействие:</strong></p>
+<ul>
+<li>Отправляет результаты анкет в <strong>Аналитику</strong> и <strong>Цифровой профиль</strong> (при авторизации)</li>
+<li>Получает справочник профессий из <strong>Системы администрирования</strong></li>
+<li>Использует <strong>Идентификацию</strong> для привязки ответов к профилю</li>
+<li>Встраивается в <strong>Личный кабинет</strong>, <strong>ПАК</strong>, сенсорную стойку</li>
+</ul>
+<hr />
+<h2 id="_9">Клиентские интерфейсы<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<p>Клиентские интерфейсы — это фронтондовая часть экосистемы, точки доступа к подсистемам. Каждый интерфейс обслуживает одну или несколько подсистем.</p>
+<h3 id="1-led-_1">1. Основное приложение LED-экрана<a class="headerlink" href="#1-led-_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Платформа</strong></td>
+<td>Медиасервер, полноэкранный режим без системных окон</td>
+</tr>
+<tr>
+<td><strong>Обслуживает</strong></td>
+<td>LED-медиаплатформа</td>
+</tr>
+<tr>
+<td><strong>Пользователи</strong></td>
+<td>Посетители (групповые сценарии), оператор</td>
+</tr>
+</tbody>
+</table>
+<p>Полноэкранное приложение на медиасервере, выводящее контент на LED-экран. Три режима: заставка (видеоплейлист, «Профессии в действии», «Мой карьерный маршрут»), индивидуальная викторина, командная игра. Целевая частота 60 кадров/с.</p>
+<hr />
+<h3 id="2_1">2. Панель оператора<a class="headerlink" href="#2_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Платформа</strong></td>
+<td>Веб-интерфейс, планшет или ноутбук</td>
+</tr>
+<tr>
+<td><strong>Обслуживает</strong></td>
+<td>LED-медиаплатформа</td>
+</tr>
+<tr>
+<td><strong>Пользователи</strong></td>
+<td>Сотрудники ЦЗН (оператор)</td>
+</tr>
+</tbody>
+</table>
+<p>Веб-интерфейс для управления сценариями в реальном времени: запуск сессий, выбор сценарных пакетов, формирование команд, управление этапами (старт, пауза, продолжение), приём ответов, управление таймером, экстренный возврат LED в режим ожидания, технический статус компонентов.</p>
+<hr />
+<h3 id="3_1">3. Киоск «ПрофСтарт»<a class="headerlink" href="#3_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Платформа</strong></td>
+<td>Интерактивная сенсорная панель, полноэкранный киоск-режим</td>
+</tr>
+<tr>
+<td><strong>Обслуживает</strong></td>
+<td>ПрофСтарт</td>
+</tr>
+<tr>
+<td><strong>Пользователи</strong></td>
+<td>Школьники, посетители</td>
+</tr>
+</tbody>
+</table>
+<p>Полноэкранное приложение на сенсорной интерактивной панели для прохождения индивидуального профориентационного теста. Крупные сенсорные элементы, прогресс прохождения, формирование цифрового профориентационного портрета. Производительность: переход между вопросами — не более 500 мс, расчёт — не более 3 секунд.</p>
+<hr />
+<h3 id="4-">4. Личный кабинет (веб-портал)<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Платформа</strong></td>
+<td>Адаптивный веб-интерфейс (десктоп + мобильный)</td>
+</tr>
+<tr>
+<td><strong>Обслуживает</strong></td>
+<td>Цифровой профиль, LED-медиаплатформа (мобильный клиент), Обратная связь</td>
+</tr>
+<tr>
+<td><strong>Пользователи</strong></td>
+<td>Зарегистрированные пользователи, гости (по QR)</td>
+</tr>
+</tbody>
+</table>
+<p>Единый адаптивный веб-портал, выполняющий несколько ролей:</p>
+<ul>
+<li><strong>Личный кабинет</strong> — цифровой профиль, история сценариев, результаты тестов, рекомендации по профессиям, учебным заведениям и работодателям</li>
+<li><strong>Мобильный веб-клиент</strong> — участие в сценариях LED-платформы (голосования, ответы, выбор команды) по QR-коду или через авторизацию</li>
+<li><strong>Анкета обратной связи</strong> — прохождение опросов и оставление отзывов</li>
+</ul>
+<p>Неавторизованные посетители подключаются по QR-коду в гостевом режиме. Авторизованные пользователи получают доступ к полному профилю и истории.</p>
+<hr />
+<h3 id="5_1">5. Административный портал<a class="headerlink" href="#5_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Платформа</strong></td>
+<td>Веб-интерфейс, браузер сотрудника</td>
+</tr>
+<tr>
+<td><strong>Обслуживает</strong></td>
+<td>Система администрирования (CMS + Аналитика)</td>
+</tr>
+<tr>
+<td><strong>Пользователи</strong></td>
+<td>Администратор, контент-менеджер, оператор, аналитик, технический специалист</td>
+</tr>
+</tbody>
+</table>
+<p>Единый веб-портал для сотрудников с двумя модулями:</p>
+<ul>
+<li><strong>Управление контентом</strong> — библиотека медиа, конструктор вопросов и сценариев, карточки профессий, версионирование, публикация</li>
+<li><strong>Аналитика</strong> — дашборды, отчёты, выгрузка данных, мониторинг интеграций</li>
+</ul>
+<hr />
+<h2 id="_10">Схема взаимодействия<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────────┐
+│                     КЛИЕНТСКИЕ ИНТЕРФЕЙСЫ                       │
+├──────────┬──────────┬──────────┬──────────────┬────────────────┤
+│ LED-экран│ Панель   │ Киоск    │ Личный       │ Администр.     │
+│ (основное│ оператора│ ПрофСтарт│ кабинет      │ портал         │
+│ прилож.) │          │          │ (веб-портал) │ (CMS+Аналит.)  │
+└────┬─────┴────┬─────┴────┬─────┴──────┬───────┴───────┬────────┘
+     │          │          │            │               │
+     ▼          ▼          ▼            ▼               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       ПОДСИСТЕМЫ                                 │
+├──────────┬──────────┬──────────┬──────────┬──────────┬─────────┤
+│ LED-     │ Проф     │ Иденти-  │ Цифровой │ Система  │ Обратная│
+│ медиа-   │ Старт    │ фикация  │ профиль  │ администр│ связь   │
+│ платформа│          │ и регистр│ и ЛК     │ ирования │         │
+└──────────┴──────────┴──────────┴──────────┴──────────┴─────────┘
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  К началу
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

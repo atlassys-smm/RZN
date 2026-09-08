@@ -1,0 +1,3374 @@
+
+<!doctype html>
+<html lang="ru" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Единая цифровая профориентационная платформа для Центра занятости населения Рязанской области">
+      
+      
+      
+        <link rel="canonical" href="http://sg.atlassys.tech/rz/docs/tech-spec/concept.html">
+      
+      
+        <link rel="prev" href="index.html">
+      
+      
+        <link rel="next" href="01-general.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Концепция (10 дней) - ПрофНавигатор 62 — Документация</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Перейти к содержанию
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Верхний колонтитул">
+    <a href=".." title="ПрофНавигатор 62 — Документация" class="md-header__button md-logo" aria-label="ПрофНавигатор 62 — Документация" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ПрофНавигатор 62 — Документация
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Концепция (10 дней)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Переключиться на тёмную тему"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Переключиться на тёмную тему" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Переключиться на светлую тему"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Переключиться на светлую тему" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Поиск" placeholder="Поиск" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Поиск">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Очистить" aria-label="Очистить" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Инициализация поиска
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Вкладки" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../index.html" class="md-tabs__link">
+          
+  
+  
+  Главная
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="index.html" class="md-tabs__link">
+          
+  
+  
+  Техническое задание
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../subsystems.html" class="md-tabs__link">
+          
+  
+  
+  Архитектура подсистем
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../entities/users.html" class="md-tabs__link">
+          
+  
+  
+  Сущности
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Навигация" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="ПрофНавигатор 62 — Документация" class="md-nav__button md-logo" aria-label="ПрофНавигатор 62 — Документация" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    ПрофНавигатор 62 — Документация
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Главная
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Главная
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../questions.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Вопросы к Заказчику
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Техническое задание
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Техническое задание
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Концепция (10 дней)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="concept.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Концепция (10 дней)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Содержание">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Содержание
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Назначение
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Принципы выполнения
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Исходные данные и контекст проектирования
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Исходные данные и контекст проектирования">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Основные подсистемы, подлежащие отражению
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ключевые ограничения, обязательные для концепции
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Единый демонстрационный сценарий
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Шесть обязательных результатов
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Шесть обязательных результатов">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Дизайнерская презентация
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Концепция и архитектура программного комплекса
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Понятная блок-схема программного комплекса
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Прототипы и дизайн-концепция программного обеспечения
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Концепция регистрации пользователей
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Видеоролик о продукте
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Минимальный перечень прототипов
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Чек-лист архитектуры и блок-схемы
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Комплектность и форматы предоставления
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Комплектность и форматы предоставления">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Структура электронного архива
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Технические, визуальные и методические требования
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Технические, визуальные и методические требования">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Техническая корректность
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uiux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI/UX и доступность
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Контент и права
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Порядок выполнения и предоставления
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Требования к приемке
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Критерии проверки и согласования
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Критерии проверки и согласования">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Уровни соответствия
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Интеллектуальные права и конфиденциальность
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Лист проверки и согласования
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="01-general.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Общие положения
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="02-standards.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. Стандарт оказания услуг
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="03-composition.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Состав и содержание ПАК
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="04-software-structure.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Структура программного обеспечения
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="05-equipment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Требования к оборудованию
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="06-led-integration.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. Интеграция с LED-экраном
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="07-implementation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Порядок создания и ввода
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="08-installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Установка и настройка
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="09-testing.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    9. Испытания и приемка
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="10-training.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    10. Инструктаж персонала
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="11-documentation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    11. Документирование
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="12-warranty.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    12. Гарантии
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="13-security.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    13. Безопасность
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="14-materials.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    14. Материалы и оборудование
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="15-regulatory.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    15. Нормативные ссылки
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Архитектура подсистем
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Архитектура подсистем
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/identification.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Идентификация и регистрация
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Аналитика и отчётность
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Аналитика и отчётность
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Описание
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_2" id="__nav_3_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Дашборды
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Дашборды
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/dashboards.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/dashboards/general.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Главный Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/dashboards/paks-summary.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Сводная по ПАК
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3_2_4" id="__nav_3_3_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Детальная по ПАК
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_3_3_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Детальная по ПАК
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/dashboards/pak-detail.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обзор
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/dashboards/pak-detail/led-platform.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LED-медиаплатформа
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/dashboards/visitors.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Посетители
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subsystems/analytics/led-dashboard.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Публичный LED
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Сущности
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Сущности
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/users.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Пользователи
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/files.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Файлы
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/professions.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Профессии
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/organizations.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Организации
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/external-identifiers.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Внешние идентификаторы
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/profession-avatar.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Аватар профессий
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/quiz.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Викторина
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/video-scenario.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Видеосценарий
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/team-game.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Командная игра
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/test.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ПрофСтарт
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/survey.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Обратная связь
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../entities/analytics.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Аналитика
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Содержание">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Содержание
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Назначение
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Принципы выполнения
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Исходные данные и контекст проектирования
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Исходные данные и контекст проектирования">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Основные подсистемы, подлежащие отражению
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ключевые ограничения, обязательные для концепции
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Единый демонстрационный сценарий
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Шесть обязательных результатов
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Шесть обязательных результатов">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Дизайнерская презентация
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Концепция и архитектура программного комплекса
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Понятная блок-схема программного комплекса
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Прототипы и дизайн-концепция программного обеспечения
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Концепция регистрации пользователей
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Видеоролик о продукте
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Минимальный перечень прототипов
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#-" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Чек-лист архитектуры и блок-схемы
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Комплектность и форматы предоставления
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Комплектность и форматы предоставления">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Структура электронного архива
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Технические, визуальные и методические требования
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Технические, визуальные и методические требования">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Техническая корректность
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uiux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI/UX и доступность
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Контент и права
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Порядок выполнения и предоставления
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Требования к приемке
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Критерии проверки и согласования
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Критерии проверки и согласования">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Уровни соответствия
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Интеллектуальные права и конфиденциальность
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Лист проверки и согласования
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="_1">Концепция демонстративного материала<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<div class="admonition info">
+<p class="admonition-title">Срок выполнения</p>
+<p><strong>10 календарных дней</strong> с даты заключения контракта. Входит в общий срок оказания услуг (60 календарных дней).</p>
+</div>
+<p>Разработка Концепции демонстративного материала является обязательной частью работ по созданию ПАК и выполняется Исполнителем на основании настоящего ТЗ и условий контракта.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Создание production-кода, рабочего сервера аутентификации, рабочей базы данных, фактических интеграций с действующими ПАК и подключение к LED-оборудованию в составе указанных услуг <strong>не требуются</strong>. Допускаются кликабельные прототипы, анимированные макеты и условные данные.</p>
+</div>
+<hr />
+<h2 id="_2">Назначение<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>Сформировать целостный и согласованный комплект проектно-демонстрационных материалов, подтверждающий:</p>
+<ul>
+<li>понимание предметной области</li>
+<li>системность проектного подхода</li>
+<li>качество UI/UX-решений</li>
+<li>техническую реализуемость предложенной архитектуры</li>
+</ul>
+<hr />
+<h2 id="_3">Принципы выполнения<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>использование единых исходных данных и обязательного демонстрационного сценария</li>
+<li>соответствие ТЗ и содержательная полнота имеют приоритет перед количеством декоративных материалов</li>
+<li>приоритет целостного пользовательского и системного решения</li>
+<li>проверяемость логики, связей между модулями и потоков данных</li>
+<li>нейтральность к конкретному программному инструменту проектирования</li>
+<li>использование исходных материалов Заказчика только в пределах предоставленного доступа</li>
+</ul>
+<hr />
+<h2 id="_4">Исходные данные и контекст проектирования<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>Проектируемый ПАК должен объединять в едином локальном контуре пользовательские сценарии, профориентационные модули, централизованную регистрацию, цифровой профиль, сбор событий, консолидированную аналитику, обратную связь и управление контентом.</p>
+<h3 id="_5">Основные подсистемы, подлежащие отражению<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Подсистема</th>
+<th>Содержание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LED-медиаплатформа</td>
+<td>режим ожидания, видеопоказ, интерактивные задания, голосования, викторины, карьерные маршруты и вывод результатов</td>
+</tr>
+<tr>
+<td>Командная работа</td>
+<td>формирование команд, подключение по QR-коду, раунды, роли, таймеры, коллективный ответ, рейтинг и итоговый командный профиль</td>
+</tr>
+<tr>
+<td>ПрофСтарт</td>
+<td>интерактивный тест школьника, расчет профессиональных направлений, цифровой профориентационный портрет и рекомендации</td>
+</tr>
+<tr>
+<td>Обратная связь</td>
+<td>автономные анкеты, оценка качества, профессиональные интересы, комментарии и добровольные контактные заявки</td>
+</tr>
+<tr>
+<td>Единая регистрация</td>
+<td>создание учетной записи по ID и паролю, вход на любом терминале, гостевой режим, личный кабинет и цифровой профиль</td>
+</tr>
+<tr>
+<td>Консолидированная аналитика</td>
+<td>события собственного ПО и внешних ПАК, единая модель данных, дашборды, отчеты и публичная визуализация</td>
+</tr>
+<tr>
+<td>Панель оператора и CMS</td>
+<td>управление сессиями, контентом, сценариями, вопросами, правилами и публикациями</td>
+</tr>
+<tr>
+<td>Локальная инфраструктура</td>
+<td>backend-сервер, медиакомпьютер LED, сетевые сегменты, резервное хранение, мониторинг и автономная работа</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">Ключевые ограничения, обязательные для концепции<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>основные сценарии должны работать в локальной сети без обязательного подключения к Интернету</li>
+<li>серверные функции и визуализация LED должны быть разделены между backend-сервером и медиакомпьютером</li>
+<li>не менее <strong>50 одновременно подключённых клиентских устройств</strong> и до <strong>8 команд</strong></li>
+<li>интеграционный контур: собственное ПО LED, «ПрофСтарт», обратная связь и внешние ПАК</li>
+<li>пароль пользователя не передается в исходные приложения, аналитические события и журналы</li>
+<li>гостевой и авторизованный режимы разделяются; гостевые результаты не связываются с профилем без явного подтверждения</li>
+<li>на публичных терминалах — автоматический выход и очистка персонального состояния</li>
+<li>интерфейсы должны быть понятны молодежи, школьникам, посетителям и сотрудникам без специальной технической подготовки</li>
+</ul>
+<hr />
+<h2 id="_7">Единый демонстрационный сценарий<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<p>Для обеспечения целостности проектного решения Исполнитель должен использовать приведённый ниже сквозной сценарий как основу презентации, прототипов, архитектурных схем и видеоролика.</p>
+<ol>
+<li>В режиме ожидания большой LED-экран приглашает организованную группу школьников принять участие в профориентационной игре</li>
+<li>Оператор выбирает сценарий «Командная работа», задаёт четыре команды и запускает сессию</li>
+<li>Участники подключаются через QR-код с мобильных устройств, выбирают команду и получают роль</li>
+<li>На LED-экране отображается ситуационное профориентационное задание. Команды обсуждают варианты и передают один итоговый ответ</li>
+<li>Система показывает правильное решение, промежуточный рейтинг и связанные профессии. После финала формируется итоговый экран результатов</li>
+<li>Один из участников переходит к модулю «ПрофСтарт» на интерактивной панели, проходит фрагмент теста в гостевом режиме и получает цифровой профориентационный портрет</li>
+<li>Пользователь выбирает сохранение результата, создаёт учётную запись с автоматически сформированным ID и паролем и подтверждает привязку результата к профилю</li>
+<li>Пользователь выполняет вход на другом подключённом терминале и видит личный кабинет с сохранённым результатом, историей и рекомендациями</li>
+<li>В аналитический контур поступают обезличенные события командной сессии и авторизованный результат пользователя; сотрудник видит обновление дашборда</li>
+<li>Оператор завершает сессию, а публичные устройства возвращаются в режим ожидания и очищают пользовательские данные</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>В материалах допускается использовать вымышленные профессии, вопросы, показатели и имена команд. Персональные данные реальных лиц использовать запрещается.</p>
+</div>
+<hr />
+<h2 id="_8">Шесть обязательных результатов<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
+<p>Все материалы должны демонстрировать единый визуальный язык, архитектуру и согласованные пользовательские маршруты.</p>
+<h3 id="1">1. Дизайнерская презентация<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>рекомендуемый объём — <strong>от 18 до 25</strong> содержательных слайдов</li>
+<li>формат экрана — <strong>16:9</strong></li>
+<li>обязательные разделы: цели и аудитории, идея продукта, пользовательские маршруты, функциональная карта, архитектура, блок-схема, регистрация и цифровой профиль, UI/UX-концепция, ключевые прототипы, аналитика, видеоконцепция, риски и допущения</li>
+<li>слайды должны содержать не только текстовые тезисы, но и схемы, диаграммы, интерфейсные макеты и визуализацию взаимодействия</li>
+<li>визуальный стиль — современный, технологичный, читаемый, пригодный для официальной демонстрации</li>
+<li>соответствие фирменному стилю «Работа России» (при предоставлении)</li>
+<li>при отсутствии фирменного стиля — нейтральная концепция с пояснением</li>
+</ul>
+<h3 id="2">2. Концепция и архитектура программного комплекса<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>описание основной идеи и ценности платформы для посетителя, сотрудника и руководителя</li>
+<li>сегментация пользователей и ролей: посетитель, школьник, участник команды, оператор, контент-менеджер, аналитик, администратор, технический специалист</li>
+<li>карта основных пользовательских маршрутов и точек перехода между модулями</li>
+<li>логическая архитектура: клиентский уровень, прикладные сервисы, контур идентификации, событийный контур, контур данных, интеграционные адаптеры, инфраструктура</li>
+<li>обоснование разделения backend-сервера и медиакомпьютера LED</li>
+<li>принцип автономной работы в локальной сети</li>
+<li>подход к расширению новыми ПАК, сценариями, терминалами и источниками данных</li>
+<li>краткое описание технологий и протоколов</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Применение конкретного технологического стека не является обязательным. Проверяются обоснованность, модульность, безопасность и соответствие ограничениям ТЗ.</p>
+</div>
+<h3 id="3-">3. Понятная блок-схема программного комплекса<a class="headerlink" href="#3-" title="Permanent link">&para;</a></h3>
+<p>Не менее одной обзорной и одной детализированной блок-схемы:</p>
+<p><strong>Обзорная схема</strong> должна показывать:
+- пользователей, терминалы, LED-экран, мобильные клиенты
+- панель оператора, backend-сервер, медиакомпьютер
+- хранилища и внешние ПАК</p>
+<p><strong>Детализированная схема</strong> должна показывать:
+- сервис регистрации, сервис профилей, API событий
+- CMS, сценарный сервис, аналитику
+- очередь/буферизацию, адаптеры и базы данных</p>
+<p><strong>Общие требования:</strong>
+- визуальная разница между пользовательскими действиями, управляющими командами, авторизационными данными, событиями аналитики и медиаконтентом
+- границы локальной сети, доверенные зоны, внешние ПАК и направления передачи данных
+- легенда, расшифровка сокращений и логичная нумерация потоков
+- не допускаются декоративные схемы без однозначных стрелок и подписей</p>
+<h3 id="4-">4. Прототипы и дизайн-концепция программного обеспечения<a class="headerlink" href="#4-" title="Permanent link">&para;</a></h3>
+<ul>
+<li>не менее <strong>16 уникальных экранных макетов</strong> (перечень ниже)</li>
+<li>не менее одного <strong>кликабельного пользовательского маршрута</strong> в инструменте прототипирования или виде веб-прототипа</li>
+<li>обязательная демонстрация экранов: большого LED, мобильного интерфейса, интерактивной панели, панели оператора, личного кабинета и аналитического интерфейса</li>
+<li>единая система типографики, цветов, компонентов, иконок, состояний и навигации</li>
+<li>учёт крупной типографики и безопасных зон LED-экрана</li>
+<li>понятные состояния: загрузка, ожидание, активное действие, подтверждение, ошибка, потеря связи, завершение, автоматический выход</li>
+<li>обезличенные демонстрационные данные и нейтральные позитивные формулировки</li>
+</ul>
+<h3 id="5">5. Концепция регистрации пользователей<a class="headerlink" href="#5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>создание базовой учётной записи по автоматически сформированному ID и паролю</li>
+<li>гостевой режим, регистрация до/после сценария</li>
+<li>вход на любом терминале с возвратом в исходный сценарий</li>
+<li>передача приложению только подтверждённого ID профиля и краткоживущего токена</li>
+<li>автоматический выход на публичном устройстве, очистка локальных данных</li>
+<li>модель согласий, включая отдельные условия для несовершеннолетних</li>
+<li>объединение результатов разных модулей по единому ID</li>
+<li>смена и восстановление пароля, блокировка, отзыв сессий, удаление профиля</li>
+</ul>
+<p><strong>Должны быть представлены:</strong>
+- пользовательская схема
+- sequence-схема входа
+- основные состояния учётной записи
+- не менее <strong>4 интерфейсных экранов</strong> регистрации/входа/профиля</p>
+<h3 id="6">6. Видеоролик о продукте<a class="headerlink" href="#6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>продолжительность — <strong>60–90 секунд</strong></li>
+<li>формат — <strong>Full HD 1920×1080</strong>, 16:9, <strong>MP4 (H.264)</strong>, 25 или 30 кадров/с</li>
+<li>2D motion design, анимация интерфейсов, инфографика и схемы</li>
+<li>обязательные смысловые блоки: проблема и ценность, взаимодействие с LED и командной игрой, «ПрофСтарт», единая регистрация и цифровой профиль, аналитика, финальный образ платформы</li>
+<li>интерфейсы в ролике должны соответствовать прототипам</li>
+<li>текст на русском языке; при дикторской речи — читаемые субтитры</li>
+<li>без водяных знаков, неправомерного использования объектов ИС и персональных данных</li>
+</ul>
+<hr />
+<h2 id="_9">Минимальный перечень прототипов<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>№</th>
+<th>Интерфейс</th>
+<th>Обязательный макет</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>LED</td>
+<td>Режим ожидания / приглашение к участию</td>
+</tr>
+<tr>
+<td>2</td>
+<td>LED</td>
+<td>Главное меню или выбор сценария</td>
+</tr>
+<tr>
+<td>3</td>
+<td>LED</td>
+<td>Экран подключения по QR-коду</td>
+</tr>
+<tr>
+<td>4</td>
+<td>LED</td>
+<td>Лобби и состав команд</td>
+</tr>
+<tr>
+<td>5</td>
+<td>LED</td>
+<td>Экран задания с медиа, таймером и статусами команд</td>
+</tr>
+<tr>
+<td>6</td>
+<td>LED</td>
+<td>Промежуточный рейтинг</td>
+</tr>
+<tr>
+<td>7</td>
+<td>LED</td>
+<td>Финальный результат и связанные профессии</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Мобильный клиент</td>
+<td>Присоединение к сессии и выбор команды</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Мобильный клиент</td>
+<td>Обсуждение/выбор и подтверждение командного ответа</td>
+</tr>
+<tr>
+<td>10</td>
+<td>ПрофСтарт</td>
+<td>Старт, выбор возрастной версии и объяснение результата</td>
+</tr>
+<tr>
+<td>11</td>
+<td>ПрофСтарт</td>
+<td>Экран вопроса с прогрессом</td>
+</tr>
+<tr>
+<td>12</td>
+<td>ПрофСтарт</td>
+<td>Цифровой профориентационный портрет и рекомендации</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Единая регистрация</td>
+<td>Создание профиля, показ ID и сохранение результата</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Единая регистрация</td>
+<td>Вход по ID и паролю / восстановление доступа</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Личный кабинет</td>
+<td>Сводный профиль, история и следующие шаги</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Панель оператора</td>
+<td>Запуск сессии, команды, раунды и управление состоянием</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Аналитика</td>
+<td>Сводный дашборд по нескольким источникам</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Обратная связь</td>
+<td>Короткая анкета оценки сервиса</td>
+</tr>
+<tr>
+<td>19</td>
+<td>CMS</td>
+<td>Редактирование сценария, вопроса или карточки профессии</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Позиции 17–19 могут быть объединены в один административно-аналитический раздел, но должны быть визуально различимы.</p>
+</div>
+<hr />
+<h2 id="-">Чек-лист архитектуры и блок-схемы<a class="headerlink" href="#-" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Блок</th>
+<th>Что должно быть отражено</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Пользователи и устройства</td>
+<td>посетитель, школьник, команда, оператор, администратор; LED, смартфон, интерактивная панель, рабочее место оператора</td>
+</tr>
+<tr>
+<td>Вычислительные узлы</td>
+<td>backend-сервер и отдельный медиакомпьютер LED</td>
+</tr>
+<tr>
+<td>Прикладные сервисы</td>
+<td>сценарии, CMS, «ПрофСтарт», обратная связь, регистрация, профиль, личный кабинет, аналитика</td>
+</tr>
+<tr>
+<td>Идентификация</td>
+<td>регистрация, аутентификация, токен, ID профиля, выход и восстановление</td>
+</tr>
+<tr>
+<td>События</td>
+<td>API приема, уникальный ID, очередь, валидация, карантин, повторная обработка</td>
+</tr>
+<tr>
+<td>Данные</td>
+<td>раздельное хранение учётных данных, профилей/согласий, контактных заявок, контента и аналитики</td>
+</tr>
+<tr>
+<td>Интеграции</td>
+<td>адаптеры «Древа профессий», интерактивной карты и «Профбаттла»</td>
+</tr>
+<tr>
+<td>Сеть</td>
+<td>граница ЛВС, сегменты серверов, киосков, медиа, гостевых и административных устройств</td>
+</tr>
+<tr>
+<td>Отказоустойчивость</td>
+<td>локальная автономность, буферизация, восстановление, резервное копирование, мониторинг</td>
+</tr>
+<tr>
+<td>Безопасность</td>
+<td>защищённый обмен, отсутствие паролей в приложениях/журналах, автоматический выход, разграничение ролей</td>
+</tr>
+<tr>
+<td>Потоки</td>
+<td>отдельные обозначения для команд управления, контента, авторизации, результатов и аналитических событий</td>
+</tr>
+<tr>
+<td>Расширяемость</td>
+<td>подключение новых терминалов, сценариев, ПАК и источников событий без изменения базовой архитектуры</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_10">Комплектность и форматы предоставления<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>№</th>
+<th>Результат</th>
+<th>Формат</th>
+<th>Требование</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Презентация</td>
+<td>PPTX и PDF</td>
+<td>18–25 слайдов; шрифты и ссылки должны корректно отображаться</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Пояснительная записка</td>
+<td>DOCX и PDF</td>
+<td>10–20 страниц; допускается объединение с презентацией</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Архитектурные и блок-схемы</td>
+<td>PDF + SVG/PNG</td>
+<td>Не менее 2 схем; читаемость при печати на А3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Прототипы и UI/UX-концепция</td>
+<td>Ссылка + PDF/PNG</td>
+<td>Не менее 16 экранов; доступ без запроса разрешений</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Материалы по регистрации и профилю</td>
+<td>PDF/SVG/PNG</td>
+<td>Маршрут, sequence-схема, состояния и 4+ экрана</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Видеоролик</td>
+<td>MP4 (H.264)</td>
+<td>60–90 сек, 1920×1080, со звуком или без, с русскими субтитрами</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Перечень допущений</td>
+<td>DOCX/PDF</td>
+<td>Условные данные, ограничения и элементы, требующие уточнения</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_11">Структура электронного архива<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>01_Презентация
+02_Концепция_и_архитектура
+03_Блок_схемы
+04_Прототипы
+05_Регистрация_и_профиль
+06_Видеоролик
+07_Допущения_и_перечень_файлов
+</code></pre></div>
+<p>Рекомендуемое наименование: <code>Концепция_демонстративного_материала_ПрофНавигатор62_[версия]_[дата].zip</code></p>
+<hr />
+<h2 id="_12">Технические, визуальные и методические требования<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<h3 id="_13">Техническая корректность<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>архитектура реализуема в локальной инфраструктуре Заказчика</li>
+<li>не допускается обязательная зависимость базовых сценариев от внешнего облачного сервиса</li>
+<li>отказоустойчивость, локальная буферизация событий, повторная доставка и недопущение дубликатов</li>
+<li>все интеграции и протоколы подписаны и объяснены</li>
+<li>условные решения помечены как предложения Исполнителя</li>
+</ul>
+<h3 id="uiux">UI/UX и доступность<a class="headerlink" href="#uiux" title="Permanent link">&para;</a></h3>
+<ul>
+<li>крупная типографика и простая иерархия для LED-экрана</li>
+<li>сенсорные элементы достаточного размера и понятный прогресс</li>
+<li>устойчивая система командных цветов, символов и подписей</li>
+<li>отсутствие негативных и дискриминационных формулировок</li>
+<li>явный индикатор авторизованного режима и команда выхода</li>
+<li>проектирование состояний ошибок и восстановления</li>
+</ul>
+<h3 id="_14">Контент и права<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li>материалы на русском языке</li>
+<li>использование собственных, лицензионных и открытых материалов</li>
+<li>запрет реальных персональных данных и фотографий посетителей</li>
+<li>материалы с генеративных инструментов проверены на корректность</li>
+</ul>
+<hr />
+<h2 id="_15">Порядок выполнения и предоставления<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h2>
+<ul>
+<li>срок — <strong>10 календарных дней</strong> с даты заключения контракта</li>
+<li>все материалы предоставляются в электронном виде</li>
+<li>Исполнитель вправе направить уточняющие вопросы</li>
+<li>Заказчик рассматривает комплект в течение <strong>3 рабочих дней</strong></li>
+<li>Исполнитель устраняет замечания в течение <strong>2 рабочих дней</strong></li>
+<li>повторное рассмотрение — в течение <strong>2 рабочих дней</strong></li>
+<li>Заказчик вправе проверить ссылки и воспроизведение файлов</li>
+<li>при необходимости — рабочая демонстрация до 15 минут</li>
+</ul>
+<hr />
+<h2 id="_16">Требования к приемке<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Требование</th>
+<th>Условие приемки</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Комплектность</td>
+<td>предоставлены все шесть обязательных результатов</td>
+</tr>
+<tr>
+<td>Срок</td>
+<td>материалы предоставлены в установленный срок</td>
+</tr>
+<tr>
+<td>Форматы</td>
+<td>файлы открываются, ссылки доступны, видеоролик воспроизводится</td>
+</tr>
+<tr>
+<td>Язык</td>
+<td>основные материалы на русском языке</td>
+</tr>
+<tr>
+<td>Обязательный сценарий</td>
+<td>сценарий отражён в презентации, прототипах и видеоролике</td>
+</tr>
+<tr>
+<td>Безопасность</td>
+<td>архив не содержит вредоносного кода, реальных персональных данных и открытых паролей</td>
+</tr>
+<tr>
+<td>Идентификация файлов</td>
+<td>файлы имеют однозначные наименования и позволяют определить состав</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_17">Критерии проверки и согласования<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>№</th>
+<th>Критерий</th>
+<th>Что проверяется</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Соответствие ТЗ и комплектность</td>
+<td>Полнота охвата модулей, обязательного сценария, ограничений</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Качество дизайнерской презентации</td>
+<td>Структура, ясность, визуальная иерархия, убедительность</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Концепция и архитектура ПАК</td>
+<td>Системность, модульность, локальная автономность, масштабируемость</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Блок-схема программного комплекса</td>
+<td>Понятность состава, корректность потоков, подписи, легенда</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Прототипы и UI/UX-концепция</td>
+<td>Единый визуальный язык, полнота маршрутов, состояния</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Единая регистрация и цифровой профиль</td>
+<td>Корректность гостевого и авторизованного режимов, безопасность</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Видеоролик о продукте</td>
+<td>Сценарная логика, соответствие прототипам, качество motion design</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_18">Уровни соответствия<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Уровень</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Соответствует полностью</td>
+<td>Критерий раскрыт полностью; решение целостное и реализуемое</td>
+</tr>
+<tr>
+<td>Соответствует с замечаниями</td>
+<td>Раскрыт в основном; отдельные недостатки, устраняемые без изменения концепции</td>
+</tr>
+<tr>
+<td>Требует доработки</td>
+<td>Раскрыт частично; значимые пробелы, требующие корректировки</td>
+</tr>
+<tr>
+<td>Существенно не соответствует</td>
+<td>Формальный или фрагментарный результат с существенными противоречиями</td>
+</tr>
+<tr>
+<td>Результат отсутствует</td>
+<td>Материал отсутствует или не позволяет провести проверку</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_19">Интеллектуальные права и конфиденциальность<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h2>
+<ul>
+<li>неисключительные права передаются Заказчику <strong>бессрочно</strong></li>
+<li>Заказчик вправе использовать материалы для реализации проекта, согласования, дальнейшей разработки и архивного хранения</li>
+<li>Исполнитель гарантирует наличие прав на все объекты и урегулирует претензии третьих лиц</li>
+<li>сведения ограниченного доступа не публикуются и не передаются третьим лицам</li>
+</ul>
+<hr />
+<h2 id="_20">Лист проверки и согласования<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>№</th>
+<th>Критерий</th>
+<th>Статус</th>
+<th>Результат</th>
+<th>Комментарий</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Соответствие ТЗ и комплектность</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Качество дизайнерской презентации</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Концепция и архитектура ПАК</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Блок-схема программного комплекса</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Прототипы и UI/UX-концепция</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Единая регистрация и цифровой профиль</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td>Видеоролик о продукте</td>
+<td>Обязательный</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>ИТОГОВОЕ РЕШЕНИЕ</strong></td>
+<td></td>
+<td>☐ Согласовано / ☐ Требуется доработка</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  К началу
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e \u0432 \u0431\u0443\u0444\u0435\u0440", "clipboard.copy": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432 \u0431\u0443\u0444\u0435\u0440", "search.result.more.one": "\u0415\u0449\u0451 1 \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.more.other": "\u0415\u0449\u0451 # \u043d\u0430 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435", "search.result.none": "\u0421\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e", "search.result.one": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e 1 \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0435", "search.result.other": "\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u0441\u043e\u0432\u043f\u0430\u0434\u0435\u043d\u0438\u0439: #", "search.result.placeholder": "\u041d\u0430\u0447\u043d\u0438\u0442\u0435 \u043f\u0435\u0447\u0430\u0442\u0430\u0442\u044c \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430", "search.result.term.missing": "\u041e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0443\u0435\u0442", "select.version": "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0435\u0440\u0441\u0438\u044e"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

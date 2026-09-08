@@ -1,6 +1,7 @@
 site_name: ПрофНавигатор 62 — Документация
 site_description: Единая цифровая профориентационная платформа для Центра занятости населения Рязанской области
-site_url: ''
+site_url: 'http://sg.atlassys.tech/rz/docs/'
+use_directory_urls: false
 
 theme:
   name: material
@@ -78,15 +79,33 @@ nav:
   - Архитектура подсистем:
     - Обзор: subsystems.md
     - Идентификация и регистрация: subsystems/identification.md
+    - LED-медиаплатформа:
+      - Обзор: subsystems/led-platform/index.md
+      - Заставка: subsystems/led-platform/screensaver.md
+      - Викторина: subsystems/led-platform/quiz.md
+      - Оператор: subsystems/led-platform/operator.md
+    - Идентификация и регистрация: subsystems/identification.md
     - Аналитика и отчётность:
       - Описание: subsystems/analytics.md
       - Дашборды:
         - Обзор: subsystems/analytics/dashboards.md
         - Главный Dashboard: subsystems/analytics/dashboards/general.md
         - Сводная по ПАК: subsystems/analytics/dashboards/paks-summary.md
-        - Детальная по ПАК: subsystems/analytics/dashboards/pak-detail.md
+        - Детальная по ПАК:
+          - Обзор: subsystems/analytics/dashboards/pak-detail.md
+          - LED-медиаплатформа: subsystems/analytics/dashboards/pak-detail/led-platform.md
         - Посетители: subsystems/analytics/dashboards/visitors.md
+      - Аналитика анкет: subsystems/analytics/surveys.md
       - Публичный LED: subsystems/analytics/led-dashboard.md
+    - Обратная связь:
+      - Обзор: subsystems/feedback/index.md
+      - Клиентская часть: subsystems/feedback/client.md
+    - Система администрирования (CMS):
+      - Обзор: subsystems/cms/index.md
+      - Справочники: subsystems/cms/references.md
+      - Викторина: subsystems/cms/quiz.md
+      - Администрирование анкет: subsystems/cms/surveys.md
+      - Администрирование согласий: subsystems/cms/consents.md
   - Сущности:
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
@@ -94,9 +113,15 @@ nav:
     - Организации: entities/organizations.md
     - Внешние идентификаторы: entities/external-identifiers.md
     - Аватар профессий: entities/profession-avatar.md
-    - Викторина: entities/quiz.md
-    - Видеосценарий: entities/video-scenario.md
-    - Командная игра: entities/team-game.md
     - ПрофСтарт: entities/test.md
-    - Обратная связь: entities/survey.md
     - Аналитика: entities/analytics.md
+    - Профессии в действии: entities/video-scenario.md
+    - Викторина:
+      - Игровая сессия: entities/game-session.md
+      - Вопросы викторины: entities/quiz.md
+    - Обратная связь:
+      - Анкеты: entities/survey.md
+      - Ответы пользователей: entities/survey-responses.md
+    - Согласия: entities/consent.md
+  - Справочники:
+    - Типы сценарных раундов: references/scenario-round-types.md
