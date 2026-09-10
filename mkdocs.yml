@@ -103,9 +103,14 @@ nav:
     - Система администрирования (CMS):
       - Обзор: subsystems/cms/index.md
       - Справочники: subsystems/cms/references.md
-      - Викторина: subsystems/cms/quiz.md
-      - Администрирование анкет: subsystems/cms/surveys.md
-      - Администрирование согласий: subsystems/cms/consents.md
+      - Контент ПАК:
+          - Викторина: subsystems/cms/quiz.md
+          - Аватары профессий: subsystems/cms/profession-avatars.md
+          - Профессии в действии: subsystems/cms/video-scenarios.md
+      - Анкеты: subsystems/cms/surveys.md
+      - Согласия: subsystems/cms/consents.md
+      - Пользователи: subsystems/cms/users.md
+      - Журнал изменений: subsystems/cms/change-log.md
   - Сущности:
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
@@ -119,9 +124,19 @@ nav:
     - Викторина:
       - Игровая сессия: entities/game-session.md
       - Вопросы викторины: entities/quiz.md
+      - Шаблоны сценариев: entities/scenario-template.md
     - Обратная связь:
       - Анкеты: entities/survey.md
       - Ответы пользователей: entities/survey-responses.md
     - Согласия: entities/consent.md
+  - Интерфейсы:
+    - Планшет оператора:
+      - Обзор: interfaces/operator-tablet/index.md
+      - Главный экран: interfaces/operator-tablet/home.md
+      - Настройка сессии: interfaces/operator-tablet/team-game-setup.md
+      - Формирование команд: interfaces/operator-tablet/team-formation.md
+      - Управление раундом: interfaces/operator-tablet/round-control.md
+      - Итоговые результаты: interfaces/operator-tablet/final-results.md
+      - Профессии в действии: interfaces/operator-tablet/professions.md
   - Справочники:
     - Типы сценарных раундов: references/scenario-round-types.md

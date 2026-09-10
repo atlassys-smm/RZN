@@ -109,4 +109,4 @@ https://platform.example.com/feedback?token=eyJzdXJ2ZXlfaWQiOiJ4eXoifQ...
 
 При отправке анкеты с контактными данными пользователь принимает согласие. В `SurveyResponse` сохраняется `consent_id` — идентификатор той версии согласия, которую показал пользователю.
 
-→ [Сущность согласия](../entities/consent.md)
+→ [Сущность согласия](../../entities/consent.md)
