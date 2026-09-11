@@ -42,7 +42,8 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID | Уникальный идентификатор (идемпотентность) |
-| `source` | string | Источник события |
+| `device_type` | string | Тип оборудования — см. [Источники событий](../references/event-sources.md) |
+| `software_id` | string | Программный комплекс — см. [Источники событий](../references/event-sources.md) |
 | `session_id` | UUID, nullable | Локальная сессия на терминале |
 | `user_id` | UUID, nullable | ID пользователя (если авторизован) |
 | `guest_id` | UUID, nullable | ID гостя (сохраняется на телефоне, виден на всех ПАК) |

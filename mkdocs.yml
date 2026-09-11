@@ -94,6 +94,13 @@ nav:
         - Детальная по ПАК:
           - Обзор: subsystems/analytics/dashboards/pak-detail.md
           - LED-медиаплатформа: subsystems/analytics/dashboards/pak-detail/led-platform.md
+          - Аватар профессий: subsystems/analytics/dashboards/pak-detail/profession-avatars.md
+          - Видео-окна: subsystems/analytics/dashboards/pak-detail/video-windows.md
+          - ПрофСтарт: subsystems/analytics/dashboards/pak-detail/profstart.md
+          - Древо профессий: subsystems/analytics/dashboards/pak-detail/profession-tree.md
+          - Интерактивная карта региона: subsystems/analytics/dashboards/pak-detail/interactive-map.md
+          - Видео-резюме: subsystems/analytics/dashboards/pak-detail/video-resume.md
+          - Профбаттл: subsystems/analytics/dashboards/pak-detail/profbattle.md
         - Посетители: subsystems/analytics/dashboards/visitors.md
       - Аналитика анкет: subsystems/analytics/surveys.md
       - Публичный LED: subsystems/analytics/led-dashboard.md
@@ -112,7 +119,10 @@ nav:
       - Согласия: subsystems/cms/consents.md
       - Пользователи: subsystems/cms/users.md
       - Журнал изменений: subsystems/cms/change-log.md
-    - ПрофСтарт: subsystems/profstart/index.md
+    - ПрофСтарт:
+      - Обзор: subsystems/profstart/index.md
+      - Процесс прохождения: subsystems/profstart/test-flow.md
+      - Результаты: subsystems/profstart/results.md
     - Цифровой профиль и личный кабинет:
       - Обзор: subsystems/digital-profile/index.md
       - Дашборд: subsystems/digital-profile/dashboard.md
@@ -176,9 +186,15 @@ nav:
   - Справочники:
     - Типы сценарных раундов: references/scenario-round-types.md
     - Типы вопросов Анкеты: references/survey-question-types.md
+    - Типы вопросов викторины: references/quiz-question-types.md
+    - Сложность вопросов викторины: references/quiz-difficulty.md
     - Типы вопросов ПрофСтарт: references/profstart-question-types.md
     - Статусы сессии ПрофСтарт: references/profstart-session-statuses.md
     - Возрастные группы ПрофСтарт: references/profstart-age-groups.md
     - Типы событий Аналитики: references/analytics-event-types.md
     - Режимы игровой сессии: references/game-session-modes.md
     - Источники событий: references/event-sources.md
+  - История изменений:
+    - Обзор: changelog/index.md
+    - Версия 1.1: changelog/v1.1.md
+    - Версия 1.0: changelog/v1.0.md

@@ -17,10 +17,10 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID | Уникальный идентификатор вопроса |
-| `type` | enum | Тип вопроса: `single_choice`, `multiple_choice`, `agreement_scale`, `image_choice`, `ranking`, `case_study` |
+| `type` | enum | Тип вопроса из [справочника](../references/profstart-question-types.md) |
 | `text` | text | Текст вопроса |
 | `media_id` | UUID, nullable | ID файла (изображение) |
-| `age_group` | enum | Возрастная группа: `12-14`, `15-17` |
+| `age_group` | enum | Возрастная группа из [справочника](../references/profstart-age-groups.md) |
 | `order` | integer | Порядок отображения (если фиксированный) |
 | `randomize` | boolean | Случайный порядок отображения |
 | `created_at` | timestamp | Дата создания |

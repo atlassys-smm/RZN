@@ -17,41 +17,21 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | UUID | Уникальный идентификатор вопроса |
-| `type` | enum | Тип вопроса (см. ниже) |
+| `type` | enum | Тип вопроса из [справочника](../references/quiz-question-types.md) |
 | `text` | text | Текст вопроса |
 | `media_id` | UUID, nullable | ID файла (изображение или видео) |
-| `difficulty` | enum, nullable | Сложность: `easy`, `medium`, `hard` |
-| `age_group` | enum, nullable | Возрастная группа: `12-14`, `15-17`, `adult` |
+| `difficulty` | enum, nullable | Сложность из [справочника](../references/quiz-difficulty.md) |
+| `age_group` | enum, nullable | Возрастная группа из [справочника](../references/profstart-age-groups.md) |
 | `time_limit` | integer, nullable | Время на ответ в секундах |
 | `points` | integer | Баллы за правильный ответ |
 | `explanation` | text, nullable | Методическое пояснение к правильному ответу |
 | `round_type_id` | string, nullable | Код типа раунда из [справочника](../references/scenario-round-types.md) (для классификации вопросов) |
-| `tags` | json, nullable | Теги (профессия, отрасль, компетенция) |
+| `tags` | json, nullable | Теги (профессия, отрасль, компетенция) — см. заметку ниже |
 | `created_at` | timestamp | Дата создания |
 | `updated_at` | timestamp | Дата обновления |
 
-### Типы вопросов
-
-| Тип | Описание |
-|-----|----------|
-| `single_choice` | Выбор одного варианта |
-| `multiple_choice` | Выбор нескольких вариантов |
-| `yes_no` | Да/нет |
-| `image_choice` | Выбор по изображению |
-| `matching` | Сопоставление |
-| `sorting` | Упорядочивание |
-| `profession_by_description` | Выбор профессии по описанию задач |
-| `recognize_by_image` | Распознавание профессии по изображению |
-| `recognize_by_video` | Распознавание профессии по видео |
-| `sequence` | Восстановление последовательности этапов |
-| `case_study` | Ситуационный кейс |
-| `role_distribution` | Распределение ролей в команде |
-| `resource_selection` | Выбор набора ресурсов и специалистов |
-| `error_finding` | Поиск ошибки в рабочей ситуации |
-| `prediction` | Прогноз развития технологии |
-| `argumentation` | Аргументация и консенсус |
-| `media_round` | Медиараунд с видеофрагментом |
-| `final_case` | Финальный комплексный кейс |
+!!! warning "Теги — под вопросом"
+    Механизм тегов пока не определён. Не понятно, планируем ли мы его оставлять.
 
 ### Связи
 
