@@ -92,8 +92,7 @@
 | `id` | UUID | Уникальный идентификатор участника |
 | `session_id` | UUID | ID сессии |
 | `team_id` | UUID, nullable | ID команды (null для индивидуальной викторины) |
-| `user_id` | UUID, nullable | ID авторизованного пользователя |
-| `guest_id` | UUID, nullable | ID гостя (если не авторизован) |
+| `user_id` | UUID | ID пользователя (гостя или авторизованного) — всегда заполнен |
 | `role` | string, nullable | Роль в команде (для командной игры) |
 | `individual_score` | integer | Индивидуальный счёт участника |
 | `joined_at` | timestamp | Дата подключения к сессии |
@@ -104,7 +103,7 @@
 
 - **GameSessionParticipant → GameSession**: участник принадлежит одной сессии (`session_id`)
 - **GameSessionParticipant → GameSessionTeam**: участник может принадлежать команде (`team_id`)
-- **GameSessionParticipant → User**: участник может быть авторизованным пользователем (`user_id`)
+- **GameSessionParticipant → User**: участник привязан к пользователю (`user_id`) — гостю или авторизованному
 
 ### Где используется
 
@@ -114,7 +113,6 @@
 
 ### Примечания
 
-- Один из идентификаторов обязателен: `user_id` или `guest_id`
 - Для индивидуальной викторины `team_id` = null
 - Для командной игры `role` = "командир" у первого подключившегося или назначенного командира
 

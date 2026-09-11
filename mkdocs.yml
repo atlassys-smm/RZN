@@ -38,10 +38,18 @@ plugins:
   - search:
       lang: ru
 
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+  - javascripts/mermaid-init.js
+
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format ''
   - pymdownx.tabbed:
       alternate_style: true
   - tables
@@ -58,6 +66,15 @@ nav:
   - Главная:
     - Обзор: index.md
     - Вопросы к Заказчику: questions.md
+    - Концепция:
+      - Обзор: concept/index.md
+      - Презентация: concept/presentation.md
+      - Пояснительная записка: concept/explanatory-note.md
+      - Архитектурные и блок-схемы: concept/architecture.md
+      - Прототипы и UI/UX-концепция: concept/prototypes.md
+      - ✅ Материалы по регистрации и профилю: concept/registration-profile.md
+      - Видеоролик: concept/video.md
+      - Перечень допущений: concept/assumptions.md
   - Техническое задание:
     - Обзор: tech-spec/index.md
     - Концепция (10 дней): tech-spec/concept.md
@@ -196,5 +213,6 @@ nav:
     - Источники событий: references/event-sources.md
   - История изменений:
     - Обзор: changelog/index.md
+    - Версия 1.2: changelog/v1.2.md
     - Версия 1.1: changelog/v1.1.md
     - Версия 1.0: changelog/v1.0.md

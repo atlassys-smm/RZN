@@ -16,8 +16,7 @@
 | `device_type` | string | Тип оборудования (например, `avatar_terminal`, `led_screen`, `pwa`) — см. [Источники событий](../references/event-sources.md) |
 | `software_id` | string | Программный комплекс (например, `led_platform`, `profstart`, `feedback`) — см. [Источники событий](../references/event-sources.md) |
 | `session_id` | UUID, nullable | ID локальной сессии на терминале (от авторизации до выхода) |
-| `user_id` | UUID, nullable | ID пользователя (если авторизован) |
-| `guest_id` | UUID, nullable | ID гостевой сессии (если не авторизован, сохраняется на телефоне) |
+| `user_id` | UUID | ID пользователя (гостя или авторизованного) — всегда заполнен |
 | `payload` | json | Дополнительные параметры события (action_type, entity_type, entity_id, result, duration, content_version и другие данные) |
 | `created_at` | timestamp | Дата и время события |
 
@@ -47,8 +46,7 @@
 
 ### Связи
 
-- **AnalyticsEvent → User**: событие может быть привязано к пользователю (`user_id`)
-- **AnalyticsEvent → GuestSession**: событие может быть привязано к гостевой сессии (`guest_id`)
+- **AnalyticsEvent → User**: событие привязано к пользователю (`user_id`) — гостю или авторизованному
 - **AnalyticsEvent → Profession**: событие может быть связано с профессией (через `entity_id` и `entity_type`)
 - **AnalyticsEvent → Direction**: событие может быть связано с направлением (через `entity_id` и `entity_type`)
 

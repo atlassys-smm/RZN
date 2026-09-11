@@ -16,8 +16,7 @@
 | `survey_id` | UUID | ID анкеты, по которой проходили |
 | `source_id` | string | XML_ID устройства (ПАК, веб) |
 | `consent_version_id` | UUID, nullable | ID версии согласия, которое принял пользователь |
-| `user_id` | UUID, nullable | ID пользователя (если авторизован) |
-| `guest_id` | UUID, nullable | ID гостевой сессии (если не авторизован) |
+| `user_id` | UUID | ID пользователя (гостя или авторизованного) — всегда заполнен |
 | `collection_point_id` | UUID, nullable | ID точки сбора (если применимо) |
 | `completed_at` | timestamp | Дата и время завершения анкеты |
 | `duration` | integer | Время прохождения в секундах |
@@ -26,8 +25,7 @@
 
 - **SurveyResponse → Survey**: ответ относится к одной анкете (`survey_id`)
 - **SurveyResponse → ConsentVersion**: ответ может содержать ссылку на принятую версию согласия (`consent_version_id`)
-- **SurveyResponse → User**: ответ может быть привязан к пользователю (`user_id`)
-- **SurveyResponse → GuestSession**: ответ может быть привязан к гостевой сессии (`guest_id`)
+- **SurveyResponse → User**: ответ привязан к пользователю (`user_id`) — гостю или авторизованному
 - **SurveyResponse → SurveyAnswer**: ответ имеет множество ответов на конкретные вопросы
 
 ### Где используется

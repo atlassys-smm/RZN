@@ -78,16 +78,14 @@
 |------|-----|----------|
 | `id` | UUID | Уникальный идентификатор записи |
 | `version_id` | UUID | ID версии согласия |
-| `user_id` | UUID, nullable | ID пользователя (если авторизован) |
-| `guest_id` | UUID, nullable | ID гостевой сессии (если не авторизован) |
+| `user_id` | UUID | ID пользователя (гостя или авторизованного) — всегда заполнен |
 | `accepted_at` | timestamp | Дата и время принятия |
 | `ip_address` | string, nullable | IP-адрес на момент принятия |
 
 ### Связи
 
 - **ConsentAcceptance → ConsentVersion**: запись относится к одной версии согласия (`version_id`)
-- **ConsentAcceptance → User**: запись может быть привязана к пользователю (`user_id`)
-- **ConsentAcceptance → GuestSession**: запись может быть привязана к гостевой сессии (`guest_id`)
+- **ConsentAcceptance → User**: запись привязана к пользователю (`user_id`) — гостю или авторизованному
 
 ### Где используется
 
