@@ -6,6 +6,7 @@ use_directory_urls: false
 theme:
   name: material
   language: ru
+  custom_dir: docs/overrides
   palette:
     - scheme: default
       primary: indigo
@@ -84,7 +85,6 @@ nav:
       - Заставка: subsystems/led-platform/screensaver.md
       - Викторина: subsystems/led-platform/quiz.md
       - Оператор: subsystems/led-platform/operator.md
-    - Идентификация и регистрация: subsystems/identification.md
     - Аналитика и отчётность:
       - Описание: subsystems/analytics.md
       - Дашборды:
@@ -107,10 +107,18 @@ nav:
           - Викторина: subsystems/cms/quiz.md
           - Аватары профессий: subsystems/cms/profession-avatars.md
           - Профессии в действии: subsystems/cms/video-scenarios.md
+          - ПрофСтарт: subsystems/cms/profstart.md
       - Анкеты: subsystems/cms/surveys.md
       - Согласия: subsystems/cms/consents.md
       - Пользователи: subsystems/cms/users.md
       - Журнал изменений: subsystems/cms/change-log.md
+    - ПрофСтарт: subsystems/profstart/index.md
+    - Цифровой профиль и личный кабинет:
+      - Обзор: subsystems/digital-profile/index.md
+      - Дашборд: subsystems/digital-profile/dashboard.md
+      - Каталог активностей: subsystems/digital-profile/activities.md
+      - Мой карьерный маршрут: subsystems/digital-profile/recommendations.md
+      - Профиль: subsystems/digital-profile/profile.md
   - Сущности:
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
@@ -130,13 +138,47 @@ nav:
       - Ответы пользователей: entities/survey-responses.md
     - Согласия: entities/consent.md
   - Интерфейсы:
+    - LED-экран:
+      - Обзор: interfaces/led-screen/index.md
+      - Заставка: interfaces/led-screen/screensaver.md
+      - Викторина: interfaces/led-screen/quiz.md
+      - Профессии в действии: interfaces/led-screen/professions-active.md
     - Планшет оператора:
       - Обзор: interfaces/operator-tablet/index.md
+      - Авторизация: interfaces/operator-tablet/login.md
       - Главный экран: interfaces/operator-tablet/home.md
       - Настройка сессии: interfaces/operator-tablet/team-game-setup.md
       - Формирование команд: interfaces/operator-tablet/team-formation.md
       - Управление раундом: interfaces/operator-tablet/round-control.md
       - Итоговые результаты: interfaces/operator-tablet/final-results.md
       - Профессии в действии: interfaces/operator-tablet/professions.md
+    - Мобильный клиент:
+      - Обзор: interfaces/mobile-client/index.md
+      - Подключение к игре: interfaces/mobile-client/join.md
+      - Ответ на вопрос / Голосование: interfaces/mobile-client/answer.md
+    - Административный портал:
+      - Обзор: interfaces/admin-portal/index.md
+      - Справочники: interfaces/admin-portal/references.md
+      - Викторина: interfaces/admin-portal/quiz.md
+      - Видеосценарии и аватары: interfaces/admin-portal/video-scenarios.md
+      - Анкеты и согласия: interfaces/admin-portal/surveys.md
+      - Пользователи и журнал: interfaces/admin-portal/users.md
+      - Дашборды: interfaces/admin-portal/dashboards.md
+      - Посетители: interfaces/admin-portal/visitors.md
+      - Аналитика анкет: interfaces/admin-portal/surveys-analytics.md
+    - ПрофСтарт:
+      - Обзор: interfaces/profstart/index.md
+      - Стартовый экран: interfaces/profstart/start.md
+      - Экран авторизации: interfaces/profstart/auth.md
+      - Экран вопроса: interfaces/profstart/question.md
+      - Экран загрузки: interfaces/profstart/loading.md
+      - Экран результата: interfaces/profstart/result.md
   - Справочники:
     - Типы сценарных раундов: references/scenario-round-types.md
+    - Типы вопросов Анкеты: references/survey-question-types.md
+    - Типы вопросов ПрофСтарт: references/profstart-question-types.md
+    - Статусы сессии ПрофСтарт: references/profstart-session-statuses.md
+    - Возрастные группы ПрофСтарт: references/profstart-age-groups.md
+    - Типы событий Аналитики: references/analytics-event-types.md
+    - Режимы игровой сессии: references/game-session-modes.md
+    - Источники событий: references/event-sources.md
