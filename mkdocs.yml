@@ -66,10 +66,14 @@ nav:
   - Главная:
     - Обзор: index.md
     - Вопросы к Заказчику: questions.md
+    - Внешние ПАК:
+      - Профбаттл: external-paks/profbattle.md
+      - Дерево профессий: external-paks/profession-tree.md
+      - Интерактивная карта: external-paks/interactive-map.md
     - Концепция:
       - Обзор: concept/index.md
       - Презентация: concept/presentation.md
-      - Пояснительная записка: concept/explanatory-note.md
+      - ✅ Пояснительная записка: concept/explanatory-note.md
       - ✅ Архитектурные и блок-схемы: concept/architecture.md
       - Прототипы и UI/UX-концепция: concept/prototypes.md
       - ✅ Материалы по регистрации и профилю: concept/registration-profile.md
@@ -150,6 +154,7 @@ nav:
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
     - Профессии: entities/professions.md
+    - Компетенции: entities/competences.md
     - Организации: entities/organizations.md
     - Внешние идентификаторы: entities/external-identifiers.md
     - Аватар профессий: entities/profession-avatar.md
@@ -213,6 +218,7 @@ nav:
     - Источники событий: references/event-sources.md
   - История изменений:
     - Обзор: changelog/index.md
+    - Версия 1.4: changelog/v1.4.md
     - Версия 1.3: changelog/v1.3.md
     - Версия 1.2: changelog/v1.2.md
     - Версия 1.1: changelog/v1.1.md
