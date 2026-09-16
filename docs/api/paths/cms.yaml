@@ -1,0 +1,52 @@
+references:
+  get:
+    tags: [cms]
+    summary: Справочники
+    description: Получить список справочников CMS
+    responses:
+      '200':
+        description: Список справочников
+
+quiz-questions:
+  get:
+    tags: [cms]
+    summary: Вопросы викторины
+    description: Получить список вопросов викторины (CMS)
+    responses:
+      '200':
+        description: Список вопросов
+  post:
+    tags: [cms]
+    summary: Создать вопрос
+    description: Добавить новый вопрос викторины
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '201':
+        description: Вопрос создан
+
+surveys:
+  get:
+    tags: [cms]
+    summary: Анкеты
+    description: Получить список анкет (CMS)
+    responses:
+      '200':
+        description: Список анкет
+  post:
+    tags: [cms]
+    summary: Создать анкету
+    description: Добавить новую анкету
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '201':
+        description: Анкета создана

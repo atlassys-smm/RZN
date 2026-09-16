@@ -1,0 +1,56 @@
+sessions:
+  post:
+    tags: [profstart]
+    summary: Начать тестирование
+    description: Создать новую сессию тестирования ПрофСтарт
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '201':
+        description: Сессия создана
+
+answer:
+  post:
+    tags: [profstart]
+    summary: Ответ на вопрос теста
+    description: Отправить ответ на вопрос теста ПрофСтарт
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Идентификатор сессии
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Ответ принят
+      '404':
+        description: Сессия не найдена
+
+result:
+  get:
+    tags: [profstart]
+    summary: Результат тестирования
+    description: Получить результат пройденного тестирования ПрофСтарт
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Идентификатор сессии
+    responses:
+      '200':
+        description: Результат тестирования
+      '404':
+        description: Сессия не найдена

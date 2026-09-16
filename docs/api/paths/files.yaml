@@ -1,0 +1,35 @@
+upload:
+  post:
+    tags: [files]
+    summary: Загрузить файл
+    description: Загрузить файл на платформу
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+    responses:
+      '201':
+        description: Файл загружен
+
+detail:
+  get:
+    tags: [files]
+    summary: Получить файл
+    description: Получить информацию о файле или скачать его
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Файл найден
+      '404':
+        description: Файл не найден

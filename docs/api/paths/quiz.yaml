@@ -1,0 +1,1048 @@
+# ═══════════════════════════════════════════════════════════════
+# CMS — Вопросы викторины
+# ═══════════════════════════════════════════════════════════════
+
+cms-questions:
+  get:
+    tags: [Викторина - CMS]
+    summary: Список вопросов
+    description: Получить список вопросов викторины с фильтрацией и пагинацией
+    parameters:
+      - name: question_type
+        in: query
+        schema:
+          type: string
+        description: Тип вопроса (single_choice, multiple_choice, ...)
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum: [easy, medium, hard]
+      - name: age_group
+        in: query
+        schema:
+          type: string
+      - name: round_type
+        in: query
+        schema:
+          type: string
+        description: Тип раунда (quick_start, tools, ...)
+      - name: tag
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список вопросов
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QuizQuestion'
+                total:
+                  type: integer
+  post:
+    tags: [Викторина - CMS]
+    summary: Создать вопрос
+    description: Создать новый вопрос с вариантами ответов
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [text, question_type, difficulty, time_limit, points, answer_options]
+            properties:
+              text:
+                type: string
+              question_type:
+                type: string
+              difficulty:
+                type: string
+                enum: [easy, medium, hard]
+              age_group:
+                type: string
+              time_limit:
+                type: integer
+                description: Время на ответ в секундах
+              points:
+                type: integer
+              explanation:
+                type: string
+                description: Пояснение правильного ответа
+              round_type:
+                type: string
+              tags:
+                type: array
+                items:
+                  type: string
+              media_id:
+                type: string
+                format: uuid
+              answer_options:
+                type: array
+                items:
+                  type: object
+                  required: [text, is_correct]
+                  properties:
+                    text:
+                      type: string
+                    is_correct:
+                      type: boolean
+                    media_id:
+                      type: string
+                      format: uuid
+                    order:
+                      type: integer
+    responses:
+      '201':
+        description: Вопрос создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizQuestion'
+
+cms-questions-detail:
+  get:
+    tags: [Викторина - CMS]
+    summary: Получить вопрос
+    description: Получить вопрос со всеми вариантами ответов
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Вопрос с вариантами ответов
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizQuestion'
+      '404':
+        description: Вопрос не найден
+
+cms-questions-update:
+  put:
+    tags: [Викторина - CMS]
+    summary: Обновить вопрос
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Вопрос обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizQuestion'
+      '404':
+        description: Вопрос не найден
+
+cms-questions-delete:
+  delete:
+    tags: [Викторина - CMS]
+    summary: Удалить вопрос
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Вопрос удалён
+      '404':
+        description: Вопрос не найден
+
+# ═══════════════════════════════════════════════════════════════
+# CMS — Шаблоны сценариев
+# ═══════════════════════════════════════════════════════════════
+
+cms-templates:
+  get:
+    tags: [Викторина - CMS]
+    summary: Список шаблонов
+    description: Получить список шаблонов сценариев
+    parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [draft, published]
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список шаблонов
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/QuizScenarioTemplate'
+                total:
+                  type: integer
+  post:
+    tags: [Викторина - CMS]
+    summary: Создать шаблон
+    description: Создать новый шаблон сценария
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    responses:
+      '201':
+        description: Шаблон создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizScenarioTemplate'
+
+cms-templates-update:
+  put:
+    tags: [Викторина - CMS]
+    summary: Обновить шаблон
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Шаблон обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizScenarioTemplate'
+
+cms-templates-delete:
+  delete:
+    tags: [Викторина - CMS]
+    summary: Удалить шаблон
+    description: Удалить шаблон (только если не использовался в проведённых сессиях)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Шаблон удалён
+      '409':
+        description: Шаблон использовался в сессиях, удаление невозможно
+
+cms-templates-publish:
+  post:
+    tags: [Викторина - CMS]
+    summary: Опубликовать шаблон
+    description: Изменить статус с draft на published — шаблон становится доступен оператору
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Шаблон опубликован
+
+cms-templates-unpublish:
+  post:
+    tags: [Викторина - CMS]
+    summary: В черновик
+    description: Изменить статус с published на draft
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Шаблон переведён в черновик
+
+# ── Раунды шаблона ─────────────────────────────────────────
+
+cms-templates-rounds-create:
+  post:
+    tags: [Викторина - CMS]
+    summary: Добавить раунд
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID шаблона
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [round_type]
+            properties:
+              round_type:
+                type: string
+    responses:
+      '201':
+        description: Раунд добавлен
+
+cms-templates-rounds-update:
+  put:
+    tags: [Викторина - CMS]
+    summary: Обновить раунд
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: roundId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Раунд обновлён
+
+cms-templates-rounds-delete:
+  delete:
+    tags: [Викторина - CMS]
+    summary: Удалить раунд
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: roundId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Раунд удалён
+
+cms-templates-rounds-reorder:
+  put:
+    tags: [Викторина - CMS]
+    summary: Изменить порядок раундов
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              round_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: ID раундов в новом порядке
+    responses:
+      '200':
+        description: Порядок изменён
+
+# ── Вопросы в раунде шаблона ───────────────────────────────
+
+cms-templates-rounds-questions-add:
+  post:
+    tags: [Викторина - CMS]
+    summary: Добавить вопрос в раунд
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: roundId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [question_id]
+            properties:
+              question_id:
+                type: string
+                format: uuid
+    responses:
+      '201':
+        description: Вопрос добавлен в раунд
+
+cms-templates-rounds-questions-remove:
+  delete:
+    tags: [Викторина - CMS]
+    summary: Убрать вопрос из раунда
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: roundId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: questionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Вопрос убран из раунда
+
+cms-templates-rounds-questions-reorder:
+  put:
+    tags: [Викторина - CMS]
+    summary: Изменить порядок вопросов в раунде
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: roundId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              question_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: ID вопросов в новом порядке
+    responses:
+      '200':
+        description: Порядок изменён
+
+# ═══════════════════════════════════════════════════════════════
+# Игровая сессия — создание и управление
+# ═══════════════════════════════════════════════════════════════
+
+session-create:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Создать сессию
+    description: |
+      Создаёт сессию в статусе `waiting` (формирование команд).
+      `current_round` и `current_question` = null — игра ещё не началась.
+      Фронтенд получает список шаблонов через `GET /cms/quiz/templates`, выбирает нужный и отправляет раунды с вопросами.
+      Команды создаются автоматически по `settings.team_count` (для mode=team).
+      Оператор запускает первый вопрос через `POST /quiz/sessions/{id}/next`.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [mode, rounds]
+            properties:
+              mode:
+                type: string
+                enum: [individual, team]
+              rounds:
+                type: array
+                description: Раунды с вопросами (заполнены из шаблона или вручную)
+                items:
+                  type: object
+                  properties:
+                    round_type:
+                      type: string
+                    question_ids:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+              settings:
+                type: object
+                properties:
+                  team_count:
+                    type: integer
+                    minimum: 2
+                    maximum: 8
+                    description: Количество команд (для mode=team)
+                  auto_reveal:
+                    type: boolean
+                    default: true
+                  auto_next:
+                    type: boolean
+                    default: false
+                  auto_next_delay:
+                    type: integer
+                    default: 5
+                  between_rounds_delay:
+                    type: integer
+                    default: 10
+                  show_intermediate_results:
+                    type: boolean
+                    default: true
+    responses:
+      '201':
+        description: Сессия создана (статус waiting, ожидает старта оператора)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSession'
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            examples:
+              invalid_rounds:
+                summary: Некорректные раунды
+                value:
+                  error: invalid_rounds
+                  message: Количество раундов должно быть от 3 до 8
+              invalid_team_count:
+                summary: Некорректное количество команд
+                value:
+                  error: invalid_team_count
+                  message: Количество команд должно быть от 2 до 8
+
+session-active:
+  get:
+    tags: [Викторина]
+    summary: Получить активную сессию
+    description: |
+      Возвращает текущую активную сессию (status=waiting или active).
+      Используется оператором при перезапуске планшета для восстановления состояния.
+      Если активной сессии нет — возвращает 404.
+    parameters:
+      - name: select
+        in: query
+        description: Связанные данные для включения
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+              - teams
+              - participants
+              - current_question
+              - current_round
+              - timer
+    responses:
+      '200':
+        description: Активная сессия
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionFull'
+      '404':
+        description: Активной сессии нет
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+session-detail:
+  get:
+    tags: [Викторина]
+    summary: Получить сессию
+    description: |
+      Без параметра select возвращает только базовые поля сессии (QuizSession).
+      С параметром select возвращает QuizSessionFull с запрошенными связями.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: select
+        in: query
+        description: Связанные данные для включения
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+              - teams
+              - participants
+              - current_question
+              - current_round
+              - timer
+    responses:
+      '200':
+        description: Сессия. Без select — только базовые поля. С select — запрошенные связи заполнены, остальные null.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionFull'
+      '404':
+        description: Сессия не найдена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+session-finish:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Завершить сессию
+    description: Завершить сессию. Статус меняется на `finished`.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Сессия завершена
+
+# ═══════════════════════════════════════════════════════════════
+# Управление ходом (оператор)
+# ═══════════════════════════════════════════════════════════════
+
+session-next:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Следующий вопрос / Начать игру
+    description: |
+      Если сессия в статусе `waiting` — запускает первый вопрос первого раунда (старт игры).
+      Если игра идёт — переход к следующему вопросу. Между вопросами — таймер автопереключения (auto_next_delay).
+      Если вопросов в раунде больше нет — показ результатов раунда, затем (через between_rounds_delay) — следующий раунд.
+      После последнего вопроса последнего раунда — показ финальных результатов. Сессия остаётся в статусе `active`, оператор завершает её явно через `POST /quiz/sessions/{id}/finish`.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Текущее состояние игры
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
+      '400':
+        description: Ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            examples:
+              session_finished:
+                summary: Сессия завершена
+                value:
+                  error: session_finished
+                  message: Сессия уже завершена
+              no_more_questions:
+                summary: Нет следующих вопросов
+                value:
+                  error: no_more_questions
+                  message: Это последний вопрос, используйте finish для завершения
+
+session-reveal:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Показать ответ
+    description: Показать правильный ответ с пояснением (используется если auto_reveal = false)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Правильный ответ
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                answer_option_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                explanation:
+                  type: string
+                  nullable: true
+      '400':
+        description: Ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            examples:
+              already_revealed:
+                summary: Ответ уже показан
+                value:
+                  error: already_revealed
+                  message: Правильный ответ уже был показан
+              no_active_question:
+                summary: Нет активного вопроса
+                value:
+                  error: no_active_question
+                  message: Нет активного вопроса для показа ответа
+
+session-timer-pause:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Пауза таймера
+    description: Поставить на паузу таймер текущего вопроса
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Состояние таймера
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizTimerState'
+
+session-timer-resume:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Возобновить таймер
+    description: Возобновить отсчёт таймера текущего вопроса
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Состояние таймера
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizTimerState'
+
+# ═══════════════════════════════════════════════════════════════
+# Результаты
+# ═══════════════════════════════════════════════════════════════
+
+session-results-round:
+  get:
+    tags: [Викторина - Оператор]
+    summary: Результат раунда
+    description: Результаты конкретного раунда. Используется LED для показа после окончания раунда.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: roundIndex
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Результат раунда
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizRoundResult'
+      '404':
+        description: Раунд не найден
+
+session-results-total:
+  get:
+    tags: [Викторина - Оператор]
+    summary: Итоговый результат
+    description: |
+      Итоговый результат на текущий момент (сумма по завершённым раундам).
+      Можно запрашивать в любой момент — между раундами или после завершения сессии.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Итоговый результат
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizTotalResult'
+
+# ═══════════════════════════════════════════════════════════════
+# Мобильный клиент — подключение и ответы
+# ═══════════════════════════════════════════════════════════════
+
+player-join:
+  post:
+    tags: [Викторина - Игрок]
+    summary: Подключиться к сессии
+    description: Подключиться к сессии по коду (из QR)
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Подключён
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_id:
+                  type: string
+                  format: uuid
+                session_id:
+                  type: string
+                  format: uuid
+                mode:
+                  type: string
+                  enum: [individual, team]
+                teams:
+                  type: array
+                  description: Список команд (для mode=team)
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      color:
+                        type: string
+                      participant_count:
+                        type: integer
+      '404':
+        description: Сессия не найдена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '409':
+        description: Сессия уже завершена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+player-team-join:
+  post:
+    tags: [Викторина - Игрок]
+    summary: Выбрать команду
+    description: Присоединиться к команде (для mode=team)
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Присоединился к команде
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_id:
+                  type: string
+                  format: uuid
+                team_id:
+                  type: string
+                  format: uuid
+                is_captain:
+                  type: boolean
+                  description: true если участник стал капитаном (первый в команде)
+
+player-answer:
+  post:
+    tags: [Викторина - Игрок]
+    summary: Ответ на вопрос
+    description: |
+      Ответ на текущий вопрос. Поведение зависит от режима и роли:
+      - Individual mode: ответ засчитывается
+      - Team mode, обычный участник: сохраняется как голос (для отображения капитану)
+      - Team mode, капитан: засчитывается как ответ команды
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              answer:
+                description: Зависит от типа вопроса
+    responses:
+      '200':
+        description: Ответ принят
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accepted:
+                  type: boolean
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            examples:
+              already_answered:
+                summary: Уже ответил
+                value:
+                  error: already_answered
+                  message: Вы уже дали ответ на этот вопрос
+              voting_closed:
+                summary: Приём ответов завершён
+                value:
+                  error: voting_closed
+                  message: Приём ответов на этот вопрос завершён
+              captain_already_answered:
+                summary: Капитан уже ответил
+                value:
+                  error: captain_already_answered
+                  message: Капитан команды уже дал итоговый ответ
+              not_captain:
+                summary: Не капитан
+                value:
+                  error: not_captain
+                  message: Только капитан может дать итоговый ответ команды
+      '404':
+        description: Сессия или вопрос не найдены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+

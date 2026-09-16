@@ -1,0 +1,540 @@
+openapi: 3.1.0
+info:
+  title: ПрофНавигатор 62 — API
+  description: |
+    REST API платформы «ПрофНавигатор 62».
+    Единая цифровая профориентационная платформа для Центра занятости населения Рязанской области.
+  version: 0.1.0
+  contact:
+    name: ПрофНавигатор 62
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Локальная разработка
+
+tags:
+  - name: auth
+    description: Авторизация и аутентификация
+  - name: users
+    description: Пользователи и профили
+  - name: professions
+    description: Справочник профессий
+  - name: Викторина
+    description: Общие методы — получение состояния сессии (используются оператором и игроками)
+  - name: Викторина - CMS
+    description: Управление вопросами и шаблонами сценариев викторины
+  - name: Викторина - Оператор
+    description: Игровая сессия — создание, управление ходом, результаты
+  - name: Викторина - Игрок
+    description: Мобильный клиент — подключение к сессии и ответы
+  - name: profstart
+    description: ПрофСтарт — тестирование
+  - name: analytics
+    description: Аналитика и события
+  - name: cms
+    description: CMS — управление контентом
+  - name: feedback
+    description: Обратная связь и анкеты
+  - name: files
+    description: Загрузка и управление файлами
+
+paths:
+  # ── Авторизация ──────────────────────────────────
+  /auth/login:
+    $ref: './paths/auth.yaml#/login'
+  /auth/logout:
+    $ref: './paths/auth.yaml#/logout'
+  /auth/refresh:
+    $ref: './paths/auth.yaml#/refresh'
+
+  # ── Пользователи ─────────────────────────────────
+  /users/me:
+    $ref: './paths/users.yaml#/me'
+
+  # ── Профессии ────────────────────────────────────
+  /professions:
+    $ref: './paths/professions.yaml#/list'
+  /professions/{id}:
+    $ref: './paths/professions.yaml#/detail'
+
+  # ── CMS: Викторина — Вопросы ────────────────────
+  /cms/quiz/questions:
+    $ref: './paths/quiz.yaml#/cms-questions'
+  /cms/quiz/questions/{id}:
+    $ref: './paths/quiz.yaml#/cms-questions-detail'
+
+  # ── CMS: Викторина — Шаблоны ────────────────────
+  /cms/quiz/templates:
+    $ref: './paths/quiz.yaml#/cms-templates'
+  /cms/quiz/templates/{id}/publish:
+    $ref: './paths/quiz.yaml#/cms-templates-publish'
+  /cms/quiz/templates/{id}/unpublish:
+    $ref: './paths/quiz.yaml#/cms-templates-unpublish'
+
+  # ── CMS: Викторина — Раунды шаблона ─────────────
+  /cms/quiz/templates/{id}/rounds:
+    $ref: './paths/quiz.yaml#/cms-templates-rounds-create'
+  /cms/quiz/templates/{id}/rounds/reorder:
+    $ref: './paths/quiz.yaml#/cms-templates-rounds-reorder'
+  /cms/quiz/templates/{id}/rounds/{roundId}:
+    $ref: './paths/quiz.yaml#/cms-templates-rounds-update'
+  /cms/quiz/templates/{id}/rounds/{roundId}/questions:
+    $ref: './paths/quiz.yaml#/cms-templates-rounds-questions-add'
+  /cms/quiz/templates/{id}/rounds/{roundId}/questions/reorder:
+    $ref: './paths/quiz.yaml#/cms-templates-rounds-questions-reorder'
+  /cms/quiz/templates/{id}/rounds/{roundId}/questions/{questionId}:
+    $ref: './paths/quiz.yaml#/cms-templates-rounds-questions-remove'
+
+  # ── Игровая сессия ──────────────────────────────
+  /quiz/sessions:
+    $ref: './paths/quiz.yaml#/session-create'
+  /quiz/sessions/active:
+    $ref: './paths/quiz.yaml#/session-active'
+  /quiz/sessions/{id}:
+    $ref: './paths/quiz.yaml#/session-detail'
+  /quiz/sessions/{id}/finish:
+    $ref: './paths/quiz.yaml#/session-finish'
+  /quiz/sessions/{id}/next:
+    $ref: './paths/quiz.yaml#/session-next'
+  /quiz/sessions/{id}/reveal:
+    $ref: './paths/quiz.yaml#/session-reveal'
+  /quiz/sessions/{id}/timer/pause:
+    $ref: './paths/quiz.yaml#/session-timer-pause'
+  /quiz/sessions/{id}/timer/resume:
+    $ref: './paths/quiz.yaml#/session-timer-resume'
+  /quiz/sessions/{id}/results/rounds/{roundIndex}:
+    $ref: './paths/quiz.yaml#/session-results-round'
+  /quiz/sessions/{id}/results/total:
+    $ref: './paths/quiz.yaml#/session-results-total'
+
+  # ── Мобильный клиент ────────────────────────────
+  /quiz/sessions/{sessionId}/join:
+    $ref: './paths/quiz.yaml#/player-join'
+  /quiz/sessions/{sessionId}/team/{teamId}/join:
+    $ref: './paths/quiz.yaml#/player-team-join'
+  /quiz/sessions/{sessionId}/answer:
+    $ref: './paths/quiz.yaml#/player-answer'
+
+  # ── ПрофСтарт ────────────────────────────────────
+  /profstart/sessions:
+    $ref: './paths/profstart.yaml#/sessions'
+  /profstart/sessions/{id}/answer:
+    $ref: './paths/profstart.yaml#/answer'
+  /profstart/sessions/{id}/result:
+    $ref: './paths/profstart.yaml#/result'
+
+  # ── Аналитика ────────────────────────────────────
+  /analytics/events:
+    $ref: './paths/analytics.yaml#/events'
+
+  # ── CMS ──────────────────────────────────────────
+  /cms/references:
+    $ref: './paths/cms.yaml#/references'
+  /cms/surveys:
+    $ref: './paths/cms.yaml#/surveys'
+
+  # ── Обратная связь ───────────────────────────────
+  /feedback/surveys:
+    $ref: './paths/feedback.yaml#/surveys'
+  /feedback/surveys/{id}/respond:
+    $ref: './paths/feedback.yaml#/respond'
+
+  # ── Файлы ────────────────────────────────────────
+  /files/upload:
+    $ref: './paths/files.yaml#/upload'
+  /files/{id}:
+    $ref: './paths/files.yaml#/detail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        question_type:
+          type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        age_group:
+          type: string
+          nullable: true
+        time_limit:
+          type: integer
+          description: Время на ответ в секундах
+        points:
+          type: integer
+        round_type:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        media_url:
+          type: string
+          nullable: true
+        answer_options:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              text:
+                type: string
+              is_correct:
+                type: boolean
+              media_url:
+                type: string
+                nullable: true
+              order:
+                type: integer
+        created_at:
+          type: string
+          format: date-time
+    QuizScenarioTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published]
+        rounds:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              round_type:
+                type: string
+              order:
+                type: integer
+              questions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    question_id:
+                      type: string
+                      format: uuid
+                    order:
+                      type: integer
+        created_at:
+          type: string
+          format: date-time
+    QuizSession:
+      description: Сущность сессии викторины (без связей)
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [individual, team]
+        status:
+          type: string
+          enum: [waiting, active, finished]
+        settings:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+    QuizSessionFull:
+      description: Сессия викторины со связями. Поля заполняются в зависимости от параметра select.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/QuizSession'
+        - type: object
+          properties:
+            current_round:
+              type: object
+              nullable: true
+              description: Текущий раунд (заполняется при select=current_round)
+              properties:
+                index:
+                  type: integer
+                round_type:
+                  type: string
+            current_question:
+              type: object
+              nullable: true
+              description: Текущий вопрос (заполняется при select=current_question)
+              properties:
+                index:
+                  type: integer
+                question:
+                  $ref: '#/components/schemas/QuizQuestion'
+                correct_answer:
+                  type: object
+                  nullable: true
+                  description: Заполнено после вызова reveal (ответ показан)
+                  properties:
+                    answer_option_ids:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                    explanation:
+                      type: string
+                      nullable: true
+                votes:
+                  type: array
+                  description: Распределение голосов по вариантам ответа
+                  items:
+                    type: object
+                    properties:
+                      answer_option_id:
+                        type: string
+                        format: uuid
+                      count:
+                        type: integer
+            timer:
+              $ref: '#/components/schemas/QuizTimerState'
+            teams:
+              type: array
+              nullable: true
+              description: Заполняется при select=teams
+              items:
+                $ref: '#/components/schemas/QuizTeam'
+            participants:
+              type: array
+              nullable: true
+              description: Заполняется при select=participants
+              items:
+                $ref: '#/components/schemas/QuizParticipant'
+    QuizTeam:
+      description: Команда в сессии викторины
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        captain_id:
+          type: string
+          format: uuid
+          nullable: true
+        score:
+          type: integer
+    QuizParticipant:
+      description: Участник сессии викторины
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID команды (null для mode=individual)
+        name:
+          type: string
+        individual_score:
+          type: integer
+    QuizSessionState:
+      description: Текущее состояние игры викторины (для next, reveal)
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [waiting, active, finished]
+        current_round:
+          type: object
+          nullable: true
+          properties:
+            index:
+              type: integer
+            round_type:
+              type: string
+        current_question:
+          type: object
+          nullable: true
+          properties:
+            index:
+              type: integer
+            question:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                text:
+                  type: string
+                question_type:
+                  type: string
+                media_url:
+                  type: string
+                  nullable: true
+                time_limit:
+                  type: integer
+                answer_options:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      text:
+                        type: string
+                      media_url:
+                        type: string
+                        nullable: true
+            correct_answer:
+              type: object
+              nullable: true
+              description: Заполнено после вызова reveal
+              properties:
+                answer_option_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                explanation:
+                  type: string
+                  nullable: true
+            votes:
+              type: array
+              description: Распределение голосов по вариантам ответа
+              items:
+                type: object
+                properties:
+                  answer_option_id:
+                    type: string
+                    format: uuid
+                  count:
+                    type: integer
+        timer:
+          $ref: '#/components/schemas/QuizTimerState'
+        scores:
+          type: array
+          description: Текущий рейтинг
+          items:
+            type: object
+            properties:
+              team_id:
+                type: string
+                format: uuid
+                nullable: true
+              participant_id:
+                type: string
+                format: uuid
+                nullable: true
+              name:
+                type: string
+              score:
+                type: integer
+    QuizTimerState:
+      description: Состояние таймера текущего вопроса викторины (для pause/resume)
+      type: object
+      properties:
+        remaining:
+          type: integer
+          description: Секунд осталось
+        running:
+          type: boolean
+          description: true — таймер идёт, false — на паузе
+    QuizScoredEntry:
+      description: Запись с баллами. id — team_id для team mode, participant_id для individual.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Название команды или имя участника
+    QuizRoundResult:
+      description: Результат раунда
+      allOf:
+        - type: object
+          properties:
+            round_index:
+              type: integer
+            round_type:
+              type: string
+        - type: object
+          properties:
+            scores:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/QuizScoredEntry'
+                  - type: object
+                    properties:
+                      round_score:
+                        type: integer
+                        description: Баллы за этот раунд
+                      total_score:
+                        type: integer
+                        description: Суммарные баллы на момент окончания раунда
+    QuizFinalResult:
+      description: Финальный результат
+      allOf:
+        - $ref: '#/components/schemas/QuizScoredEntry'
+        - type: object
+          properties:
+            place:
+              type: integer
+            score:
+              type: integer
+    QuizTotalResult:
+      description: Итоговый результат на текущий момент. mode определяет, что означает id.
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [individual, team]
+        results:
+          type: array
+          description: Рейтинг по убыванию баллов
+          items:
+            $ref: '#/components/schemas/QuizFinalResult'
+
+security:
+  - bearerAuth: []

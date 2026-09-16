@@ -1,0 +1,34 @@
+surveys:
+  get:
+    tags: [feedback]
+    summary: Доступные анкеты
+    description: Получить список анкет обратной связи
+    security: []
+    responses:
+      '200':
+        description: Список анкет
+
+respond:
+  post:
+    tags: [feedback]
+    summary: Ответить на анкету
+    description: Отправить ответы на анкету обратной связи
+    security: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Идентификатор анкеты
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '201':
+        description: Ответы отправлены
+      '404':
+        description: Анкета не найдена

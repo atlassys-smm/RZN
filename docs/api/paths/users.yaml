@@ -1,0 +1,21 @@
+me:
+  get:
+    tags: [users]
+    summary: Текущий пользователь
+    description: Получить профиль текущего аутентифицированного пользователя
+    responses:
+      '200':
+        description: Профиль пользователя
+  patch:
+    tags: [users]
+    summary: Обновить профиль
+    description: Частичное обновление профиля текущего пользователя
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+    responses:
+      '200':
+        description: Профиль обновлён

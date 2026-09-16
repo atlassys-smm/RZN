@@ -1,0 +1,43 @@
+login:
+  post:
+    tags: [auth]
+    summary: Вход в систему
+    description: Аутентификация пользователя и получение JWT-токенов
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [login, password]
+            properties:
+              login:
+                type: string
+              password:
+                type: string
+    responses:
+      '200':
+        description: Успешная аутентификация
+      '401':
+        description: Неверные учётные данные
+
+logout:
+  post:
+    tags: [auth]
+    summary: Выход из системы
+    description: Инвалидация текущего токена
+    responses:
+      '204':
+        description: Токен инвалидирован
+
+refresh:
+  post:
+    tags: [auth]
+    summary: Обновление токена
+    description: Получение новой пары access/refresh токенов
+    responses:
+      '200':
+        description: Токены обновлены
+      '401':
+        description: Refresh-токен недействителен
