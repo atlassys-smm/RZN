@@ -1,0 +1,126 @@
+# ═══════════════════════════════════════════════════════════════
+# Компетенции
+# ═══════════════════════════════════════════════════════════════
+
+competences:
+  get:
+    tags: [Компетенции]
+    summary: Список компетенций
+    security: []
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список компетенций
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Competence'
+                total:
+                  type: integer
+  post:
+    tags: [Компетенции]
+    summary: Создать компетенцию
+    description: Создать новую компетенцию (требуются права CMS)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    responses:
+      '201':
+        description: Компетенция создана
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competence'
+
+competences-detail:
+  get:
+    tags: [Компетенции]
+    summary: Получить компетенцию
+    security: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Компетенция
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competence'
+      '404':
+        description: Не найдена
+  put:
+    tags: [Компетенции]
+    summary: Обновить компетенцию
+    description: Обновить компетенцию (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    responses:
+      '200':
+        description: Компетенция обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Competence'
+      '404':
+        description: Не найдена
+  delete:
+    tags: [Компетенции]
+    summary: Удалить компетенцию
+    description: Удалить компетенцию (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Компетенция удалена
+      '409':
+        description: Нельзя удалить — есть связанные пользователи

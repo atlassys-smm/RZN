@@ -101,8 +101,8 @@ flowchart TD
     Choice -->|Индивидуальный сценарий| Individual["Запуск сценария<br/>(ПрофСтарт, Викторина)"]
     Individual --> Monitor["Мониторинг прохождения"]
     Monitor --> Dashboard
-    Choice -->|Профессии в действии| VideoScenario["Запуск видеосценария"]
-    VideoScenario --> Control["Управление показом<br/>(пауза, ветвление)"]
+    Choice -->|Профессии в действии| InteractiveVideoScenario["Запуск видеосценария"]
+    InteractiveVideoScenario --> Control["Управление показом<br/>(пауза, ветвление)"]
     Control --> Dashboard
     Choice -->|Заставки| Screensaver["Управление заставками"]
     Screensaver --> Dashboard

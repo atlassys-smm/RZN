@@ -1,15 +1,31 @@
-list:
+# ═══════════════════════════════════════════════════════════════
+# Профессии
+# ═══════════════════════════════════════════════════════════════
+
+professions:
   get:
-    tags: [professions]
+    tags: [Профессии]
     summary: Список профессий
     description: Получить справочник профессий с фильтрацией и пагинацией
     security: []
     parameters:
-      - name: direction
+      - name: direction_id
         in: query
         schema:
           type: string
+          format: uuid
         description: Фильтр по профессиональному направлению
+      - name: industry_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по отрасли
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Поиск по названию
       - name: limit
         in: query
         schema:
@@ -23,10 +39,50 @@ list:
     responses:
       '200':
         description: Список профессий
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Profession'
+                total:
+                  type: integer
+  post:
+    tags: [Профессии]
+    summary: Создать профессию
+    description: Создать новую профессию (требуются права CMS)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name, industry_id, direction_id]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              industry_id:
+                type: string
+                format: uuid
+              direction_id:
+                type: string
+                format: uuid
+    responses:
+      '201':
+        description: Профессия создана
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profession'
 
-detail:
+professions-detail:
   get:
-    tags: [professions]
+    tags: [Профессии]
     summary: Детали профессии
     description: Получить полную информацию о профессии по идентификатору
     security: []
@@ -36,8 +92,276 @@ detail:
         required: true
         schema:
           type: string
+          format: uuid
     responses:
       '200':
         description: Карточка профессии
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profession'
       '404':
         description: Профессия не найдена
+  put:
+    tags: [Профессии]
+    summary: Обновить профессию
+    description: Обновить профессию (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              industry_id:
+                type: string
+                format: uuid
+              direction_id:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Профессия обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profession'
+      '404':
+        description: Не найдена
+  delete:
+    tags: [Профессии]
+    summary: Удалить профессию
+    description: Удалить профессию (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Профессия удалена
+      '404':
+        description: Не найдена
+
+# ═══════════════════════════════════════════════════════════════
+# Отрасли
+# ═══════════════════════════════════════════════════════════════
+
+industries:
+  get:
+    tags: [Профессии]
+    summary: Список отраслей
+    security: []
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список отраслей
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Industry'
+                total:
+                  type: integer
+  post:
+    tags: [Профессии]
+    summary: Создать отрасль
+    description: Создать новую отрасль (требуются права CMS)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+    responses:
+      '201':
+        description: Отрасль создана
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Industry'
+
+industries-detail:
+  put:
+    tags: [Профессии]
+    summary: Обновить отрасль
+    description: Обновить отрасль (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+    responses:
+      '200':
+        description: Отрасль обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Industry'
+      '404':
+        description: Не найдена
+  delete:
+    tags: [Профессии]
+    summary: Удалить отрасль
+    description: Удалить отрасль (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Отрасль удалена
+      '409':
+        description: Нельзя удалить — есть связанные профессии
+
+# ═══════════════════════════════════════════════════════════════
+# Направления
+# ═══════════════════════════════════════════════════════════════
+
+directions:
+  get:
+    tags: [Профессии]
+    summary: Список направлений
+    security: []
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список направлений
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Direction'
+                total:
+                  type: integer
+  post:
+    tags: [Профессии]
+    summary: Создать направление
+    description: Создать новое направление (требуются права CMS)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    responses:
+      '201':
+        description: Направление создано
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Direction'
+
+directions-detail:
+  put:
+    tags: [Профессии]
+    summary: Обновить направление
+    description: Обновить направление (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+    responses:
+      '200':
+        description: Направление обновлено
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Direction'
+      '404':
+        description: Не найдена
+  delete:
+    tags: [Профессии]
+    summary: Удалить направление
+    description: Удалить направление (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Направление удалено
+      '409':
+        description: Нельзя удалить — есть связанные профессии

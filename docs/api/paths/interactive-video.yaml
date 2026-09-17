@@ -1,0 +1,600 @@
+# ═══════════════════════════════════════════════════════════════
+# CMS — Видеосценарии
+# ═══════════════════════════════════════════════════════════════
+
+cms-scenarios:
+  get:
+    tags: [Интерактивное видео - CMS]
+    summary: Список видеосценариев
+    description: Получить список видеосценариев с фильтрацией и пагинацией
+    parameters:
+      - name: profession_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по профессии
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список видеосценариев
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/InteractiveVideoScenario'
+                total:
+                  type: integer
+  post:
+    tags: [Интерактивное видео - CMS]
+    summary: Создать видеосценарий
+    description: |
+      Создать новый видеосценарий. Стартовая ветка создаётся автоматически.
+      Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [title]
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              profession_id:
+                type: string
+                format: uuid
+                nullable: true
+    responses:
+      '201':
+        description: Видеосценарий создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoScenario'
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+cms-scenarios-detail:
+  get:
+    tags: [Интерактивное видео - CMS]
+    summary: Получить видеосценарий
+    description: Получить видеосценарий с деревом веток
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Видеосценарий с деревом веток
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoScenarioFull'
+      '404':
+        description: Видеосценарий не найден
+  put:
+    tags: [Интерактивное видео - CMS]
+    summary: Обновить видеосценарий
+    description: Обновить название, описание или профессию
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              profession_id:
+                type: string
+                format: uuid
+                nullable: true
+    responses:
+      '200':
+        description: Видеосценарий обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoScenario'
+      '404':
+        description: Видеосценарий не найден
+  delete:
+    tags: [Интерактивное видео - CMS]
+    summary: Удалить видеосценарий
+    description: Удалить видеосценарий (только если не использовался в активных сессиях)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Видеосценарий удалён
+      '409':
+        description: Видеосценарий использовался в сессиях, удаление невозможно
+
+# ── Ветки видеосценария ─────────────────────────────────────
+
+cms-branches-create:
+  post:
+    tags: [Интерактивное видео - CMS]
+    summary: Добавить ветку
+    description: |
+      Добавить дочернюю ветку к указанному родителю.
+      Если `parent_id` не указан — добавляется как вариант выбора для стартовой ветки.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID видеосценария
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [parent_id, text, media_id]
+            properties:
+              parent_id:
+                type: string
+                format: uuid
+                description: ID родительской ветки
+              text:
+                type: string
+                description: Текст варианта выбора
+              media_id:
+                type: string
+                format: uuid
+                description: ID видеофайла
+              prompt:
+                type: string
+                description: Текст вопроса в точке выбора (для родительской ветки)
+    responses:
+      '201':
+        description: Ветка добавлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+cms-branches-update:
+  put:
+    tags: [Интерактивное видео - CMS]
+    summary: Обновить ветку
+    description: Обновить текст вопроса, текст варианта или видеофайл
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: branchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              text:
+                type: string
+              prompt:
+                type: string
+              media_id:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Ветка обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+      '404':
+        description: Ветка не найдена
+
+cms-branches-delete:
+  delete:
+    tags: [Интерактивное видео - CMS]
+    summary: Удалить ветку
+    description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: branchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Ветка удалена
+      '400':
+        description: Нельзя удалить стартовую ветку
+      '404':
+        description: Ветка не найдена
+
+# ═══════════════════════════════════════════════════════════════
+# Показ — создание и управление (оператор)
+# ═══════════════════════════════════════════════════════════════
+
+session-create:
+  post:
+    tags: [Интерактивное видео - Оператор]
+    summary: Запустить показ
+    description: |
+      Запустить показ видеосценариев на LED-экране.
+      Если `scenario_ids` указан — используются эти сценарии.
+      Если не указан — система выбирает случайные сценарии (количество определяется `profession_count`).
+      Статус сессии сразу становится `active`.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [device_id]
+            properties:
+              device_id:
+                type: string
+                description: Идентификатор LED-устройства, на котором запускается показ
+              scenario_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: ID видеосценариев для показа (опционально)
+              profession_count:
+                type: integer
+                minimum: 1
+                maximum: 10
+                default: 3
+                description: Количество профессий для показа (если scenario_ids не указан)
+              settings:
+                type: object
+                properties:
+                  voting_duration:
+                    type: integer
+                    default: 30
+                    description: Длительность голосования в секундах
+                  result_display_duration:
+                    type: integer
+                    default: 5
+                    description: Длительность показа результата в секундах
+    responses:
+      '201':
+        description: Показ запущен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoSession'
+      '400':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            examples:
+              no_scenarios:
+                summary: Нет доступных сценариев
+                value:
+                  error: no_scenarios
+                  message: Нет доступных видеосценариев для показа
+              device_busy:
+                summary: Устройство занято
+                value:
+                  error: device_busy
+                  message: На этом устройстве уже запущена сессия
+
+session-active:
+  get:
+    tags: [Интерактивное видео]
+    summary: Получить активную сессию
+    description: |
+      Возвращает текущую активную сессию показа с полным состоянием.
+      Если указан `device_id` — возвращает сессию для этого устройства.
+      Если `device_id` не указан — возвращает любую активную сессию (для оператора).
+      Используется LED-экраном при переподключении для восстановления состояния.
+      Используется оператором при перезапуске планшета для возможности остановки.
+      Если активной сессии нет — возвращает 404.
+    parameters:
+      - name: device_id
+        in: query
+        schema:
+          type: string
+        description: Идентификатор LED-устройства (если не указан — возвращается любая активная сессия)
+    responses:
+      '200':
+        description: Активная сессия с полным состоянием
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoState'
+      '404':
+        description: Активной сессии нет
+
+session-stop:
+  post:
+    tags: [Интерактивное видео - Оператор]
+    summary: Остановить показ
+    description: Остановить показ и вернуть LED-экран в режим ожидания
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Показ остановлен
+      '404':
+        description: Сессия не найдена
+
+# ═══════════════════════════════════════════════════════════════
+# Состояние показа (LED-экран)
+# ═══════════════════════════════════════════════════════════════
+
+session-state:
+  get:
+    tags: [Интерактивное видео - LED]
+    summary: Получить состояние показа
+    description: |
+      Текущее состояние показа для LED-экрана.
+      Включает информацию о текущем видео, точке голосования, результатах.
+      LED-экран опрашивает этот эндпоинт для синхронизации.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Состояние показа
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoState'
+      '404':
+        description: Сессия не найдена
+
+session-voting:
+  get:
+    tags: [Интерактивное видео - Зритель]
+    summary: Получить информацию о голосовании
+    description: |
+      Информация о текущей точке голосования для мобильного клиента.
+      Включает варианты выбора, таймер, статус участника (проголосовал/не проголосовал), результат.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: participant_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID участника (получен при подключении через /join)
+    responses:
+      '200':
+        description: Информация о голосовании
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoVoting'
+      '404':
+        description: Сессия или точка голосования не найдена
+
+# ═══════════════════════════════════════════════════════════════
+# Мобильный клиент — подключение и голосование
+# ═══════════════════════════════════════════════════════════════
+
+player-join:
+  post:
+    tags: [Интерактивное видео - Зритель]
+    summary: Подключиться к показу
+    description: Подключиться к показу по QR-коду
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Подключён
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_id:
+                  type: string
+                  format: uuid
+                session_id:
+                  type: string
+                  format: uuid
+      '404':
+        description: Сессия не найдена
+      '409':
+        description: Показ уже завершён
+
+player-vote:
+  post:
+    tags: [Интерактивное видео - Зритель]
+    summary: Проголосовать
+    description: |
+      Проголосовать за вариант продолжения в точке голосования.
+      Один участник может проголосовать только один раз за каждую точку голосования.
+    parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [branch_id]
+            properties:
+              branch_id:
+                type: string
+                format: uuid
+                description: ID выбранной ветки (варианта продолжения)
+    responses:
+      '200':
+        description: Голос принят
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accepted:
+                  type: boolean
+                message:
+                  type: string
+      '400':
+        description: Ошибка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+            examples:
+              voting_closed:
+                summary: Голосование завершено
+                value:
+                  error: voting_closed
+                  message: Голосование уже завершено
+              already_voted:
+                summary: Уже голосовал
+                value:
+                  error: already_voted
+                  message: Вы уже проголосовали
+              invalid_branch:
+                summary: Неверная ветка
+                value:
+                  error: invalid_branch
+                  message: Выбранная ветка не является допустимым вариантом
+      '404':
+        description: Сессия или точка голосования не найдена
+
+# ═══════════════════════════════════════════════════════════════
+# WebSocket — уведомления об изменениях
+# ═══════════════════════════════════════════════════════════════
+#
+# WebSocket для получения уведомлений об изменениях состояния.
+# Клиент получает событие и загружает актуальные данные через REST API.
+#
+# ## Подключение
+#
+# ws://host/api/v1/interactive-video/sessions/{sessionId}/ws
+#
+# ## События от сервера
+#
+# Сервер отправляет только тип события. Клиент сам загружает данные через REST.
+#
+# ### phase_changed
+# Сменилась фаза показа (playing → waiting → result).
+# LED загружает: GET /interactive-video/sessions/{id}/state
+# Мобильный загружает: GET /interactive-video/sessions/{id}/voting
+#
+# { "type": "phase_changed" }
+#
+# ### votes_updated (только для LED)
+# Поступил новый голос.
+# LED загружает: GET /interactive-video/sessions/{id}/state
+#
+# { "type": "votes_updated" }
+#
+# ### scenario_finished
+# Текущий сценарий завершён, переход к следующему.
+# LED загружает: GET /interactive-video/sessions/{id}/state
+# Мобильный загружает: GET /interactive-video/sessions/{id}/voting
+#
+# { "type": "scenario_finished" }
+#
+# ### session_finished
+# Показ завершён.
+#
+# { "type": "session_finished" }
+#
+# ## Пример использования (LED)
+#
+# 1. LED подключается к WebSocket
+# 2. Загружает начальное состояние: GET /state
+# 3. Получает событие { "type": "votes_updated" }
+# 4. Загружает обновлённое состояние: GET /state
+# 5. Обновляет отображение
+#
+# ## Пример использования (мобильный)
+#
+# 1. Мобильный подключается к WebSocket
+# 2. Загружает начальное состояние: GET /voting
+# 3. Голосует: POST /vote
+# 4. Получает событие { "type": "phase_changed" } (переход в result)
+# 5. Загружает результат: GET /voting

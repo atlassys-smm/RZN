@@ -1046,3 +1046,99 @@ player-answer:
             schema:
               $ref: '#/components/schemas/Error'
 
+# ═══════════════════════════════════════════════════════════════
+# WebSocket — обновления в реальном времени
+# ═══════════════════════════════════════════════════════════════
+#
+# WebSocket-эндпоинты для получения обновлений в реальном времени.
+# OpenAPI 3.1 не поддерживает WebSocket, поэтому описание приведено ниже.
+#
+# ## Подключение
+#
+# ws://host/api/v1/quiz/sessions/{sessionId}/ws
+#
+# ## События от сервера
+#
+# ### session_state
+# Обновление состояния сессии (для оператора и LED).
+#
+# {
+#   "type": "session_state",
+#   "data": {
+#     "status": "active",
+#     "current_round": { "index": 0, "round_type": "quick_start" },
+#     "current_question": { ... },
+#     "timer": { "remaining": 25, "running": true },
+#     "scores": [...]
+#   }
+# }
+#
+# ### question_started
+# Начался приём ответов на вопрос.
+#
+# {
+#   "type": "question_started",
+#   "data": {
+#     "question_index": 0,
+#     "time_limit": 30
+#   }
+# }
+#
+# ### votes_update
+# Обновление количества голосов (для оператора и LED).
+#
+# {
+#   "type": "votes_update",
+#   "data": {
+#     "votes": [
+#       { "answer_option_id": "uuid", "count": 5 },
+#       { "answer_option_id": "uuid", "count": 3 }
+#     ],
+#     "total_voters": 8
+#   }
+# }
+#
+# ### question_revealed
+# Правильный ответ показан.
+#
+# {
+#   "type": "question_revealed",
+#   "data": {
+#     "correct_answer": {
+#       "answer_option_ids": ["uuid"],
+#       "explanation": "Пояснение"
+#     }
+#   }
+# }
+#
+# ### round_finished
+# Раунд завершён, показ результатов.
+#
+# {
+#   "type": "round_finished",
+#   "data": {
+#     "round_index": 0,
+#     "scores": [...]
+#   }
+# }
+#
+# ### session_finished
+# Сессия завершена.
+#
+# {
+#   "type": "session_finished",
+#   "data": {}
+# }
+#
+# ## События от клиента
+#
+# ### subscribe
+# Подписка на определённые типы событий.
+#
+# {
+#   "type": "subscribe",
+#   "events": ["votes_update", "question_revealed"]
+# }
+#
+# Если не отправлено — клиент получает все события.
+

@@ -17,8 +17,12 @@ tags:
     description: Авторизация и аутентификация
   - name: users
     description: Пользователи и профили
-  - name: professions
-    description: Справочник профессий
+  - name: Профессии
+    description: Справочник профессий, отраслей и направлений
+  - name: Компетенции
+    description: Справочник компетенций
+  - name: Организации
+    description: Учебные заведения и работодатели
   - name: Викторина
     description: Общие методы — получение состояния сессии (используются оператором и игроками)
   - name: Викторина - CMS
@@ -27,6 +31,16 @@ tags:
     description: Игровая сессия — создание, управление ходом, результаты
   - name: Викторина - Игрок
     description: Мобильный клиент — подключение к сессии и ответы
+  - name: Интерактивное видео
+    description: Общие методы — получение состояния показа (используется LED-экраном)
+  - name: Интерактивное видео - CMS
+    description: Управление видеосценариями и ветками
+  - name: Интерактивное видео - Оператор
+    description: Показ — запуск и остановка
+  - name: Интерактивное видео - LED
+    description: Получение состояния показа для LED-экрана
+  - name: Интерактивное видео - Зритель
+    description: Мобильный клиент — подключение и голосование
   - name: profstart
     description: ПрофСтарт — тестирование
   - name: analytics
@@ -53,9 +67,29 @@ paths:
 
   # ── Профессии ────────────────────────────────────
   /professions:
-    $ref: './paths/professions.yaml#/list'
+    $ref: './paths/professions.yaml#/professions'
   /professions/{id}:
-    $ref: './paths/professions.yaml#/detail'
+    $ref: './paths/professions.yaml#/professions-detail'
+  /industries:
+    $ref: './paths/professions.yaml#/industries'
+  /industries/{id}:
+    $ref: './paths/professions.yaml#/industries-detail'
+  /directions:
+    $ref: './paths/professions.yaml#/directions'
+  /directions/{id}:
+    $ref: './paths/professions.yaml#/directions-detail'
+
+  # ── Компетенции ─────────────────────────────────
+  /competences:
+    $ref: './paths/competences.yaml#/competences'
+  /competences/{id}:
+    $ref: './paths/competences.yaml#/competences-detail'
+
+  # ── Организации ─────────────────────────────────
+  /organizations:
+    $ref: './paths/organizations.yaml#/organizations'
+  /organizations/{id}:
+    $ref: './paths/organizations.yaml#/organizations-detail'
 
   # ── CMS: Викторина — Вопросы ────────────────────
   /cms/quiz/questions:
@@ -114,6 +148,34 @@ paths:
     $ref: './paths/quiz.yaml#/player-team-join'
   /quiz/sessions/{sessionId}/answer:
     $ref: './paths/quiz.yaml#/player-answer'
+
+  # ── CMS: Интерактивное видео — Видеосценарии ───
+  /cms/video-scenarios:
+    $ref: './paths/interactive-video.yaml#/cms-scenarios'
+  /cms/video-scenarios/{id}:
+    $ref: './paths/interactive-video.yaml#/cms-scenarios-detail'
+  /cms/video-scenarios/{id}/branches:
+    $ref: './paths/interactive-video.yaml#/cms-branches-create'
+  /cms/video-scenarios/{id}/branches/{branchId}:
+    $ref: './paths/interactive-video.yaml#/cms-branches-update'
+
+  # ── Интерактивное видео — Показ ────────────────
+  /interactive-video/sessions:
+    $ref: './paths/interactive-video.yaml#/session-create'
+  /interactive-video/sessions/active:
+    $ref: './paths/interactive-video.yaml#/session-active'
+  /interactive-video/sessions/{id}/stop:
+    $ref: './paths/interactive-video.yaml#/session-stop'
+  /interactive-video/sessions/{id}/state:
+    $ref: './paths/interactive-video.yaml#/session-state'
+  /interactive-video/sessions/{id}/voting:
+    $ref: './paths/interactive-video.yaml#/session-voting'
+
+  # ── Мобильный клиент (Интерактивное видео) ─────
+  /interactive-video/sessions/{sessionId}/join:
+    $ref: './paths/interactive-video.yaml#/player-join'
+  /interactive-video/sessions/{sessionId}/vote:
+    $ref: './paths/interactive-video.yaml#/player-vote'
 
   # ── ПрофСтарт ────────────────────────────────────
   /profstart/sessions:
@@ -470,12 +532,21 @@ components:
               score:
                 type: integer
     QuizTimerState:
-      description: Состояние таймера текущего вопроса викторины (для pause/resume)
+      description: |
+        Состояние таймера текущего вопроса викторины.
+        Для синхронизации используется абсолютный timestamp `ends_at`, а не относительный `remaining`.
+        Клиент вычисляет оставшееся время: remaining = ends_at - now.
       type: object
       properties:
-        remaining:
+        ends_at:
           type: integer
-          description: Секунд осталось
+          format: int64
+          nullable: true
+          description: UNIX timestamp (мс), когда таймер закончится. Null если на паузе.
+        remaining_at_pause:
+          type: integer
+          nullable: true
+          description: Секунд осталось на момент паузы. Заполняется если running=false.
         running:
           type: boolean
           description: true — таймер идёт, false — на паузе
@@ -535,6 +606,268 @@ components:
           description: Рейтинг по убыванию баллов
           items:
             $ref: '#/components/schemas/QuizFinalResult'
+
+    # ═══════════════════════════════════════════════════════
+    # Интерактивное видео — Схемы
+    # ═══════════════════════════════════════════════════════
+
+    InteractiveVideoScenario:
+      description: Видеосценарий (интерактивный видеоролик с точками выбора)
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        profession_id:
+          type: string
+          format: uuid
+          nullable: true
+        branch_count:
+          type: integer
+          description: Количество веток в сценарии
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    InteractiveVideoScenarioFull:
+      description: Видеосценарий с деревом веток
+      allOf:
+        - $ref: '#/components/schemas/InteractiveVideoScenario'
+        - type: object
+          properties:
+            branches:
+              type: array
+              description: Дерево веток (стартовая ветка первая, с дочерними вложенными)
+              items:
+                $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+
+    InteractiveVideoScenarioBranch:
+      description: Ветка видеосценария (видеофрагмент с вариантами выбора)
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        scenario_id:
+          type: string
+          format: uuid
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID родительской ветки (null для стартовой)
+        media_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID видеофайла
+        media_url:
+          type: string
+          nullable: true
+          description: URL видеофайла
+        text:
+          type: string
+          nullable: true
+          description: Текст варианта выбора (для дочерних веток)
+        prompt:
+          type: string
+          nullable: true
+          description: Текст вопроса в точке выбора (для веток с дочерними вариантами)
+        children:
+          type: array
+          description: Дочерние ветки (варианты выбора после этого видео)
+          items:
+            $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+
+    InteractiveVideoSession:
+      description: Сессия показа «Интерактивное видео»
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, finished]
+        scenario_ids:
+          type: array
+          description: ID видеосценариев для показа
+          items:
+            type: string
+            format: uuid
+        current_scenario_index:
+          type: integer
+          nullable: true
+          description: Индекс текущего сценария (0-based)
+        settings:
+          type: object
+          properties:
+            voting_duration:
+              type: integer
+              description: Длительность голосования в секундах
+            result_display_duration:
+              type: integer
+              description: Длительность показа результата в секундах
+        created_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    InteractiveVideoState:
+      description: Текущее состояние показа для LED-экрана
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        device_id:
+          type: string
+          description: Идентификатор LED-устройства, на котором запущена сессия
+        status:
+          type: string
+          enum: [active, finished]
+        phase:
+          type: string
+          enum: [playing, waiting, result]
+          description: |
+            Фаза показа:
+            - `playing` — проигрывание ролика
+            - `waiting` — точка голосования, сбор ответов
+            - `result` — показ результата
+        phase_started_at:
+          type: integer
+          format: int64
+          description: UNIX timestamp (мс), когда началась текущая фаза
+        current_scenario:
+          type: object
+          nullable: true
+          description: Текущий видеосценарий
+          properties:
+            index:
+              type: integer
+            scenario:
+              $ref: '#/components/schemas/InteractiveVideoScenario'
+        current_branch:
+          type: object
+          nullable: true
+          description: Текущая ветка (видеофрагмент)
+          properties:
+            id:
+              type: string
+              format: uuid
+            media_url:
+              type: string
+              nullable: true
+            profession_name:
+              type: string
+              nullable: true
+              description: Название профессии (показывается в начале видео)
+        voting_point:
+          type: object
+          nullable: true
+          description: Точка голосования (заполняется в фазе waiting/result)
+          properties:
+            prompt:
+              type: string
+              description: Текст вопроса/ситуации
+            options:
+              type: array
+              description: Варианты выбора (дочерние ветки)
+              items:
+                type: object
+                properties:
+                  branch_id:
+                    type: string
+                    format: uuid
+                  text:
+                    type: string
+            timer:
+              type: object
+              properties:
+                ends_at:
+                  type: integer
+                  format: int64
+                  description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
+            votes:
+              type: array
+              description: Распределение голосов (заполняется в фазе result)
+              items:
+                type: object
+                properties:
+                  branch_id:
+                    type: string
+                    format: uuid
+                  count:
+                    type: integer
+            total_voters:
+              type: integer
+              description: Общее количество проголосовавших
+            winner_branch_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: ID выбранной ветки (заполняется в фазе result)
+
+    InteractiveVideoVoting:
+      description: Информация о голосовании для мобильного клиента
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        phase:
+          type: string
+          enum: [playing, waiting, result]
+          description: |
+            Фаза показа:
+            - `playing` — проигрывание ролика
+            - `waiting` — точка голосования, сбор ответов
+            - `result` — показ результата
+        voting_point:
+          type: object
+          nullable: true
+          description: Точка голосования (заполняется в фазе waiting/result)
+          properties:
+            prompt:
+              type: string
+              description: Текст вопроса/ситуации
+            options:
+              type: array
+              description: Варианты выбора
+              items:
+                type: object
+                properties:
+                  branch_id:
+                    type: string
+                    format: uuid
+                  text:
+                    type: string
+            timer:
+              type: object
+              properties:
+                ends_at:
+                  type: integer
+                  format: int64
+                  description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
+            already_voted:
+              type: boolean
+              description: true, если участник уже проголосовал
+            voted_branch_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: ID ветки, за которую проголосовал участник (если already_voted=true)
 
 security:
   - bearerAuth: []
