@@ -31,15 +31,15 @@ tags:
     description: Игровая сессия — создание, управление ходом, результаты
   - name: Викторина - Игрок
     description: Мобильный клиент — подключение к сессии и ответы
-  - name: Интерактивное видео
+  - name: Профессии в действии
     description: Общие методы — получение состояния показа (используется LED-экраном)
-  - name: Интерактивное видео - CMS
+  - name: Профессии в действии - CMS
     description: Управление видеосценариями и ветками
-  - name: Интерактивное видео - Оператор
+  - name: Профессии в действии - Оператор
     description: Показ — запуск и остановка
-  - name: Интерактивное видео - LED
+  - name: Профессии в действии - LED
     description: Получение состояния показа для LED-экрана
-  - name: Интерактивное видео - Зритель
+  - name: Профессии в действии - Зритель
     description: Мобильный клиент — подключение и голосование
   - name: profstart
     description: ПрофСтарт — тестирование
@@ -149,7 +149,7 @@ paths:
   /quiz/sessions/{sessionId}/answer:
     $ref: './paths/quiz.yaml#/player-answer'
 
-  # ── CMS: Интерактивное видео — Видеосценарии ───
+  # ── CMS: Профессии в действии — Видеосценарии ───
   /cms/video-scenarios:
     $ref: './paths/interactive-video.yaml#/cms-scenarios'
   /cms/video-scenarios/{id}:
@@ -159,7 +159,7 @@ paths:
   /cms/video-scenarios/{id}/branches/{branchId}:
     $ref: './paths/interactive-video.yaml#/cms-branches-update'
 
-  # ── Интерактивное видео — Показ ────────────────
+  # ── Профессии в действии — Показ ────────────────
   /interactive-video/sessions:
     $ref: './paths/interactive-video.yaml#/session-create'
   /interactive-video/sessions/active:
@@ -171,7 +171,7 @@ paths:
   /interactive-video/sessions/{id}/voting:
     $ref: './paths/interactive-video.yaml#/session-voting'
 
-  # ── Мобильный клиент (Интерактивное видео) ─────
+  # ── Мобильный клиент (Профессии в действии) ─────
   /interactive-video/sessions/{sessionId}/join:
     $ref: './paths/interactive-video.yaml#/player-join'
   /interactive-video/sessions/{sessionId}/vote:
@@ -608,7 +608,7 @@ components:
             $ref: '#/components/schemas/QuizFinalResult'
 
     # ═══════════════════════════════════════════════════════
-    # Интерактивное видео — Схемы
+    # Профессии в действии — Схемы
     # ═══════════════════════════════════════════════════════
 
     InteractiveVideoScenario:
@@ -688,7 +688,7 @@ components:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
 
     InteractiveVideoSession:
-      description: Сессия показа «Интерактивное видео»
+      description: Сессия показа «Профессии в действии»
       type: object
       properties:
         id:

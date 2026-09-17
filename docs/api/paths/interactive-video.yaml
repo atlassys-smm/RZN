@@ -4,7 +4,7 @@
 
 cms-scenarios:
   get:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Список видеосценариев
     description: Получить список видеосценариев с фильтрацией и пагинацией
     parameters:
@@ -39,7 +39,7 @@ cms-scenarios:
                 total:
                   type: integer
   post:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Создать видеосценарий
     description: |
       Создать новый видеосценарий. Стартовая ветка создаётся автоматически.
@@ -76,7 +76,7 @@ cms-scenarios:
 
 cms-scenarios-detail:
   get:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Получить видеосценарий
     description: Получить видеосценарий с деревом веток
     parameters:
@@ -96,7 +96,7 @@ cms-scenarios-detail:
       '404':
         description: Видеосценарий не найден
   put:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Обновить видеосценарий
     description: Обновить название, описание или профессию
     parameters:
@@ -131,7 +131,7 @@ cms-scenarios-detail:
       '404':
         description: Видеосценарий не найден
   delete:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Удалить видеосценарий
     description: Удалить видеосценарий (только если не использовался в активных сессиях)
     parameters:
@@ -151,7 +151,7 @@ cms-scenarios-detail:
 
 cms-branches-create:
   post:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Добавить ветку
     description: |
       Добавить дочернюю ветку к указанному родителю.
@@ -202,7 +202,7 @@ cms-branches-create:
 
 cms-branches-update:
   put:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Обновить ветку
     description: Обновить текст вопроса, текст варианта или видеофайл
     parameters:
@@ -244,7 +244,7 @@ cms-branches-update:
 
 cms-branches-delete:
   delete:
-    tags: [Интерактивное видео - CMS]
+    tags: [Профессии в действии - CMS]
     summary: Удалить ветку
     description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
     parameters:
@@ -274,7 +274,7 @@ cms-branches-delete:
 
 session-create:
   post:
-    tags: [Интерактивное видео - Оператор]
+    tags: [Профессии в действии - Оператор]
     summary: Запустить показ
     description: |
       Запустить показ видеосценариев на LED-экране.
@@ -342,7 +342,7 @@ session-create:
 
 session-active:
   get:
-    tags: [Интерактивное видео]
+    tags: [Профессии в действии]
     summary: Получить активную сессию
     description: |
       Возвращает текущую активную сессию показа с полным состоянием.
@@ -369,7 +369,7 @@ session-active:
 
 session-stop:
   post:
-    tags: [Интерактивное видео - Оператор]
+    tags: [Профессии в действии - Оператор]
     summary: Остановить показ
     description: Остановить показ и вернуть LED-экран в режим ожидания
     parameters:
@@ -391,7 +391,7 @@ session-stop:
 
 session-state:
   get:
-    tags: [Интерактивное видео - LED]
+    tags: [Профессии в действии - LED]
     summary: Получить состояние показа
     description: |
       Текущее состояние показа для LED-экрана.
@@ -416,7 +416,7 @@ session-state:
 
 session-voting:
   get:
-    tags: [Интерактивное видео - Зритель]
+    tags: [Профессии в действии - Зритель]
     summary: Получить информацию о голосовании
     description: |
       Информация о текущей точке голосования для мобильного клиента.
@@ -451,7 +451,7 @@ session-voting:
 
 player-join:
   post:
-    tags: [Интерактивное видео - Зритель]
+    tags: [Профессии в действии - Зритель]
     summary: Подключиться к показу
     description: Подключиться к показу по QR-коду
     parameters:
@@ -482,7 +482,7 @@ player-join:
 
 player-vote:
   post:
-    tags: [Интерактивное видео - Зритель]
+    tags: [Профессии в действии - Зритель]
     summary: Проголосовать
     description: |
       Проголосовать за вариант продолжения в точке голосования.

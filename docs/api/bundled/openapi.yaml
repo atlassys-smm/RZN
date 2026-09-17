@@ -33,15 +33,15 @@ tags:
   description: Игровая сессия — создание, управление ходом, результаты
 - name: Викторина - Игрок
   description: Мобильный клиент — подключение к сессии и ответы
-- name: Интерактивное видео
+- name: Профессии в действии
   description: Общие методы — получение состояния показа (используется LED-экраном)
-- name: Интерактивное видео - CMS
+- name: Профессии в действии - CMS
   description: Управление видеосценариями и ветками
-- name: Интерактивное видео - Оператор
+- name: Профессии в действии - Оператор
   description: Показ — запуск и остановка
-- name: Интерактивное видео - LED
+- name: Профессии в действии - LED
   description: Получение состояния показа для LED-экрана
-- name: Интерактивное видео - Зритель
+- name: Профессии в действии - Зритель
   description: Мобильный клиент — подключение и голосование
 - name: profstart
   description: ПрофСтарт — тестирование
@@ -1769,7 +1769,7 @@ paths:
   /cms/video-scenarios:
     get:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Список видеосценариев
       description: Получить список видеосценариев с фильтрацией и пагинацией
       parameters:
@@ -1805,7 +1805,7 @@ paths:
                     type: integer
     post:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Создать видеосценарий
       description: 'Создать новый видеосценарий. Стартовая ветка создаётся автоматически.
 
@@ -1845,7 +1845,7 @@ paths:
   /cms/video-scenarios/{id}:
     get:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Получить видеосценарий
       description: Получить видеосценарий с деревом веток
       parameters:
@@ -1866,7 +1866,7 @@ paths:
           description: Видеосценарий не найден
     put:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Обновить видеосценарий
       description: Обновить название, описание или профессию
       parameters:
@@ -1902,7 +1902,7 @@ paths:
           description: Видеосценарий не найден
     delete:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Удалить видеосценарий
       description: Удалить видеосценарий (только если не использовался в активных
         сессиях)
@@ -1921,7 +1921,7 @@ paths:
   /cms/video-scenarios/{id}/branches:
     post:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Добавить ветку
       description: 'Добавить дочернюю ветку к указанному родителю.
 
@@ -1978,7 +1978,7 @@ paths:
   /cms/video-scenarios/{id}/branches/{branchId}:
     put:
       tags:
-      - Интерактивное видео - CMS
+      - Профессии в действии - CMS
       summary: Обновить ветку
       description: Обновить текст вопроса, текст варианта или видеофайл
       parameters:
@@ -2020,7 +2020,7 @@ paths:
   /interactive-video/sessions:
     post:
       tags:
-      - Интерактивное видео - Оператор
+      - Профессии в действии - Оператор
       summary: Запустить показ
       description: 'Запустить показ видеосценариев на LED-экране.
 
@@ -2096,7 +2096,7 @@ paths:
   /interactive-video/sessions/active:
     get:
       tags:
-      - Интерактивное видео
+      - Профессии в действии
       summary: Получить активную сессию
       description: 'Возвращает текущую активную сессию показа с полным состоянием.
 
@@ -2130,7 +2130,7 @@ paths:
   /interactive-video/sessions/{id}/stop:
     post:
       tags:
-      - Интерактивное видео - Оператор
+      - Профессии в действии - Оператор
       summary: Остановить показ
       description: Остановить показ и вернуть LED-экран в режим ожидания
       parameters:
@@ -2148,7 +2148,7 @@ paths:
   /interactive-video/sessions/{id}/state:
     get:
       tags:
-      - Интерактивное видео - LED
+      - Профессии в действии - LED
       summary: Получить состояние показа
       description: 'Текущее состояние показа для LED-экрана.
 
@@ -2176,7 +2176,7 @@ paths:
   /interactive-video/sessions/{id}/voting:
     get:
       tags:
-      - Интерактивное видео - Зритель
+      - Профессии в действии - Зритель
       summary: Получить информацию о голосовании
       description: 'Информация о текущей точке голосования для мобильного клиента.
 
@@ -2210,7 +2210,7 @@ paths:
   /interactive-video/sessions/{sessionId}/join:
     post:
       tags:
-      - Интерактивное видео - Зритель
+      - Профессии в действии - Зритель
       summary: Подключиться к показу
       description: Подключиться к показу по QR-коду
       parameters:
@@ -2241,7 +2241,7 @@ paths:
   /interactive-video/sessions/{sessionId}/vote:
     post:
       tags:
-      - Интерактивное видео - Зритель
+      - Профессии в действии - Зритель
       summary: Проголосовать
       description: 'Проголосовать за вариант продолжения в точке голосования.
 
@@ -2999,7 +2999,7 @@ components:
           items:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
     InteractiveVideoSession:
-      description: Сессия показа «Интерактивное видео»
+      description: Сессия показа «Профессии в действии»
       type: object
       properties:
         id:
