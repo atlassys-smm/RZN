@@ -9,7 +9,7 @@ info:
     name: ПрофНавигатор 62
 
 servers:
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:8000/api
     description: Локальная разработка
 
 tags:
@@ -149,6 +149,14 @@ paths:
   /quiz/sessions/{sessionId}/answer:
     $ref: './paths/quiz.yaml#/player-answer'
 
+  # ── CMS: Профессии в действии — Устройства ───
+  /cms/devices:
+    $ref: './paths/interactive-video.yaml#/cms-devices'
+  /cms/devices/{id}:
+    $ref: './paths/interactive-video.yaml#/cms-devices-detail'
+  /cms/devices/{device_id}/refresh-token:
+    $ref: './paths/interactive-video.yaml#/cms-device-refresh-token'
+
   # ── CMS: Профессии в действии — Видеосценарии ───
   /cms/video-scenarios:
     $ref: './paths/interactive-video.yaml#/cms-scenarios'
@@ -168,6 +176,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/session-stop'
   /interactive-video/sessions/{id}/state:
     $ref: './paths/interactive-video.yaml#/session-state'
+  /interactive-video/sessions/{id}/advance:
+    $ref: './paths/interactive-video.yaml#/session-advance'
   /interactive-video/sessions/{id}/voting:
     $ref: './paths/interactive-video.yaml#/session-voting'
 
@@ -221,12 +231,43 @@ components:
           type: string
         message:
           type: string
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        location:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    DeviceWithToken:
+      allOf:
+        - $ref: '#/components/schemas/Device'
+        - type: object
+          properties:
+            token:
+              type: string
+              description: Device JWT. Показывается только один раз, при регистрации
+    DeviceTokenResponse:
+      type: object
+      required: [device_id, token]
+      properties:
+        device_id:
+          type: integer
+          format: int64
+        token:
+          type: string
+          description: Новый device JWT
     QuizQuestion:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         text:
           type: string
         question_type:
@@ -276,8 +317,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
@@ -616,16 +657,16 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         title:
           type: string
         description:
           type: string
           nullable: true
         profession_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         branch_count:
           type: integer
@@ -654,19 +695,19 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         scenario_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         parent_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
         media_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID видеофайла
         media_url:
@@ -692,8 +733,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         status:
           type: string
           enum: [active, finished]
@@ -701,8 +742,8 @@ components:
           type: array
           description: ID видеосценариев для показа
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
         current_scenario_index:
           type: integer
           nullable: true
@@ -729,10 +770,11 @@ components:
       type: object
       properties:
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         device_id:
-          type: string
+          type: integer
+          format: int64
           description: Идентификатор LED-устройства, на котором запущена сессия
         status:
           type: string
@@ -764,8 +806,8 @@ components:
           description: Текущая ветка (видеофрагмент)
           properties:
             id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
             media_url:
               type: string
               nullable: true
@@ -788,8 +830,8 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   text:
                     type: string
             timer:
@@ -806,16 +848,16 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   count:
                     type: integer
             total_voters:
               type: integer
               description: Общее количество проголосовавших
             winner_branch_id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
               nullable: true
               description: ID выбранной ветки (заполняется в фазе result)
 
@@ -824,8 +866,8 @@ components:
       type: object
       properties:
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         phase:
           type: string
           enum: [playing, waiting, result]
@@ -849,8 +891,8 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   text:
                     type: string
             timer:
@@ -864,8 +906,8 @@ components:
               type: boolean
               description: true, если участник уже проголосовал
             voted_branch_id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
 

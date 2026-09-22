@@ -12,14 +12,14 @@ professions:
       - name: direction_id
         in: query
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: Фильтр по профессиональному направлению
       - name: industry_id
         in: query
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: Фильтр по отрасли
       - name: search
         in: query
@@ -67,11 +67,11 @@ professions:
               description:
                 type: string
               industry_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               direction_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
     responses:
       '201':
         description: Профессия создана
@@ -91,8 +91,8 @@ professions-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Карточка профессии
@@ -111,8 +111,8 @@ professions-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -125,11 +125,11 @@ professions-detail:
               description:
                 type: string
               industry_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               direction_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
     responses:
       '200':
         description: Профессия обновлена
@@ -148,8 +148,8 @@ professions-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Профессия удалена
@@ -222,8 +222,8 @@ industries-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -251,8 +251,8 @@ industries-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Отрасль удалена
@@ -327,8 +327,8 @@ directions-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -358,8 +358,8 @@ directions-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Направление удалено

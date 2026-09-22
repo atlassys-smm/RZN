@@ -11,7 +11,7 @@ info:
   contact:
     name: ПрофНавигатор 62
 servers:
-- url: http://localhost:8080/api/v1
+- url: http://localhost:8000/api
   description: Локальная разработка
 tags:
 - name: auth
@@ -134,14 +134,14 @@ paths:
       - name: direction_id
         in: query
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: Фильтр по профессиональному направлению
       - name: industry_id
         in: query
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: Фильтр по отрасли
       - name: search
         in: query
@@ -193,11 +193,11 @@ paths:
                 description:
                   type: string
                 industry_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 direction_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
       responses:
         '201':
           description: Профессия создана
@@ -217,8 +217,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Карточка профессии
@@ -238,8 +238,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -252,11 +252,11 @@ paths:
                 description:
                   type: string
                 industry_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 direction_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
       responses:
         '200':
           description: Профессия обновлена
@@ -276,8 +276,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Профессия удалена
@@ -348,8 +348,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -378,8 +378,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Отрасль удалена
@@ -452,8 +452,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -484,8 +484,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Направление удалено
@@ -1766,6 +1766,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /cms/devices:
+    post:
+      tags:
+      - Профессии в действии - CMS
+      summary: Зарегистрировать устройство
+      description: 'Зарегистрировать новое LED-устройство и выпустить для него device-токен
+        (JWT, привязан к `device_id`).
+
+        Токен возвращается только один раз, в ответе на регистрацию — сохраните его
+        в конфигурации плеера.
+
+        '
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                location:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Устройство зарегистрировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceWithToken'
+    get:
+      tags:
+      - Профессии в действии - CMS
+      summary: Список устройств
+      description: Получить список зарегистрированных LED-устройств
+      responses:
+        '200':
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+  /cms/devices/{id}:
+    get:
+      tags:
+      - Профессии в действии - CMS
+      summary: Получить устройство
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Устройство
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '404':
+          description: Устройство не найдено
+    delete:
+      tags:
+      - Профессии в действии - CMS
+      summary: Отозвать устройство
+      description: Отзывает device-токен устройства (`is_active = false`). Существующий
+        токен перестаёт приниматься сервером.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Устройство отозвано
+        '404':
+          description: Устройство не найдено
+  /cms/devices/{device_id}/refresh-token:
+    post:
+      tags:
+      - Профессии в действии - CMS
+      summary: Обновить JWT устройства
+      description: Выпустить новый device JWT по идентификатору активного устройства.
+      parameters:
+      - name: device_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Новый токен устройства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceTokenResponse'
+        '404':
+          description: Устройство не найдено
+        '409':
+          description: Устройство неактивно
   /cms/video-scenarios:
     get:
       tags:
@@ -1776,8 +1886,8 @@ paths:
       - name: profession_id
         in: query
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: Фильтр по профессии
       - name: limit
         in: query
@@ -1807,7 +1917,10 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Создать видеосценарий
-      description: 'Создать новый видеосценарий. Стартовая ветка создаётся автоматически.
+      description: 'Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
+
+        её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`)
+        — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
 
         Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
 
@@ -1826,8 +1939,8 @@ paths:
                 description:
                   type: string
                 profession_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                   nullable: true
       responses:
         '201':
@@ -1853,8 +1966,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Видеосценарий с деревом веток
@@ -1874,8 +1987,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -1888,8 +2001,8 @@ paths:
                 description:
                   type: string
                 profession_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                   nullable: true
       responses:
         '200':
@@ -1911,8 +2024,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Видеосценарий удалён
@@ -1934,8 +2047,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: ID видеосценария
       requestBody:
         required: true
@@ -1949,15 +2062,15 @@ paths:
               - media_id
               properties:
                 parent_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                   description: ID родительской ветки
                 text:
                   type: string
                   description: Текст варианта выбора
                 media_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                   description: ID видеофайла
                 prompt:
                   type: string
@@ -1986,14 +2099,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: branchId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -2006,8 +2119,8 @@ paths:
                 prompt:
                   type: string
                 media_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
       responses:
         '200':
           description: Ветка обновлена
@@ -2042,14 +2155,15 @@ paths:
               - device_id
               properties:
                 device_id:
-                  type: string
+                  type: integer
+                  format: int64
                   description: Идентификатор LED-устройства, на котором запускается
                     показ
                 scenario_ids:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   description: ID видеосценариев для показа (опционально)
                 profession_count:
                   type: integer
@@ -2115,7 +2229,8 @@ paths:
       - name: device_id
         in: query
         schema:
-          type: string
+          type: integer
+          format: int64
         description: Идентификатор LED-устройства (если не указан — возвращается любая
           активная сессия)
       responses:
@@ -2138,8 +2253,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Показ остановлен
@@ -2162,8 +2277,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Состояние показа
@@ -2171,6 +2286,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InteractiveVideoState'
+        '403':
+          description: Сессия принадлежит другому устройству
+        '404':
+          description: Сессия не найдена
+  /interactive-video/sessions/{id}/advance:
+    post:
+      tags:
+      - Профессии в действии - LED
+      summary: Сигнал окончания видео
+      description: 'Вызывается LED-плеером, когда воспроизведение текущего видеофрагмента
+        (`current_branch`) завершилось.
+
+        Сервер не хранит длительность видео — момент перехода к точке голосования
+        (или к следующему сценарию/завершению показа)
+
+        определяется именно этим сигналом, а не таймером.
+
+        Требует device-токен (`Authorization: Bearer <device token>`), полученный
+        при регистрации устройства.
+
+        - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `waiting`
+        (голосование).
+
+        - Если дочерних веток нет и в очереди остались сценарии — переход к следующему
+        сценарию (`scenario_finished`).
+
+        - Если дочерних веток нет и сценариев больше нет — показ завершается (`session_finished`).
+
+        '
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Обновлённое состояние показа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractiveVideoState'
+        '400':
+          description: Показ сейчас не в фазе воспроизведения видео
+        '403':
+          description: Сессия принадлежит другому устройству
         '404':
           description: Сессия не найдена
   /interactive-video/sessions/{id}/voting:
@@ -2189,14 +2351,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: participant_id
         in: query
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: ID участника (получен при подключении через /join)
       responses:
         '200':
@@ -2218,8 +2380,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Подключён
@@ -2229,11 +2391,11 @@ paths:
                 type: object
                 properties:
                   participant_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   session_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
         '404':
           description: Сессия не найдена
         '409':
@@ -2253,8 +2415,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -2265,8 +2427,8 @@ paths:
               - branch_id
               properties:
                 branch_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                   description: ID выбранной ветки (варианта продолжения)
       responses:
         '200':
@@ -2483,6 +2645,13 @@ paths:
                 file:
                   type: string
                   format: binary
+                title:
+                  type: string
+                description:
+                  type: string
+                uploaded_by:
+                  type: integer
+                  format: int64
       responses:
         '201':
           description: Файл загружен
@@ -2517,12 +2686,45 @@ components:
           type: string
         message:
           type: string
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        location:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    DeviceWithToken:
+      allOf:
+      - $ref: '#/components/schemas/Device'
+      - type: object
+        properties:
+          token:
+            type: string
+            description: Device JWT. Показывается только один раз, при регистрации
+    DeviceTokenResponse:
+      type: object
+      required:
+      - device_id
+      - token
+      properties:
+        device_id:
+          type: integer
+          format: int64
+        token:
+          type: string
+          description: Новый device JWT
     QuizQuestion:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         text:
           type: string
         question_type:
@@ -2575,8 +2777,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
@@ -2930,16 +3132,16 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         title:
           type: string
         description:
           type: string
           nullable: true
         profession_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         branch_count:
           type: integer
@@ -2966,19 +3168,19 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         scenario_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         parent_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
         media_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID видеофайла
         media_url:
@@ -3003,8 +3205,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         status:
           type: string
           enum:
@@ -3014,8 +3216,8 @@ components:
           type: array
           description: ID видеосценариев для показа
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
         current_scenario_index:
           type: integer
           nullable: true
@@ -3041,10 +3243,11 @@ components:
       type: object
       properties:
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         device_id:
-          type: string
+          type: integer
+          format: int64
           description: Идентификатор LED-устройства, на котором запущена сессия
         status:
           type: string
@@ -3085,8 +3288,8 @@ components:
           description: Текущая ветка (видеофрагмент)
           properties:
             id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
             media_url:
               type: string
               nullable: true
@@ -3109,8 +3312,8 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   text:
                     type: string
             timer:
@@ -3128,16 +3331,16 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   count:
                     type: integer
             total_voters:
               type: integer
               description: Общее количество проголосовавших
             winner_branch_id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
               nullable: true
               description: ID выбранной ветки (заполняется в фазе result)
     InteractiveVideoVoting:
@@ -3145,8 +3348,8 @@ components:
       type: object
       properties:
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         phase:
           type: string
           enum:
@@ -3177,8 +3380,8 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   text:
                     type: string
             timer:
@@ -3193,8 +3396,8 @@ components:
               type: boolean
               description: true, если участник уже проголосовал
             voted_branch_id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
 security:
