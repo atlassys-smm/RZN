@@ -279,8 +279,8 @@ session-create:
     summary: Запустить показ
     description: |
       Запустить показ видеосценариев на LED-экране.
-      Если `scenario_ids` указан — используются эти сценарии.
-      Если не указан — система выбирает случайные сценарии (количество определяется `profession_count`).
+      В `settings` передаётся либо `scenario_ids` (ручной выбор), либо `profession_count` (случайный выбор N сценариев).
+      Бэкенд конвертит `profession_count` в `scenario_ids` перед сохранением.
       Статус сессии сразу становится `active`.
     requestBody:
       required: true
@@ -288,27 +288,28 @@ session-create:
         application/json:
           schema:
             type: object
-            required: [device_id]
+            required: [device_id, settings]
             properties:
               device_id:
                 type: integer
                 format: int64
                 description: Идентификатор LED-устройства, на котором запускается показ
-              scenario_ids:
-                type: array
-                items:
-                  type: integer
-                  format: int64
-                description: ID видеосценариев для показа (опционально)
-              profession_count:
-                type: integer
-                minimum: 1
-                maximum: 10
-                default: 3
-                description: Количество профессий для показа (если scenario_ids не указан)
               settings:
                 type: object
+                required: [scenario_ids или profession_count]
                 properties:
+                  scenario_ids:
+                    type: array
+                    items:
+                      type: integer
+                      format: int64
+                    description: ID видеосценариев для показа (ручной выбор)
+                  profession_count:
+                    type: integer
+                    minimum: 1
+                    maximum: 10
+                    default: 3
+                    description: Количество случайных сценариев для показа (если scenario_ids не указан)
                   voting_duration:
                     type: integer
                     default: 30

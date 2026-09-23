@@ -848,19 +848,15 @@ components:
         status:
           type: string
           enum: [active, finished]
-        scenario_ids:
-          type: array
-          description: ID видеосценариев для показа
-          items:
-            type: integer
-            format: int64
-        current_scenario_index:
-          type: integer
-          nullable: true
-          description: Индекс текущего сценария (0-based)
         settings:
           type: object
           properties:
+            scenario_ids:
+              type: array
+              description: ID видеосценариев для показа (порядок определяет очередь воспроизведения)
+              items:
+                type: integer
+                format: int64
             voting_duration:
               type: integer
               description: Длительность голосования в секундах
@@ -900,15 +896,26 @@ components:
           type: integer
           format: int64
           description: UNIX timestamp (мс), когда началась текущая фаза
-        current_scenario:
+        settings:
           type: object
+          description: Настройки показа
+          properties:
+            scenario_ids:
+              type: array
+              description: ID всех видеосценариев в сессии
+              items:
+                type: integer
+                format: int64
+            voting_duration:
+              type: integer
+              description: Длительность голосования в секундах
+            result_display_duration:
+              type: integer
+              description: Длительность показа результата в секундах
+        current_scenario:
+          $ref: '#/components/schemas/InteractiveVideoScenario'
           nullable: true
           description: Текущий видеосценарий
-          properties:
-            index:
-              type: integer
-            scenario:
-              $ref: '#/components/schemas/InteractiveVideoScenario'
         current_branch:
           type: object
           nullable: true
@@ -920,20 +927,17 @@ components:
             media_url:
               type: string
               nullable: true
+            prompt:
+              type: string
+              nullable: true
+              description: Текст вопроса в точке выбора
             profession_name:
               type: string
               nullable: true
               description: Название профессии (показывается в начале видео)
-        voting_point:
-          type: object
-          nullable: true
-          description: Точка голосования (заполняется в фазе voting)
-          properties:
-            prompt:
-              type: string
-              description: Текст вопроса/ситуации
-            options:
+            children:
               type: array
+              nullable: true
               description: Варианты выбора (дочерние ветки)
               items:
                 type: object
@@ -943,6 +947,11 @@ components:
                     format: int64
                   text:
                     type: string
+        voting_point:
+          type: object
+          nullable: true
+          description: Информация о голосовании (заполняется в фазе voting)
+          properties:
             timer:
               type: object
               properties:
@@ -961,14 +970,6 @@ components:
                     format: int64
                   count:
                     type: integer
-            total_voters:
-              type: integer
-              description: Общее количество проголосовавших
-            winner_branch_id:
-              type: integer
-              format: int64
-              nullable: true
-              description: ID выбранной ветки
 
     InteractiveVideoVoting:
       description: Информация о голосовании для мобильного клиента
