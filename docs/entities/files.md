@@ -13,6 +13,7 @@
 | Поле | Тип | Описание |
 |------|-----|----------|
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор файла |
+| `module_code` | string | Символьный код модуля, к которому относится файл (например, `quiz`, `video_scenario`, `profession`, `survey`, `team_game`, `profstart`) |
 | `type` | enum | Тип файла: `video`, `image`, `document`, `audio` |
 | `file_path` | string | Путь к файлу в хранилище |
 | `mime_type` | string | MIME-тип файла (например, `video/mp4`, `image/jpeg`) |
