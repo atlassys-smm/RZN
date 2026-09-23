@@ -95,8 +95,8 @@ organizations-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Организация
@@ -115,8 +115,8 @@ organizations-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -162,8 +162,8 @@ organizations-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Организация удалена

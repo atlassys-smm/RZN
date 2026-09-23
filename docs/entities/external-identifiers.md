@@ -15,9 +15,9 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор записи |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор записи |
 | `entity_type` | enum | Тип нашей сущности: `profession`, `industry`, `direction` |
-| `entity_id` | UUID | ID нашей сущности |
+| `entity_id` | integer (int64) | ID нашей сущности |
 | `source` | string | Источник внешнего идентификатора: `tree_of_professions`, `regional_map`, `profbattle`, `profession_avatar` |
 | `external_id` | string | Идентификатор сущности во внешней системе |
 | `external_name` | string, nullable | Название сущности во внешней системе (для справки) |

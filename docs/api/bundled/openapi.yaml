@@ -560,8 +560,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Компетенция
@@ -581,8 +581,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -613,8 +613,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Компетенция удалена
@@ -721,8 +721,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Организация
@@ -742,8 +742,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -792,8 +792,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Организация удалена
@@ -902,8 +902,8 @@ paths:
                   items:
                     type: string
                 media_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 answer_options:
                   type: array
                   items:
@@ -917,8 +917,8 @@ paths:
                       is_correct:
                         type: boolean
                       media_id:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
                       order:
                         type: integer
       responses:
@@ -939,8 +939,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Вопрос с вариантами ответов
@@ -1025,8 +1025,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Шаблон опубликован
@@ -1041,8 +1041,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Шаблон переведён в черновик
@@ -1056,8 +1056,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: ID шаблона
       requestBody:
         required: true
@@ -1083,8 +1083,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -1095,8 +1095,8 @@ paths:
                 round_ids:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   description: ID раундов в новом порядке
       responses:
         '200':
@@ -1111,14 +1111,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Раунд обновлён
@@ -1132,14 +1132,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -1150,8 +1150,8 @@ paths:
               - question_id
               properties:
                 question_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
       responses:
         '201':
           description: Вопрос добавлен в раунд
@@ -1165,14 +1165,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -1183,8 +1183,8 @@ paths:
                 question_ids:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   description: ID вопросов в новом порядке
       responses:
         '200':
@@ -1199,20 +1199,20 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: questionId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Вопрос убран из раунда
@@ -1259,8 +1259,8 @@ paths:
                       question_ids:
                         type: array
                         items:
-                          type: string
-                          format: uuid
+                          type: integer
+                          format: int64
                 settings:
                   type: object
                   properties:
@@ -1364,8 +1364,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: select
         in: query
         description: Связанные данные для включения
@@ -1406,8 +1406,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '204':
           description: Сессия завершена
@@ -1435,8 +1435,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Текущее состояние игры
@@ -1473,8 +1473,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Правильный ответ
@@ -1486,8 +1486,8 @@ paths:
                   answer_option_ids:
                     type: array
                     items:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                   explanation:
                     type: string
                     nullable: true
@@ -1519,8 +1519,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Состояние таймера
@@ -1539,8 +1539,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Состояние таймера
@@ -1560,8 +1560,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundIndex
         in: path
         required: true
@@ -1591,8 +1591,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Итоговый результат
@@ -1611,8 +1611,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Подключён
@@ -1622,11 +1622,11 @@ paths:
                 type: object
                 properties:
                   participant_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   session_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   mode:
                     type: string
                     enum:
@@ -1639,8 +1639,8 @@ paths:
                       type: object
                       properties:
                         id:
-                          type: string
-                          format: uuid
+                          type: integer
+                          format: int64
                         name:
                           type: string
                         color:
@@ -1670,14 +1670,14 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: teamId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       responses:
         '200':
           description: Присоединился к команде
@@ -1687,11 +1687,11 @@ paths:
                 type: object
                 properties:
                   participant_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   team_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   is_captain:
                     type: boolean
                     description: true если участник стал капитаном (первый в команде)
@@ -1714,8 +1714,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -2686,8 +2686,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         created_at:
@@ -2698,8 +2698,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         created_at:
@@ -2710,19 +2710,19 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
           type: string
           nullable: true
         industry_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         direction_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         created_at:
           type: string
           format: date-time
@@ -2734,8 +2734,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
@@ -2749,8 +2749,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         type:
@@ -2864,8 +2864,8 @@ components:
             type: object
             properties:
               id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               text:
                 type: string
               is_correct:
@@ -2900,8 +2900,8 @@ components:
             type: object
             properties:
               id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               round_type:
                 type: string
               order:
@@ -2912,11 +2912,11 @@ components:
                   type: object
                   properties:
                     id:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                     question_id:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                     order:
                       type: integer
         created_at:
@@ -2927,8 +2927,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         mode:
           type: string
           enum:
@@ -2983,8 +2983,8 @@ components:
                   answer_option_ids:
                     type: array
                     items:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                   explanation:
                     type: string
                     nullable: true
@@ -2995,8 +2995,8 @@ components:
                   type: object
                   properties:
                     answer_option_id:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                     count:
                       type: integer
           timer:
@@ -3018,18 +3018,18 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         color:
           type: string
         captain_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         score:
           type: integer
@@ -3038,14 +3038,14 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         team_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID команды (null для mode=individual)
         name:
@@ -3080,8 +3080,8 @@ components:
               type: object
               properties:
                 id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 text:
                   type: string
                 question_type:
@@ -3097,8 +3097,8 @@ components:
                     type: object
                     properties:
                       id:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
                       text:
                         type: string
                       media_url:
@@ -3112,8 +3112,8 @@ components:
                 answer_option_ids:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                 explanation:
                   type: string
                   nullable: true
@@ -3124,8 +3124,8 @@ components:
                 type: object
                 properties:
                   answer_option_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   count:
                     type: integer
         timer:
@@ -3137,12 +3137,12 @@ components:
             type: object
             properties:
               team_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 nullable: true
               participant_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 nullable: true
               name:
                 type: string
@@ -3178,8 +3178,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
           description: Название команды или имя участника

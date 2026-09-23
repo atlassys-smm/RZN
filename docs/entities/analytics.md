@@ -12,11 +12,11 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор события (используется для идемпотентности) |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор события (используется для идемпотентности) |
 | `device_type` | string | Тип оборудования (например, `avatar_terminal`, `led_screen`, `pwa`) — см. [Источники событий](../references/event-sources.md) |
 | `software_id` | string | Программный комплекс (например, `led_platform`, `profstart`, `feedback`) — см. [Источники событий](../references/event-sources.md) |
-| `session_id` | UUID, nullable | ID локальной сессии на терминале (от авторизации до выхода) |
-| `user_id` | UUID | ID пользователя (гостя или авторизованного) — всегда заполнен |
+| `session_id` | integer (int64), nullable | ID локальной сессии на терминале (от авторизации до выхода) |
+| `user_id` | integer (int64) | ID пользователя (гостя или авторизованного) — всегда заполнен |
 | `payload` | json | Дополнительные параметры события (action_type, entity_type, entity_id, result, duration, content_version и другие данные) |
 | `created_at` | timestamp | Дата и время события |
 
@@ -39,7 +39,7 @@
 |----------------|-----|----------|
 | `action_type` | enum | Тип действия: `user_action`, `system_action` |
 | `entity_type` | string | Тип сущности: `profession`, `industry`, `direction`, `employer`, `educational_institution`, `question`, `survey` |
-| `entity_id` | UUID | ID сущности |
+| `entity_id` | integer (int64) | ID сущности |
 | `result` | string | Результат: `correct`, `incorrect`, `completed`, `viewed`, `selected`, `recommended` |
 | `duration` | integer | Длительность в миллисекундах |
 | `content_version` | string | Версия контента |

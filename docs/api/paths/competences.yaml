@@ -66,8 +66,8 @@ competences-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Компетенция
@@ -86,8 +86,8 @@ competences-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -117,8 +117,8 @@ competences-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Компетенция удалена

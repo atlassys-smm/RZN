@@ -16,10 +16,10 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор вопроса |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор вопроса |
 | `type` | enum | Тип вопроса из [справочника](../references/quiz-question-types.md) |
 | `text` | text | Текст вопроса |
-| `media_id` | UUID, nullable | ID файла (изображение или видео) |
+| `media_id` | integer (int64), nullable | ID файла (изображение или видео) |
 | `difficulty` | enum, nullable | Сложность из [справочника](../references/quiz-difficulty.md) |
 | `age_group` | enum, nullable | Возрастная группа из [справочника](../references/profstart-age-groups.md) |
 | `time_limit` | integer, nullable | Время на ответ в секундах |
@@ -55,10 +55,10 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор варианта |
-| `question_id` | UUID | ID вопроса |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор варианта |
+| `question_id` | integer (int64) | ID вопроса |
 | `text` | text | Текст варианта ответа |
-| `media_id` | UUID, nullable | ID файла (изображение) |
+| `media_id` | integer (int64), nullable | ID файла (изображение) |
 | `is_correct` | boolean | Является ли вариант правильным |
 | `order` | integer | Порядок отображения |
 
