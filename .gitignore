@@ -1,5 +1,6 @@
 .DS_Store
 site/
 public/
+node_modules/
 ~$*
 scripts/__pycache__/

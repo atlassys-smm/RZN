@@ -1,0 +1,10 @@
+{
+  "name": "profnavigator62-docs",
+  "private": true,
+  "scripts": {
+    "mock": "prism mock docs/api/bundled/openapi.yaml --host 127.0.0.1 --port 4010 --dynamic"
+  },
+  "devDependencies": {
+    "@stoplight/prism-cli": "^4.12"
+  }
+}

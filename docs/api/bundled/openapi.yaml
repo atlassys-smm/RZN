@@ -2679,6 +2679,112 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Industry:
+      description: Отрасль экономики
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Direction:
+      description: Профессиональное направление
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    Profession:
+      description: Профессия из справочника
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        industry_id:
+          type: string
+          format: uuid
+        direction_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Competence:
+      description: Компетенция (навык/способность)
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    Organization:
+      description: Организация (учебное заведение или работодатель)
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - education
+          - employer
+        address:
+          type: string
+          nullable: true
+        coordinates:
+          type: object
+          nullable: true
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        description:
+          type: string
+          nullable: true
+        website:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     Error:
       type: object
       properties:
