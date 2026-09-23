@@ -2306,7 +2306,7 @@ paths:
         Требует device-токен (`Authorization: Bearer <device token>`), полученный
         при регистрации устройства.
 
-        - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `waiting`
+        - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `voting`
         (голосование).
 
         - Если дочерних веток нет и в очереди остались сценарии — переход к следующему
@@ -2700,9 +2700,6 @@ components:
           format: uuid
         name:
           type: string
-        description:
-          type: string
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -3364,15 +3361,12 @@ components:
           type: string
           enum:
           - playing
-          - waiting
-          - result
+          - voting
           description: 'Фаза показа:
 
             - `playing` — проигрывание ролика
 
-            - `waiting` — точка голосования, сбор ответов
-
-            - `result` — показ результата
+            - `voting` — точка голосования, сбор ответов
 
             '
         phase_started_at:
@@ -3406,7 +3400,7 @@ components:
         voting_point:
           type: object
           nullable: true
-          description: Точка голосования (заполняется в фазе waiting/result)
+          description: Точка голосования (заполняется в фазе voting)
           properties:
             prompt:
               type: string
@@ -3432,7 +3426,7 @@ components:
                     вычисляет remaining = ends_at - now.
             votes:
               type: array
-              description: Распределение голосов (заполняется в фазе result)
+              description: Распределение голосов
               items:
                 type: object
                 properties:
@@ -3448,7 +3442,7 @@ components:
               type: integer
               format: int64
               nullable: true
-              description: ID выбранной ветки (заполняется в фазе result)
+              description: ID выбранной ветки
     InteractiveVideoVoting:
       description: Информация о голосовании для мобильного клиента
       type: object
@@ -3460,21 +3454,18 @@ components:
           type: string
           enum:
           - playing
-          - waiting
-          - result
+          - voting
           description: 'Фаза показа:
 
             - `playing` — проигрывание ролика
 
-            - `waiting` — точка голосования, сбор ответов
-
-            - `result` — показ результата
+            - `voting` — точка голосования, сбор ответов
 
             '
         voting_point:
           type: object
           nullable: true
-          description: Точка голосования (заполняется в фазе waiting/result)
+          description: Точка голосования (заполняется в фазе voting)
           properties:
             prompt:
               type: string
