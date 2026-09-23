@@ -35,12 +35,12 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор анкеты |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор анкеты |
 | `external_id` | string | Символьный идентификатор (например, `videoresume_feedback`, `event_survey`) |
 | `name` | string | Название (например, «Оценка видеорезюме», «Оценка мероприятия») |
 | `description` | text, nullable | Описание анкеты |
 | `is_active` | boolean | Активна ли анкета (деактивированная не показывается в точках сбора) |
-| `copied_from_id` | UUID, nullable | ID анкеты, от которой эта была скопирована (для отслеживания версий) |
+| `copied_from_id` | integer (int64), nullable | ID анкеты, от которой эта была скопирована (для отслеживания версий) |
 | `created_at` | timestamp | Дата создания |
 | `updated_at` | timestamp | Дата обновления |
 
@@ -65,12 +65,12 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор вопроса |
-| `survey_id` | UUID | ID анкеты |
-| `parent_id` | UUID, nullable | ID родительского вопроса, к которому привязан условный вопрос |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор вопроса |
+| `survey_id` | integer (int64) | ID анкеты |
+| `parent_id` | integer (int64), nullable | ID родительского вопроса, к которому привязан условный вопрос |
 | `type` | enum | Тип вопроса: `rating_scale`, `single_choice`, `multiple_choice`, `text`, `profession_choice` |
 | `text` | text | Текст вопроса |
-| `media_id` | UUID, nullable | ID файла (изображение) |
+| `media_id` | integer (int64), nullable | ID файла (изображение) |
 | `required` | boolean | Обязательный ли вопрос |
 | `order` | integer | Порядок отображения |
 | `condition` | json, nullable | Условие показа (например, `{"operator": "lte", "value": 2}`) |

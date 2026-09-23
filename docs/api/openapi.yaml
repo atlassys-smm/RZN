@@ -9,7 +9,7 @@ info:
     name: ПрофНавигатор 62
 
 servers:
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:8000/api
     description: Локальная разработка
 
 tags:
@@ -17,6 +17,8 @@ tags:
     description: Авторизация и аутентификация
   - name: users
     description: Пользователи и профили
+  - name: LED-устройства
+    description: Регистрация LED-устройств, управление ими и device-токенами
   - name: Профессии
     description: Справочник профессий, отраслей и направлений
   - name: Компетенции
@@ -149,6 +151,14 @@ paths:
   /quiz/sessions/{sessionId}/answer:
     $ref: './paths/quiz.yaml#/player-answer'
 
+  # ── CMS: Профессии в действии — Устройства ───
+  /cms/devices:
+    $ref: './paths/cms.yaml#/cms-devices'
+  /cms/devices/{id}:
+    $ref: './paths/cms.yaml#/cms-devices-detail'
+  /cms/devices/{device_id}/refresh-token:
+    $ref: './paths/cms.yaml#/cms-device-refresh-token'
+
   # ── CMS: Профессии в действии — Видеосценарии ───
   /cms/video-scenarios:
     $ref: './paths/interactive-video.yaml#/cms-scenarios'
@@ -168,6 +178,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/session-stop'
   /interactive-video/sessions/{id}/state:
     $ref: './paths/interactive-video.yaml#/session-state'
+  /interactive-video/sessions/{id}/advance:
+    $ref: './paths/interactive-video.yaml#/session-advance'
   /interactive-video/sessions/{id}/voting:
     $ref: './paths/interactive-video.yaml#/session-voting'
 
@@ -220,8 +232,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         created_at:
@@ -233,13 +245,10 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
-        description:
-          type: string
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -249,19 +258,19 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
           type: string
           nullable: true
         industry_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         direction_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         created_at:
           type: string
           format: date-time
@@ -274,8 +283,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
@@ -290,8 +299,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         type:
@@ -332,12 +341,43 @@ components:
           type: string
         message:
           type: string
+    Device:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        location:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    DeviceWithToken:
+      allOf:
+        - $ref: '#/components/schemas/Device'
+        - type: object
+          properties:
+            token:
+              type: string
+              description: Device JWT. Показывается только один раз, при регистрации
+    DeviceTokenResponse:
+      type: object
+      required: [device_id, token]
+      properties:
+        device_id:
+          type: integer
+          format: int64
+        token:
+          type: string
+          description: Новый device JWT
     QuizQuestion:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         text:
           type: string
         question_type:
@@ -369,8 +409,8 @@ components:
             type: object
             properties:
               id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               text:
                 type: string
               is_correct:
@@ -387,8 +427,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         description:
@@ -403,8 +443,8 @@ components:
             type: object
             properties:
               id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               round_type:
                 type: string
               order:
@@ -415,11 +455,11 @@ components:
                   type: object
                   properties:
                     id:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                     question_id:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                     order:
                       type: integer
         created_at:
@@ -430,8 +470,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         mode:
           type: string
           enum: [individual, team]
@@ -480,8 +520,8 @@ components:
                     answer_option_ids:
                       type: array
                       items:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
                     explanation:
                       type: string
                       nullable: true
@@ -492,8 +532,8 @@ components:
                     type: object
                     properties:
                       answer_option_id:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
                       count:
                         type: integer
             timer:
@@ -515,18 +555,18 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
         color:
           type: string
         captain_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         score:
           type: integer
@@ -535,14 +575,14 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         team_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID команды (null для mode=individual)
         name:
@@ -574,8 +614,8 @@ components:
               type: object
               properties:
                 id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 text:
                   type: string
                 question_type:
@@ -591,8 +631,8 @@ components:
                     type: object
                     properties:
                       id:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
                       text:
                         type: string
                       media_url:
@@ -606,8 +646,8 @@ components:
                 answer_option_ids:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                 explanation:
                   type: string
                   nullable: true
@@ -618,8 +658,8 @@ components:
                 type: object
                 properties:
                   answer_option_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   count:
                     type: integer
         timer:
@@ -631,12 +671,12 @@ components:
             type: object
             properties:
               team_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 nullable: true
               participant_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 nullable: true
               name:
                 type: string
@@ -666,8 +706,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         name:
           type: string
           description: Название команды или имя участника
@@ -727,16 +767,16 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         title:
           type: string
         description:
           type: string
           nullable: true
         profession_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
         branch_count:
           type: integer
@@ -765,19 +805,19 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         scenario_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         parent_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
         media_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           nullable: true
           description: ID видеофайла
         media_url:
@@ -803,8 +843,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         status:
           type: string
           enum: [active, finished]
@@ -812,8 +852,8 @@ components:
           type: array
           description: ID видеосценариев для показа
           items:
-            type: string
-            format: uuid
+            type: integer
+            format: int64
         current_scenario_index:
           type: integer
           nullable: true
@@ -840,22 +880,22 @@ components:
       type: object
       properties:
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         device_id:
-          type: string
+          type: integer
+          format: int64
           description: Идентификатор LED-устройства, на котором запущена сессия
         status:
           type: string
           enum: [active, finished]
         phase:
           type: string
-          enum: [playing, waiting, result]
+          enum: [playing, voting]
           description: |
             Фаза показа:
             - `playing` — проигрывание ролика
-            - `waiting` — точка голосования, сбор ответов
-            - `result` — показ результата
+            - `voting` — точка голосования, сбор ответов
         phase_started_at:
           type: integer
           format: int64
@@ -875,8 +915,8 @@ components:
           description: Текущая ветка (видеофрагмент)
           properties:
             id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
             media_url:
               type: string
               nullable: true
@@ -887,7 +927,7 @@ components:
         voting_point:
           type: object
           nullable: true
-          description: Точка голосования (заполняется в фазе waiting/result)
+          description: Точка голосования (заполняется в фазе voting)
           properties:
             prompt:
               type: string
@@ -899,8 +939,8 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   text:
                     type: string
             timer:
@@ -912,43 +952,42 @@ components:
                   description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
             votes:
               type: array
-              description: Распределение голосов (заполняется в фазе result)
+              description: Распределение голосов
               items:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   count:
                     type: integer
             total_voters:
               type: integer
               description: Общее количество проголосовавших
             winner_branch_id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
               nullable: true
-              description: ID выбранной ветки (заполняется в фазе result)
+              description: ID выбранной ветки
 
     InteractiveVideoVoting:
       description: Информация о голосовании для мобильного клиента
       type: object
       properties:
         session_id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         phase:
           type: string
-          enum: [playing, waiting, result]
+          enum: [playing, voting]
           description: |
             Фаза показа:
             - `playing` — проигрывание ролика
-            - `waiting` — точка голосования, сбор ответов
-            - `result` — показ результата
+            - `voting` — точка голосования, сбор ответов
         voting_point:
           type: object
           nullable: true
-          description: Точка голосования (заполняется в фазе waiting/result)
+          description: Точка голосования (заполняется в фазе voting)
           properties:
             prompt:
               type: string
@@ -960,8 +999,8 @@ components:
                 type: object
                 properties:
                   branch_id:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                   text:
                     type: string
             timer:
@@ -975,8 +1014,8 @@ components:
               type: boolean
               description: true, если участник уже проголосовал
             voted_branch_id:
-              type: string
-              format: uuid
+              type: integer
+              format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
 

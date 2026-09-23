@@ -20,7 +20,7 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор сессии |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор сессии |
 | `mode` | enum | Режим: `individual` (индивидуальная викторина), `team` (командная игра) |
 | `status` | enum | Статус: `waiting` (формирование команд), `active` (идёт игра), `finished` (завершена) |
 | `current_round_index` | integer | Индекс текущего раунда (для восстановления после сбоя) |
@@ -63,8 +63,8 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор |
-| `session_id` | UUID | ID сессии |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор |
+| `session_id` | integer (int64) | ID сессии |
 | `round_type` | enum | Тип раунда из [справочника](../references/scenario-round-types.md): `quick_start`, `tools`, `skills`, `situation`, `team_building`, `process`, `future`, `regional`, `final` |
 | `order` | integer | Порядок раунда в сессии |
 
@@ -83,9 +83,9 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор |
-| `round_id` | UUID | ID раунда сессии |
-| `question_id` | UUID | ID исходного вопроса ([GameQuestion](quiz.md)) |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор |
+| `round_id` | integer (int64) | ID раунда сессии |
+| `question_id` | integer (int64) | ID исходного вопроса ([GameQuestion](quiz.md)) |
 | `order` | integer | Порядок вопроса в раунде |
 
 ### Связи
@@ -106,11 +106,11 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор команды |
-| `session_id` | UUID | ID сессии |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор команды |
+| `session_id` | integer (int64) | ID сессии |
 | `name` | string | Название команды |
 | `color` | string | Цвет команды (для визуального различия) |
-| `captain_id` | UUID, nullable | ID капитана команды (ссылка на GameSessionParticipant) |
+| `captain_id` | integer (int64), nullable | ID капитана команды (ссылка на GameSessionParticipant) |
 | `score` | integer | Итоговый счёт команды |
 | `created_at` | timestamp | Дата создания |
 
@@ -135,10 +135,10 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор |
-| `session_id` | UUID | ID сессии |
-| `team_id` | UUID, nullable | ID команды (null для индивидуальной викторины) |
-| `user_id` | UUID, nullable | ID пользователя (null для гостя) |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор |
+| `session_id` | integer (int64) | ID сессии |
+| `team_id` | integer (int64), nullable | ID команды (null для индивидуальной викторины) |
+| `user_id` | integer (int64), nullable | ID пользователя (null для гостя) |
 | `individual_score` | integer | Индивидуальный счёт участника |
 | `joined_at` | timestamp | Дата подключения к сессии |
 
@@ -163,11 +163,11 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор |
-| `session_id` | UUID | ID сессии |
-| `session_question_id` | UUID | ID вопроса в сессии (GameSessionQuestion) |
-| `participant_id` | UUID | ID участника, давшего ответ (капитан для команды, или индивидуальный участник) |
-| `team_id` | UUID, nullable | ID команды (для team mode) |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор |
+| `session_id` | integer (int64) | ID сессии |
+| `session_question_id` | integer (int64) | ID вопроса в сессии (GameSessionQuestion) |
+| `participant_id` | integer (int64) | ID участника, давшего ответ (капитан для команды, или индивидуальный участник) |
+| `team_id` | integer (int64), nullable | ID команды (для team mode) |
 | `answer` | json | Ответ — структура зависит от типа вопроса |
 | `is_correct` | boolean | Правильность ответа |
 | `score` | integer | Начисленные баллы |

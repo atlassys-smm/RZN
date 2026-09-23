@@ -62,7 +62,7 @@
 |------|-----|----------|
 | `action_type` | enum | Тип действия: `user_action` (действие пользователя) или `system_action` (действие системы) |
 | `entity_type` | string | Тип сущности: `profession`, `industry`, `direction`, `employer`, `educational_institution`, `question`, `survey` |
-| `entity_id` | UUID | ID сущности |
+| `entity_id` | integer (int64) | ID сущности |
 | `result` | string | Результат: `correct`, `incorrect`, `completed`, `viewed`, `selected`, `recommended` |
 | `duration` | integer | Длительность в миллисекундах |
 | `content_version` | string | Версия контента |

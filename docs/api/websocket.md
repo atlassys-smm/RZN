@@ -49,7 +49,7 @@ ws://host/api/v1/interactive-video/sessions/{sessionId}/ws
 
 | Событие | Описание | Что загружать |
 |---------|----------|---------------|
-| `phase_changed` | Сменилась фаза (playing → waiting → result) | `GET /state` |
+| `phase_changed` | Сменилась фаза (playing → voting) | `GET /state` |
 | `votes_updated` | Поступил новый голос | `GET /state` |
 | `scenario_finished` | Сценарий завершён, переход к следующему | `GET /state` |
 | `session_finished` | Показ завершён | — |
@@ -58,7 +58,7 @@ ws://host/api/v1/interactive-video/sessions/{sessionId}/ws
 
 | Событие | Описание | Что загружать |
 |---------|----------|---------------|
-| `phase_changed` | Сменилась фаза (waiting → result) | `GET /voting` |
+| `phase_changed` | Сменилась фаза (voting → playing) | `GET /voting` |
 | `scenario_finished` | Сценарий завершён | `GET /voting` |
 | `session_finished` | Показ завершён | — |
 

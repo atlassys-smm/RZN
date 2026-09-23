@@ -24,13 +24,13 @@
 |------|-----|----------|
 | `type` | enum | Тип вопроса (см. таблицу выше) |
 | `text` | text | Текст вопроса |
-| `media_id` | UUID, nullable | Изображение к вопросу |
+| `media_id` | integer (int64), nullable | Изображение к вопросу |
 | `required` | boolean | Обязательный ли вопрос |
 | `order` | integer | Порядок отображения |
 | `scale_min` | integer, nullable | Минимальное значение шкалы (для `rating_scale`, по умолчанию 1) |
 | `scale_max` | integer, nullable | Максимальное значение шкалы (для `rating_scale`, по умолчанию 5) |
 | `condition` | json, nullable | Условие показа (например, `{"operator": "lte", "value": 2}`) |
-| `parent_id` | UUID, nullable | ID родительского вопроса для условных вопросов |
+| `parent_id` | integer (int64), nullable | ID родительского вопроса для условных вопросов |
 
 ---
 

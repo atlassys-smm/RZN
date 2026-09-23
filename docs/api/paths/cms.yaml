@@ -1,3 +1,105 @@
+cms-devices:
+  post:
+    tags: [LED-устройства]
+    summary: Зарегистрировать устройство
+    description: |
+      Зарегистрировать новое LED-устройство и выпустить для него device-токен (JWT, привязан к `device_id`).
+      Токен возвращается только один раз, в ответе на регистрацию — сохраните его в конфигурации плеера.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              location:
+                type: string
+                nullable: true
+    responses:
+      '201':
+        description: Устройство зарегистрировано
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceWithToken'
+  get:
+    tags: [LED-устройства]
+    summary: Список устройств
+    description: Получить список зарегистрированных LED-устройств
+    responses:
+      '200':
+        description: Список устройств
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Device'
+
+cms-devices-detail:
+  get:
+    tags: [LED-устройства]
+    summary: Получить устройство
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Устройство
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      '404':
+        description: Устройство не найдено
+  delete:
+    tags: [LED-устройства]
+    summary: Отозвать устройство
+    description: Отзывает device-токен устройства (`is_active = false`). Существующий токен перестаёт приниматься сервером.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: Устройство отозвано
+      '404':
+        description: Устройство не найдено
+
+cms-device-refresh-token:
+  post:
+    tags: [LED-устройства]
+    summary: Обновить JWT устройства
+    description: Выпустить новый device JWT по идентификатору активного устройства.
+    parameters:
+      - name: device_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Новый токен устройства
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTokenResponse'
+      '404':
+        description: Устройство не найдено
+      '409':
+        description: Устройство неактивно
+
 references:
   get:
     tags: [cms]

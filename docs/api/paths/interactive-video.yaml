@@ -11,8 +11,8 @@ cms-scenarios:
       - name: profession_id
         in: query
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: Фильтр по профессии
       - name: limit
         in: query
@@ -42,7 +42,8 @@ cms-scenarios:
     tags: [Профессии в действии - CMS]
     summary: Создать видеосценарий
     description: |
-      Создать новый видеосценарий. Стартовая ветка создаётся автоматически.
+      Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
+      её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`) — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
       Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
     requestBody:
       required: true
@@ -57,8 +58,8 @@ cms-scenarios:
               description:
                 type: string
               profession_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 nullable: true
     responses:
       '201':
@@ -84,8 +85,8 @@ cms-scenarios-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Видеосценарий с деревом веток
@@ -104,8 +105,8 @@ cms-scenarios-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -118,8 +119,8 @@ cms-scenarios-detail:
               description:
                 type: string
               profession_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 nullable: true
     responses:
       '200':
@@ -139,8 +140,8 @@ cms-scenarios-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Видеосценарий удалён
@@ -161,8 +162,8 @@ cms-branches-create:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: ID видеосценария
     requestBody:
       required: true
@@ -173,15 +174,15 @@ cms-branches-create:
             required: [parent_id, text, media_id]
             properties:
               parent_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 description: ID родительской ветки
               text:
                 type: string
                 description: Текст варианта выбора
               media_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 description: ID видеофайла
               prompt:
                 type: string
@@ -210,14 +211,14 @@ cms-branches-update:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: branchId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -230,8 +231,8 @@ cms-branches-update:
               prompt:
                 type: string
               media_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
     responses:
       '200':
         description: Ветка обновлена
@@ -252,14 +253,14 @@ cms-branches-delete:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: branchId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Ветка удалена
@@ -290,13 +291,14 @@ session-create:
             required: [device_id]
             properties:
               device_id:
-                type: string
+                type: integer
+                format: int64
                 description: Идентификатор LED-устройства, на котором запускается показ
               scenario_ids:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 description: ID видеосценариев для показа (опционально)
               profession_count:
                 type: integer
@@ -355,7 +357,8 @@ session-active:
       - name: device_id
         in: query
         schema:
-          type: string
+          type: integer
+          format: int64
         description: Идентификатор LED-устройства (если не указан — возвращается любая активная сессия)
     responses:
       '200':
@@ -377,8 +380,8 @@ session-stop:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Показ остановлен
@@ -402,8 +405,8 @@ session-state:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Состояние показа
@@ -411,6 +414,41 @@ session-state:
           application/json:
             schema:
               $ref: '#/components/schemas/InteractiveVideoState'
+      '403':
+        description: Сессия принадлежит другому устройству
+      '404':
+        description: Сессия не найдена
+
+session-advance:
+  post:
+    tags: [Профессии в действии - LED]
+    summary: Сигнал окончания видео
+    description: |
+      Вызывается LED-плеером, когда воспроизведение текущего видеофрагмента (`current_branch`) завершилось.
+      Сервер не хранит длительность видео — момент перехода к точке голосования (или к следующему сценарию/завершению показа)
+      определяется именно этим сигналом, а не таймером.
+      Требует device-токен (`Authorization: Bearer <device token>`), полученный при регистрации устройства.
+      - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `voting` (голосование).
+      - Если дочерних веток нет и в очереди остались сценарии — переход к следующему сценарию (`scenario_finished`).
+      - Если дочерних веток нет и сценариев больше нет — показ завершается (`session_finished`).
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Обновлённое состояние показа
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractiveVideoState'
+      '400':
+        description: Показ сейчас не в фазе воспроизведения видео
+      '403':
+        description: Сессия принадлежит другому устройству
       '404':
         description: Сессия не найдена
 
@@ -426,14 +464,14 @@ session-voting:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: participant_id
         in: query
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: ID участника (получен при подключении через /join)
     responses:
       '200':
@@ -459,8 +497,8 @@ player-join:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Подключён
@@ -470,11 +508,11 @@ player-join:
               type: object
               properties:
                 participant_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 session_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
       '404':
         description: Сессия не найдена
       '409':
@@ -492,8 +530,8 @@ player-vote:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -503,8 +541,8 @@ player-vote:
             required: [branch_id]
             properties:
               branch_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
                 description: ID выбранной ветки (варианта продолжения)
     responses:
       '200':
@@ -559,7 +597,7 @@ player-vote:
 # Сервер отправляет только тип события. Клиент сам загружает данные через REST.
 #
 # ### phase_changed
-# Сменилась фаза показа (playing → waiting → result).
+# Сменилась фаза показа (playing → voting → playing).
 # LED загружает: GET /interactive-video/sessions/{id}/state
 # Мобильный загружает: GET /interactive-video/sessions/{id}/voting
 #
@@ -596,5 +634,5 @@ player-vote:
 # 1. Мобильный подключается к WebSocket
 # 2. Загружает начальное состояние: GET /voting
 # 3. Голосует: POST /vote
-# 4. Получает событие { "type": "phase_changed" } (переход в result)
+# 4. Получает событие { "type": "phase_changed" } (переход между playing и voting)
 # 5. Загружает результат: GET /voting

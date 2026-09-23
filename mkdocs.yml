@@ -164,6 +164,7 @@ nav:
     - ПрофСтарт: entities/test.md
     - Аналитика: entities/analytics.md
     - Профессии в действии: entities/video-scenario.md
+    - Устройства: entities/devices.md
     - Викторина:
       - Игровая сессия: entities/game-session.md
       - Вопросы викторины: entities/quiz.md

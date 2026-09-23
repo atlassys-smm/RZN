@@ -13,6 +13,13 @@ upload:
               file:
                 type: string
                 format: binary
+              title:
+                type: string
+              description:
+                type: string
+              uploaded_by:
+                type: integer
+                format: int64
     responses:
       '201':
         description: Файл загружен

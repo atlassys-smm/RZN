@@ -91,8 +91,8 @@ cms-questions:
                 items:
                   type: string
               media_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
               answer_options:
                 type: array
                 items:
@@ -104,8 +104,8 @@ cms-questions:
                     is_correct:
                       type: boolean
                     media_id:
-                      type: string
-                      format: uuid
+                      type: integer
+                      format: int64
                     order:
                       type: integer
     responses:
@@ -126,8 +126,8 @@ cms-questions-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Вопрос с вариантами ответов
@@ -147,8 +147,8 @@ cms-questions-update:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -174,8 +174,8 @@ cms-questions-delete:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Вопрос удалён
@@ -254,8 +254,8 @@ cms-templates-update:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -280,8 +280,8 @@ cms-templates-delete:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Шаблон удалён
@@ -298,8 +298,8 @@ cms-templates-publish:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Шаблон опубликован
@@ -314,8 +314,8 @@ cms-templates-unpublish:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Шаблон переведён в черновик
@@ -331,8 +331,8 @@ cms-templates-rounds-create:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
         description: ID шаблона
     requestBody:
       required: true
@@ -357,14 +357,14 @@ cms-templates-rounds-update:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Раунд обновлён
@@ -378,14 +378,14 @@ cms-templates-rounds-delete:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Раунд удалён
@@ -399,8 +399,8 @@ cms-templates-rounds-reorder:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -411,8 +411,8 @@ cms-templates-rounds-reorder:
               round_ids:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 description: ID раундов в новом порядке
     responses:
       '200':
@@ -429,14 +429,14 @@ cms-templates-rounds-questions-add:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -446,8 +446,8 @@ cms-templates-rounds-questions-add:
             required: [question_id]
             properties:
               question_id:
-                type: string
-                format: uuid
+                type: integer
+                format: int64
     responses:
       '201':
         description: Вопрос добавлен в раунд
@@ -461,20 +461,20 @@ cms-templates-rounds-questions-remove:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: questionId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Вопрос убран из раунда
@@ -488,14 +488,14 @@ cms-templates-rounds-questions-reorder:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -506,8 +506,8 @@ cms-templates-rounds-questions-reorder:
               question_ids:
                 type: array
                 items:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 description: ID вопросов в новом порядке
     responses:
       '200':
@@ -549,8 +549,8 @@ session-create:
                     question_ids:
                       type: array
                       items:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
               settings:
                 type: object
                 properties:
@@ -649,8 +649,8 @@ session-detail:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: select
         in: query
         description: Связанные данные для включения
@@ -690,8 +690,8 @@ session-finish:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '204':
         description: Сессия завершена
@@ -714,8 +714,8 @@ session-next:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Текущее состояние игры
@@ -751,8 +751,8 @@ session-reveal:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Правильный ответ
@@ -764,8 +764,8 @@ session-reveal:
                 answer_option_ids:
                   type: array
                   items:
-                    type: string
-                    format: uuid
+                    type: integer
+                    format: int64
                 explanation:
                   type: string
                   nullable: true
@@ -797,8 +797,8 @@ session-timer-pause:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Состояние таймера
@@ -817,8 +817,8 @@ session-timer-resume:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Состояние таймера
@@ -841,8 +841,8 @@ session-results-round:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: roundIndex
         in: path
         required: true
@@ -870,8 +870,8 @@ session-results-total:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Итоговый результат
@@ -894,8 +894,8 @@ player-join:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Подключён
@@ -905,11 +905,11 @@ player-join:
               type: object
               properties:
                 participant_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 session_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 mode:
                   type: string
                   enum: [individual, team]
@@ -920,8 +920,8 @@ player-join:
                     type: object
                     properties:
                       id:
-                        type: string
-                        format: uuid
+                        type: integer
+                        format: int64
                       name:
                         type: string
                       color:
@@ -951,14 +951,14 @@ player-team-join:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
       - name: teamId
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     responses:
       '200':
         description: Присоединился к команде
@@ -968,11 +968,11 @@ player-team-join:
               type: object
               properties:
                 participant_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 team_id:
-                  type: string
-                  format: uuid
+                  type: integer
+                  format: int64
                 is_captain:
                   type: boolean
                   description: true если участник стал капитаном (первый в команде)
@@ -991,8 +991,8 @@ player-answer:
         in: path
         required: true
         schema:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
@@ -1091,8 +1091,8 @@ player-answer:
 #   "type": "votes_update",
 #   "data": {
 #     "votes": [
-#       { "answer_option_id": "uuid", "count": 5 },
-#       { "answer_option_id": "uuid", "count": 3 }
+#       { "answer_option_id": "id", "count": 5 },
+#       { "answer_option_id": "id", "count": 3 }
 #     ],
 #     "total_voters": 8
 #   }
@@ -1105,7 +1105,7 @@ player-answer:
 #   "type": "question_revealed",
 #   "data": {
 #     "correct_answer": {
-#       "answer_option_ids": ["uuid"],
+#       "answer_option_ids": ["id"],
 #       "explanation": "Пояснение"
 #     }
 #   }

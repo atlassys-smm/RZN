@@ -12,7 +12,7 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | UUID | Уникальный идентификатор файла |
+| `id` | integer (int64, автоинкремент) | Уникальный идентификатор файла |
 | `type` | enum | Тип файла: `video`, `image`, `document`, `audio` |
 | `file_path` | string | Путь к файлу в хранилище |
 | `mime_type` | string | MIME-тип файла (например, `video/mp4`, `image/jpeg`) |
@@ -20,7 +20,7 @@
 | `title` | string | Название файла |
 | `description` | text, nullable | Описание файла |
 | `uploaded_at` | timestamp | Дата загрузки |
-| `uploaded_by` | UUID | ID пользователя, загрузившего файл |
+| `uploaded_by` | integer (int64), nullable | ID пользователя, загрузившего файл |
 
 ### Связи
 
