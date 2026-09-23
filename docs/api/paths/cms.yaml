@@ -1,6 +1,6 @@
 cms-devices:
   post:
-    tags: [Профессии в действии - CMS]
+    tags: [LED-устройства]
     summary: Зарегистрировать устройство
     description: |
       Зарегистрировать новое LED-устройство и выпустить для него device-токен (JWT, привязан к `device_id`).
@@ -26,7 +26,7 @@ cms-devices:
             schema:
               $ref: '#/components/schemas/DeviceWithToken'
   get:
-    tags: [Профессии в действии - CMS]
+    tags: [LED-устройства]
     summary: Список устройств
     description: Получить список зарегистрированных LED-устройств
     responses:
@@ -41,7 +41,7 @@ cms-devices:
 
 cms-devices-detail:
   get:
-    tags: [Профессии в действии - CMS]
+    tags: [LED-устройства]
     summary: Получить устройство
     parameters:
       - name: id
@@ -60,7 +60,7 @@ cms-devices-detail:
       '404':
         description: Устройство не найдено
   delete:
-    tags: [Профессии в действии - CMS]
+    tags: [LED-устройства]
     summary: Отозвать устройство
     description: Отзывает device-токен устройства (`is_active = false`). Существующий токен перестаёт приниматься сервером.
     parameters:
@@ -78,7 +78,7 @@ cms-devices-detail:
 
 cms-device-refresh-token:
   post:
-    tags: [Профессии в действии - CMS]
+    tags: [LED-устройства]
     summary: Обновить JWT устройства
     description: Выпустить новый device JWT по идентификатору активного устройства.
     parameters:

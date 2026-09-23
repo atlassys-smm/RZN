@@ -37,6 +37,8 @@ tags:
   description: Общие методы — получение состояния показа (используется LED-экраном)
 - name: Профессии в действии - CMS
   description: Управление видеосценариями и ветками
+- name: LED-устройства
+  description: Регистрация LED-устройств, управление ими и device-токенами
 - name: Профессии в действии - Оператор
   description: Показ — запуск и остановка
 - name: Профессии в действии - LED
@@ -1769,7 +1771,7 @@ paths:
   /cms/devices:
     post:
       tags:
-      - Профессии в действии - CMS
+      - LED-устройства
       summary: Зарегистрировать устройство
       description: 'Зарегистрировать новое LED-устройство и выпустить для него device-токен
         (JWT, привязан к `device_id`).
@@ -1801,7 +1803,7 @@ paths:
                 $ref: '#/components/schemas/DeviceWithToken'
     get:
       tags:
-      - Профессии в действии - CMS
+      - LED-устройства
       summary: Список устройств
       description: Получить список зарегистрированных LED-устройств
       responses:
@@ -1816,7 +1818,7 @@ paths:
   /cms/devices/{id}:
     get:
       tags:
-      - Профессии в действии - CMS
+      - LED-устройства
       summary: Получить устройство
       parameters:
       - name: id
@@ -1836,7 +1838,7 @@ paths:
           description: Устройство не найдено
     delete:
       tags:
-      - Профессии в действии - CMS
+      - LED-устройства
       summary: Отозвать устройство
       description: Отзывает device-токен устройства (`is_active = false`). Существующий
         токен перестаёт приниматься сервером.
@@ -1855,7 +1857,7 @@ paths:
   /cms/devices/{device_id}/refresh-token:
     post:
       tags:
-      - Профессии в действии - CMS
+      - LED-устройства
       summary: Обновить JWT устройства
       description: Выпустить новый device JWT по идентификатору активного устройства.
       parameters:
