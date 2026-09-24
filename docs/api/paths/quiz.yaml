@@ -888,7 +888,7 @@ player-join:
   post:
     tags: [Викторина - Игрок]
     summary: Подключиться к сессии
-    description: Подключиться к сессии по коду (из QR)
+    description: Подключиться к сессии по QR-коду
     parameters:
       - name: sessionId
         in: path
