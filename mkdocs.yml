@@ -227,7 +227,6 @@ nav:
     - WebSocket API: api/websocket.md
   - История изменений:
     - Обзор: changelog/index.md
-    - Версия 1.14: changelog/v1.14.md
     - Версия 1.13: changelog/v1.13.md
     - Версия 1.12: changelog/v1.12.md
     - Версия 1.10: changelog/v1.10.md
@@ -241,3 +240,9 @@ nav:
     - Версия 1.2: changelog/v1.2.md
     - Версия 1.1: changelog/v1.1.md
     - Версия 1.0: changelog/v1.0.md
+  - История изменений бэкенда:
+    - Обзор: changelog-back/index.md
+    - Версия 0.4: changelog-back/v0.4.md
+    - Версия 0.3: changelog-back/v0.3.md
+    - Версия 0.2: changelog-back/v0.2.md
+    - Версия 0.1: changelog-back/v0.1.md
