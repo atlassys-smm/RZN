@@ -174,7 +174,6 @@ nav:
       - Ответы пользователей: entities/survey-responses.md
     - Согласия: entities/consent.md
   - Интерфейсы:
-    - Общие правила: interfaces/guidelines.md
     - LED-экран:
       - Обзор: interfaces/led-screen/index.md
       - Заставка: interfaces/led-screen/screensaver.md
@@ -228,7 +227,7 @@ nav:
     - WebSocket API: api/websocket.md
   - История изменений:
     - Обзор: changelog/index.md
-    - Версия 1.11: changelog/v1.11.md
+    - Версия 1.12: changelog/v1.12.md
     - Версия 1.10: changelog/v1.10.md
     - Версия 1.9: changelog/v1.9.md
     - Версия 1.8: changelog/v1.8.md
