@@ -54,14 +54,14 @@
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор пользователя |
 | `guest_id` | string, nullable | Уникальный идентификатор гостя (генерируется при первом QR, если пользователь не авторизован) |
 | `guest_expires_at` | timestamp, nullable | Срок действия гостевого режима (24 часа от создания). Если null — пользователь авторизован |
-| `oauth_provider` | enum, nullable | Провайдер авторизации: `yandex`, `vk`. Null для гостя |
+| `oauth_provider` | integer, nullable | Провайдер авторизации: `1` — Яндекс, `2` — VK. Null для гостя |
 | `oauth_provider_id` | string, nullable | ID пользователя у провайдера. Null для гостя |
 | `email` | string, nullable | Email из OAuth-провайдера |
 | `name` | string, nullable | Имя из OAuth-провайдера |
 | `avatar_url` | string, nullable | URL аватара из OAuth-провайдера |
-| `gender` | enum, nullable | Пол: `male`, `female`, `unknown` |
+| `gender` | integer, nullable | Пол: `1` — male, `2` — female, `null` — не указан |
 | `birth_date` | date, nullable | Дата рождения из OAuth-провайдера |
-| `status` | enum | Статус: `guest`, `active`, `deactivated` |
+| `status` | integer | Статус: `1` — guest, `2` — active, `3` — anonymized, `4` — deactivated |
 | `created_at` | timestamp | Дата создания учётной записи |
 | `updated_at` | timestamp | Дата последнего обновления |
 

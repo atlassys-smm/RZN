@@ -846,8 +846,9 @@ components:
           type: integer
           format: int64
         status:
-          type: string
-          enum: [active, finished]
+          type: integer
+          enum: [1, 2]
+          description: '1 — active, 2 — finished'
         settings:
           type: object
           properties:
@@ -883,15 +884,16 @@ components:
           format: int64
           description: Идентификатор LED-устройства, на котором запущена сессия
         status:
-          type: string
-          enum: [active, finished]
+          type: integer
+          enum: [1, 2]
+          description: '1 — active, 2 — finished'
         phase:
-          type: string
-          enum: [playing, voting]
+          type: integer
+          enum: [1, 2]
           description: |
             Фаза показа:
-            - `playing` — проигрывание ролика
-            - `voting` — точка голосования, сбор ответов
+            - `1` — playing, проигрывание ролика
+            - `2` — voting, точка голосования, сбор ответов
         phase_started_at:
           type: integer
           format: int64
@@ -979,12 +981,12 @@ components:
           type: integer
           format: int64
         phase:
-          type: string
-          enum: [playing, voting]
+          type: integer
+          enum: [1, 2]
           description: |
             Фаза показа:
-            - `playing` — проигрывание ролика
-            - `voting` — точка голосования, сбор ответов
+            - `1` — playing, проигрывание ролика
+            - `2` — voting, точка голосования, сбор ответов
         voting_point:
           type: object
           nullable: true
