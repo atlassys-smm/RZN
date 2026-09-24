@@ -90,7 +90,7 @@
 
 ### Структура шаблона
 
-Шаблон состоит из раундов (от 3 до 8), каждый раунд содержит конкретные вопросы из банка:
+Поля редактора раундов и вопросов соответствуют сущностям [ScenarioTemplateRound](../../entities/scenario-template.md#scenariotemplateround) и [ScenarioTemplateRoundQuestion](../../entities/scenario-template.md#scenariotemplateroundquestion):
 
 | Поле | Тип | Обязательное |
 |------|-----|:---:|

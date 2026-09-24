@@ -38,7 +38,7 @@
 
 Управление шаблонами для индивидуальной викторины и командной игры. Шаблон сценария — это заранее подготовленный набор раундов с конкретными вопросами, привязанными к определённой тематике или направлению.
 
-Оператор при запуске сессии любого режима выбирает готовый шаблон или вручную формирует раунды. Клиент передаёт в API создания сессии только `rounds`, без ID шаблона. В шаблонах закреплены конкретные вопросы; при ручной настройке оператор передаёт `question_ids` либо задаёт `question_count` и `question_filters` (`difficulty`, `age_group`, `tags`) для автоматического выбора.
+Шаблон хранит подготовленные типы раундов и конкретные вопросы; модель шаблона описана в [сущностях](../../entities/scenario-template.md#scenariotemplate). Порядок выбора шаблона и ручной настройки показан в [интерфейсе оператора](../../interfaces/operator-tablet/team-game-setup.md), формат создаваемой сессии — в [GameSession](../../entities/game-session.md#gamesession).
 
 ### Режимы
 
@@ -61,7 +61,7 @@
 
 ### Структура шаблона
 
-Шаблон состоит из **раундов** (от 3 до 8) — сущности [ScenarioTemplateRound](../../entities/scenario-template.md#scenariotemplateround). Каждый раунд содержит **конкретные вопросы** из банка вопросов — сущности [ScenarioTemplateRoundQuestion](../../entities/scenario-template.md#scenariotemplateroundquestion). Тип раунда — из [справочника](../../references/scenario-round-types.md).
+Структура раундов и связей с вопросами описана для [ScenarioTemplateRound](../../entities/scenario-template.md#scenariotemplateround) и [ScenarioTemplateRoundQuestion](../../entities/scenario-template.md#scenariotemplateroundquestion); типы раундов берутся из [справочника](../../references/scenario-round-types.md).
 
 ### Работа с вопросами в раунде
 
