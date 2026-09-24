@@ -1,0 +1,138 @@
+# ═══════════════════════════════════════════════════════════════
+# Аватары профессий
+# ═══════════════════════════════════════════════════════════════
+
+avatars:
+  get:
+    tags: [Аватары профессий]
+    summary: Список аватаров профессий
+    security: []
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список аватаров
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProfessionAvatar'
+                total:
+                  type: integer
+  post:
+    tags: [Аватары профессий]
+    summary: Создать аватар профессии
+    description: Добавить аватар для профессии — мужской и женский образ (требуются права CMS)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [profession_id, male_photo_file_id, female_photo_file_id]
+            properties:
+              profession_id:
+                type: integer
+                format: int64
+              male_photo_file_id:
+                type: integer
+                format: int64
+                description: ID файла — фото мужчины
+              female_photo_file_id:
+                type: integer
+                format: int64
+                description: ID файла — фото женщины
+    responses:
+      '201':
+        description: Аватар создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionAvatar'
+      '422':
+        description: Аватар для этой профессии уже существует
+
+avatars-detail:
+  get:
+    tags: [Аватары профессий]
+    summary: Аватар профессии
+    description: Получить аватар по ID профессии
+    security: []
+    parameters:
+      - name: profession_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Аватар
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionAvatar'
+      '404':
+        description: Не найден
+  put:
+    tags: [Аватары профессий]
+    summary: Обновить аватар профессии
+    description: Обновить фото мужского или женского образа (требуются права CMS)
+    parameters:
+      - name: profession_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              male_photo_file_id:
+                type: integer
+                format: int64
+              female_photo_file_id:
+                type: integer
+                format: int64
+    responses:
+      '200':
+        description: Аватар обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionAvatar'
+      '404':
+        description: Не найден
+  delete:
+    tags: [Аватары профессий]
+    summary: Удалить аватар профессии
+    description: Удалить аватар профессии (требуются права CMS)
+    parameters:
+      - name: profession_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: Аватар удалён
+      '404':
+        description: Не найден

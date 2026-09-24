@@ -1,0 +1,351 @@
+# ═══════════════════════════════════════════════════════════════
+# Согласия
+# ═══════════════════════════════════════════════════════════════
+
+consent-types:
+  get:
+    tags: [Согласия]
+    summary: Список типов согласий
+    security: []
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список типов согласий
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ConsentType'
+                total:
+                  type: integer
+  post:
+    tags: [Согласия]
+    summary: Создать тип согласия
+    description: Создать новый тип согласия (требуются права CMS)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, title]
+            properties:
+              code:
+                type: string
+                description: Уникальный код (например, personal_data)
+              title:
+                type: string
+              description:
+                type: string
+    responses:
+      '201':
+        description: Тип согласия создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentType'
+
+consent-types-detail:
+  get:
+    tags: [Согласия]
+    summary: Детали типа согласия
+    security: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Тип согласия
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentType'
+      '404':
+        description: Не найден
+  put:
+    tags: [Согласия]
+    summary: Обновить тип согласия
+    description: Обновить тип согласия (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+    responses:
+      '200':
+        description: Тип согласия обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentType'
+      '404':
+        description: Не найден
+  delete:
+    tags: [Согласия]
+    summary: Удалить тип согласия
+    description: Удалить тип согласия (требуются права CMS)
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: Тип согласия удалён
+      '404':
+        description: Не найден
+      '409':
+        description: Нельзя удалить — есть связанные версии
+
+consent-versions:
+  get:
+    tags: [Согласия]
+    summary: Список версий типа согласия
+    security: []
+    parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список версий
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ConsentVersion'
+                total:
+                  type: integer
+  post:
+    tags: [Согласия]
+    summary: Создать версию согласия (черновик)
+    description: Создать новую черновую версию согласия (требуются права CMS)
+    parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [text]
+            properties:
+              text:
+                type: string
+                description: Полный текст согласия
+    responses:
+      '201':
+        description: Черновик создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentVersion'
+
+consent-version-active:
+  get:
+    tags: [Согласия]
+    summary: Активная версия согласия
+    description: Получить последнюю опубликованную версию типа согласия
+    security: []
+    parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Активная версия
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentVersion'
+      '404':
+        description: Нет опубликованных версий
+
+consent-version-detail:
+  get:
+    tags: [Согласия]
+    summary: Детали версии согласия
+    security: []
+    parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Версия согласия
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentVersion'
+      '404':
+        description: Не найдена
+  put:
+    tags: [Согласия]
+    summary: Обновить версию согласия
+    description: Обновить черновик версии (требуются права CMS). Опубликованные версии нельзя редактировать.
+    parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              text:
+                type: string
+    responses:
+      '200':
+        description: Версия обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentVersion'
+      '404':
+        description: Не найдена
+      '422':
+        description: Нельзя редактировать опубликованную версию
+
+consent-version-publish:
+  post:
+    tags: [Согласия]
+    summary: Опубликовать версию согласия
+    description: Опубликовать черновик версии согласия (требуются права CMS). Присваивается номер версии и дата вступления в силу.
+    parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Версия опубликована
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentVersion'
+      '404':
+        description: Не найдена
+      '422':
+        description: Версия уже опубликована
+
+consent-acceptances:
+  get:
+    tags: [Согласия]
+    summary: Список принятых согласий пользователя
+    parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список принятых согласий
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ConsentAcceptance'
+                total:
+                  type: integer

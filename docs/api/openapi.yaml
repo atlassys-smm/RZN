@@ -25,6 +25,14 @@ tags:
     description: Справочник компетенций
   - name: Организации
     description: Учебные заведения и работодатели
+  - name: Согласия
+    description: Версионируемые юридические согласия на обработку персональных данных
+  - name: Аватары профессий
+    description: Эталонные образы профессий для генерации аватаров
+  - name: Аватары пользователей
+    description: Сгенерированные аватары пользователей
+  - name: Файлы
+    description: Скачивание файлов по подписанным URL
   - name: Викторина
     description: Общие методы — получение состояния сессии (используются оператором и игроками)
   - name: Викторина - CMS
@@ -92,6 +100,28 @@ paths:
     $ref: './paths/organizations.yaml#/organizations'
   /organizations/{id}:
     $ref: './paths/organizations.yaml#/organizations-detail'
+
+  # ── Согласия ────────────────────────────────────
+  /consents/types:
+    $ref: './paths/consents.yaml#/consent-types'
+  /consents/types/{id}:
+    $ref: './paths/consents.yaml#/consent-types-detail'
+  /consents/types/{type_id}/versions:
+    $ref: './paths/consents.yaml#/consent-versions'
+  /consents/types/{type_id}/versions/active:
+    $ref: './paths/consents.yaml#/consent-version-active'
+  /consents/types/{type_id}/versions/{version_id}:
+    $ref: './paths/consents.yaml#/consent-version-detail'
+  /consents/types/{type_id}/versions/{version_id}/publish:
+    $ref: './paths/consents.yaml#/consent-version-publish'
+  /consents/acceptances:
+    $ref: './paths/consents.yaml#/consent-acceptances'
+
+  # ── Аватары профессий ───────────────────────────
+  /avatars:
+    $ref: './paths/profession-avatars.yaml#/avatars'
+  /avatars/{profession_id}:
+    $ref: './paths/profession-avatars.yaml#/avatars-detail'
 
   # ── CMS: Викторина — Вопросы ────────────────────
   /cms/quiz/questions:
@@ -214,10 +244,18 @@ paths:
     $ref: './paths/feedback.yaml#/respond'
 
   # ── Файлы ────────────────────────────────────────
-  /files/upload:
-    $ref: './paths/files.yaml#/upload'
-  /files/{id}:
+  /files/{file_uuid}:
     $ref: './paths/files.yaml#/detail'
+
+  # ── Аватары пользователей ────────────────────────
+  /me/avatars:
+    $ref: './paths/user-avatars.yaml#/user-avatars-list'
+  /me/avatars/{avatar_id}:
+    $ref: './paths/user-avatars.yaml#/user-avatars-detail'
+  /users/{user_id}/avatars:
+    $ref: './paths/user-avatars.yaml#/user-avatars-create'
+  /avatars/qr/{qr_token}:
+    $ref: './paths/user-avatars.yaml#/user-avatars-qr'
 
 components:
   securitySchemes:
@@ -330,6 +368,128 @@ components:
           type: string
           format: date-time
         updated_at:
+          type: string
+          format: date-time
+
+    ConsentType:
+      description: Тип согласия
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ConsentVersion:
+      description: Версия согласия
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type_id:
+          type: integer
+          format: int64
+        version:
+          type: string
+          nullable: true
+        text:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+        effective_from:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ConsentAcceptance:
+      description: Факт принятия согласия
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        version_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        accepted_at:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+          nullable: true
+
+    ProfessionAvatar:
+      description: Аватар профессии — мужской и женский образ
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        profession_id:
+          type: integer
+          format: int64
+        male_photo_file_id:
+          type: integer
+          format: int64
+          description: ID файла — фото мужчины
+        female_photo_file_id:
+          type: integer
+          format: int64
+          description: ID файла — фото женщины
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserAvatar:
+      description: Сгенерированный аватар пользователя
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        profession_id:
+          type: integer
+          format: int64
+        image_url:
+          type: string
+          description: Подписанный URL для скачивания (TTL 24ч)
+        qr_token:
+          type: string
+          description: Токен для доступа по QR-коду
+        created_at:
           type: string
           format: date-time
 

@@ -1,42 +1,37 @@
-upload:
-  post:
-    tags: [files]
-    summary: Загрузить файл
-    description: Загрузить файл на платформу
-    requestBody:
-      required: true
-      content:
-        multipart/form-data:
-          schema:
-            type: object
-            properties:
-              file:
-                type: string
-                format: binary
-              title:
-                type: string
-              description:
-                type: string
-              uploaded_by:
-                type: integer
-                format: int64
-    responses:
-      '201':
-        description: Файл загружен
-
 detail:
   get:
-    tags: [files]
-    summary: Получить файл
-    description: Получить информацию о файле или скачать его
+    tags: [Файлы]
+    summary: Скачать файл
+    description: Скачать файл по UUID с проверкой подписи
     parameters:
-      - name: id
+      - name: file_uuid
         in: path
         required: true
         schema:
           type: string
+          format: uuid
+      - name: expires
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Timestamp истечения подписи
+      - name: sig
+        in: query
+        required: true
+        schema:
+          type: string
+        description: HMAC-подпись
     responses:
       '200':
-        description: Файл найден
+        description: Файл
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      '403':
+        description: Неверная или истёкшая подпись
       '404':
         description: Файл не найден

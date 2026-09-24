@@ -26,6 +26,14 @@ tags:
   description: Справочник компетенций
 - name: Организации
   description: Учебные заведения и работодатели
+- name: Согласия
+  description: Версионируемые юридические согласия на обработку персональных данных
+- name: Аватары профессий
+  description: Эталонные образы профессий для генерации аватаров
+- name: Аватары пользователей
+  description: Сгенерированные аватары пользователей
+- name: Файлы
+  description: Скачивание файлов по подписанным URL
 - name: Викторина
   description: Общие методы — получение состояния сессии (используются оператором
     и игроками)
@@ -799,6 +807,506 @@ paths:
           description: Организация удалена
         '404':
           description: Не найдена
+  /consents/types:
+    get:
+      tags:
+      - Согласия
+      summary: Список типов согласий
+      security: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Список типов согласий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsentType'
+                  total:
+                    type: integer
+    post:
+      tags:
+      - Согласия
+      summary: Создать тип согласия
+      description: Создать новый тип согласия (требуются права CMS)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              - title
+              properties:
+                code:
+                  type: string
+                  description: Уникальный код (например, personal_data)
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Тип согласия создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentType'
+  /consents/types/{id}:
+    get:
+      tags:
+      - Согласия
+      summary: Детали типа согласия
+      security: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Тип согласия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentType'
+        '404':
+          description: Не найден
+    put:
+      tags:
+      - Согласия
+      summary: Обновить тип согласия
+      description: Обновить тип согласия (требуются права CMS)
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Тип согласия обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentType'
+        '404':
+          description: Не найден
+    delete:
+      tags:
+      - Согласия
+      summary: Удалить тип согласия
+      description: Удалить тип согласия (требуются права CMS)
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Тип согласия удалён
+        '404':
+          description: Не найден
+        '409':
+          description: Нельзя удалить — есть связанные версии
+  /consents/types/{type_id}/versions:
+    get:
+      tags:
+      - Согласия
+      summary: Список версий типа согласия
+      security: []
+      parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Список версий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsentVersion'
+                  total:
+                    type: integer
+    post:
+      tags:
+      - Согласия
+      summary: Создать версию согласия (черновик)
+      description: Создать новую черновую версию согласия (требуются права CMS)
+      parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - text
+              properties:
+                text:
+                  type: string
+                  description: Полный текст согласия
+      responses:
+        '201':
+          description: Черновик создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentVersion'
+  /consents/types/{type_id}/versions/active:
+    get:
+      tags:
+      - Согласия
+      summary: Активная версия согласия
+      description: Получить последнюю опубликованную версию типа согласия
+      security: []
+      parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Активная версия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentVersion'
+        '404':
+          description: Нет опубликованных версий
+  /consents/types/{type_id}/versions/{version_id}:
+    get:
+      tags:
+      - Согласия
+      summary: Детали версии согласия
+      security: []
+      parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Версия согласия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentVersion'
+        '404':
+          description: Не найдена
+    put:
+      tags:
+      - Согласия
+      summary: Обновить версию согласия
+      description: Обновить черновик версии (требуются права CMS). Опубликованные
+        версии нельзя редактировать.
+      parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Версия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentVersion'
+        '404':
+          description: Не найдена
+        '422':
+          description: Нельзя редактировать опубликованную версию
+  /consents/types/{type_id}/versions/{version_id}/publish:
+    post:
+      tags:
+      - Согласия
+      summary: Опубликовать версию согласия
+      description: Опубликовать черновик версии согласия (требуются права CMS). Присваивается
+        номер версии и дата вступления в силу.
+      parameters:
+      - name: type_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: version_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Версия опубликована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentVersion'
+        '404':
+          description: Не найдена
+        '422':
+          description: Версия уже опубликована
+  /consents/acceptances:
+    get:
+      tags:
+      - Согласия
+      summary: Список принятых согласий пользователя
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Список принятых согласий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsentAcceptance'
+                  total:
+                    type: integer
+  /avatars:
+    get:
+      tags:
+      - Аватары профессий
+      summary: Список аватаров профессий
+      security: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Список аватаров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProfessionAvatar'
+                  total:
+                    type: integer
+    post:
+      tags:
+      - Аватары профессий
+      summary: Создать аватар профессии
+      description: Добавить аватар для профессии — мужской и женский образ (требуются
+        права CMS)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - profession_id
+              - male_photo_file_id
+              - female_photo_file_id
+              properties:
+                profession_id:
+                  type: integer
+                  format: int64
+                male_photo_file_id:
+                  type: integer
+                  format: int64
+                  description: ID файла — фото мужчины
+                female_photo_file_id:
+                  type: integer
+                  format: int64
+                  description: ID файла — фото женщины
+      responses:
+        '201':
+          description: Аватар создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionAvatar'
+        '422':
+          description: Аватар для этой профессии уже существует
+  /avatars/{profession_id}:
+    get:
+      tags:
+      - Аватары профессий
+      summary: Аватар профессии
+      description: Получить аватар по ID профессии
+      security: []
+      parameters:
+      - name: profession_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Аватар
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionAvatar'
+        '404':
+          description: Не найден
+    put:
+      tags:
+      - Аватары профессий
+      summary: Обновить аватар профессии
+      description: Обновить фото мужского или женского образа (требуются права CMS)
+      parameters:
+      - name: profession_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                male_photo_file_id:
+                  type: integer
+                  format: int64
+                female_photo_file_id:
+                  type: integer
+                  format: int64
+      responses:
+        '200':
+          description: Аватар обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionAvatar'
+        '404':
+          description: Не найден
+    delete:
+      tags:
+      - Аватары профессий
+      summary: Удалить аватар профессии
+      description: Удалить аватар профессии (требуются права CMS)
+      parameters:
+      - name: profession_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Аватар удалён
+        '404':
+          description: Не найден
   /cms/quiz/questions:
     get:
       tags:
@@ -2634,12 +3142,152 @@ paths:
           description: Ответы отправлены
         '404':
           description: Анкета не найдена
-  /files/upload:
+  /files/{file_uuid}:
+    get:
+      tags:
+      - Файлы
+      summary: Скачать файл
+      description: Скачать файл по UUID с проверкой подписи
+      parameters:
+      - name: file_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: expires
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Timestamp истечения подписи
+      - name: sig
+        in: query
+        required: true
+        schema:
+          type: string
+        description: HMAC-подпись
+      responses:
+        '200':
+          description: Файл
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Неверная или истёкшая подпись
+        '404':
+          description: Файл не найден
+  /me/avatars:
+    get:
+      tags:
+      - Аватары пользователей
+      summary: Список моих аватаров
+      description: Получить свои аватары (user_id позже будет из токена авторизации)
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Временный параметр, позже будет из токена
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Список аватаров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserAvatar'
+                  total:
+                    type: integer
+  /me/avatars/{avatar_id}:
+    get:
+      tags:
+      - Аватары пользователей
+      summary: Детали моего аватара
+      parameters:
+      - name: avatar_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Временный параметр, позже будет из токена
+      responses:
+        '200':
+          description: Аватар
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAvatar'
+        '404':
+          description: Не найден
+    delete:
+      tags:
+      - Аватары пользователей
+      summary: Удалить мой аватар
+      parameters:
+      - name: avatar_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Временный параметр, позже будет из токена
+      responses:
+        '204':
+          description: Аватар удалён
+        '404':
+          description: Не найден
+  /users/{user_id}/avatars:
     post:
       tags:
-      - files
-      summary: Загрузить файл
-      description: Загрузить файл на платформу
+      - Аватары пользователей
+      summary: Сохранить аватар пользователя
+      description: Терминал сохраняет сгенерированный аватар для пользователя
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: profession_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
@@ -2647,36 +3295,37 @@ paths:
             schema:
               type: object
               properties:
-                file:
+                photo:
                   type: string
                   format: binary
-                title:
-                  type: string
-                description:
-                  type: string
-                uploaded_by:
-                  type: integer
-                  format: int64
       responses:
         '201':
-          description: Файл загружен
-  /files/{id}:
+          description: Аватар сохранён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAvatar'
+  /avatars/qr/{qr_token}:
     get:
       tags:
-      - files
-      summary: Получить файл
-      description: Получить информацию о файле или скачать его
+      - Аватары пользователей
+      summary: Аватар по QR-токену
+      description: Публичный доступ по QR-коду
       parameters:
-      - name: id
+      - name: qr_token
         in: path
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Файл найден
+          description: Аватар
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAvatar'
         '404':
-          description: Файл не найден
+          description: Не найден
 components:
   securitySchemes:
     bearerAuth:
@@ -2785,6 +3434,125 @@ components:
           type: string
           format: date-time
         updated_at:
+          type: string
+          format: date-time
+    ConsentType:
+      description: Тип согласия
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ConsentVersion:
+      description: Версия согласия
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        type_id:
+          type: integer
+          format: int64
+        version:
+          type: string
+          nullable: true
+        text:
+          type: string
+        status:
+          type: string
+          enum:
+          - draft
+          - published
+        effective_from:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ConsentAcceptance:
+      description: Факт принятия согласия
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        version_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        accepted_at:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+          nullable: true
+    ProfessionAvatar:
+      description: Аватар профессии — мужской и женский образ
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        profession_id:
+          type: integer
+          format: int64
+        male_photo_file_id:
+          type: integer
+          format: int64
+          description: ID файла — фото мужчины
+        female_photo_file_id:
+          type: integer
+          format: int64
+          description: ID файла — фото женщины
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UserAvatar:
+      description: Сгенерированный аватар пользователя
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        profession_id:
+          type: integer
+          format: int64
+        image_url:
+          type: string
+          description: Подписанный URL для скачивания (TTL 24ч)
+        qr_token:
+          type: string
+          description: Токен для доступа по QR-коду
+        created_at:
           type: string
           format: date-time
     Error:
@@ -3316,10 +4084,11 @@ components:
           type: integer
           format: int64
         status:
-          type: string
+          type: integer
           enum:
-          - active
-          - finished
+          - 1
+          - 2
+          description: 1 — active, 2 — finished
         settings:
           type: object
           properties:
@@ -3355,20 +4124,21 @@ components:
           format: int64
           description: Идентификатор LED-устройства, на котором запущена сессия
         status:
-          type: string
+          type: integer
           enum:
-          - active
-          - finished
+          - 1
+          - 2
+          description: 1 — active, 2 — finished
         phase:
-          type: string
+          type: integer
           enum:
-          - playing
-          - voting
+          - 1
+          - 2
           description: 'Фаза показа:
 
-            - `playing` — проигрывание ролика
+            - `1` — playing, проигрывание ролика
 
-            - `voting` — точка голосования, сбор ответов
+            - `2` — voting, точка голосования, сбор ответов
 
             '
         phase_started_at:
@@ -3458,15 +4228,15 @@ components:
           type: integer
           format: int64
         phase:
-          type: string
+          type: integer
           enum:
-          - playing
-          - voting
+          - 1
+          - 2
           description: 'Фаза показа:
 
-            - `playing` — проигрывание ролика
+            - `1` — playing, проигрывание ролика
 
-            - `voting` — точка голосования, сбор ответов
+            - `2` — voting, точка голосования, сбор ответов
 
             '
         voting_point:

@@ -1,0 +1,148 @@
+# ═══════════════════════════════════════════════════════════════
+# Аватары пользователей
+# ═══════════════════════════════════════════════════════════════
+
+user-avatars-create:
+  post:
+    tags: [Аватары пользователей]
+    summary: Сохранить аватар пользователя
+    description: Терминал сохраняет сгенерированный аватар для пользователя
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: profession_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              photo:
+                type: string
+                format: binary
+    responses:
+      '201':
+        description: Аватар сохранён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAvatar'
+
+user-avatars-list:
+  get:
+    tags: [Аватары пользователей]
+    summary: Список моих аватаров
+    description: Получить свои аватары (user_id позже будет из токена авторизации)
+    parameters:
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Временный параметр, позже будет из токена
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список аватаров
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserAvatar'
+                total:
+                  type: integer
+
+user-avatars-detail:
+  get:
+    tags: [Аватары пользователей]
+    summary: Детали моего аватара
+    parameters:
+      - name: avatar_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Временный параметр, позже будет из токена
+    responses:
+      '200':
+        description: Аватар
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAvatar'
+      '404':
+        description: Не найден
+  delete:
+    tags: [Аватары пользователей]
+    summary: Удалить мой аватар
+    parameters:
+      - name: avatar_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Временный параметр, позже будет из токена
+    responses:
+      '204':
+        description: Аватар удалён
+      '404':
+        description: Не найден
+
+user-avatars-qr:
+  get:
+    tags: [Аватары пользователей]
+    summary: Аватар по QR-токену
+    description: Публичный доступ по QR-коду
+    parameters:
+      - name: qr_token
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Аватар
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAvatar'
+      '404':
+        description: Не найден
