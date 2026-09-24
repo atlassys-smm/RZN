@@ -14,6 +14,7 @@
 |------|-----|----------|
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор файла |
 | `type` | integer | Тип файла: `1` — video, `2` — image, `3` — document, `4` — audio |
+| `module_code` | string | Символьный код модуля, к которому относится файл (например, `quiz`, `video_scenario`, `profession`, `survey`, `team_game`, `profstart`) |
 | `file_path` | string | Путь к файлу в хранилище |
 | `mime_type` | string | MIME-тип файла (например, `video/mp4`, `image/jpeg`) |
 | `size` | integer | Размер файла в байтах |
