@@ -20,7 +20,7 @@
 | `type` | enum | Тип вопроса из [справочника](../references/profstart-question-types.md) |
 | `text` | text | Текст вопроса |
 | `media_id` | integer (int64), nullable | ID файла (изображение) |
-| `age_group` | enum | Возрастная группа из [справочника](../references/profstart-age-groups.md) |
+| `age_group` | integer | Числовой ID возрастной группы из [справочника](../references/profstart-age-groups.md) |
 | `order` | integer | Порядок отображения (если фиксированный) |
 | `randomize` | boolean | Случайный порядок отображения |
 | `created_at` | timestamp | Дата создания |
@@ -78,7 +78,7 @@
 |------|-----|----------|
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор сессии |
 | `user_id` | integer (int64) | ID пользователя (гостя или авторизованного) — всегда заполнен |
-| `age_group` | enum | Возрастная группа: `12-14`, `15-17` |
+| `age_group` | integer | Числовой ID возрастной группы из [справочника](../references/profstart-age-groups.md) |
 | `status` | enum | Статус сессии: `in_progress`, `completed`, `abandoned` |
 | `started_at` | timestamp | Дата и время начала теста |
 | `completed_at` | timestamp, nullable | Дата и время завершения теста |
@@ -148,7 +148,7 @@
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор результата |
 | `session_id` | integer (int64) | ID сессии прохождения |
 | `user_id` | integer (int64) | ID пользователя (гостя или авторизованного) — всегда заполнен |
-| `age_group` | enum | Возрастная группа теста |
+| `age_group` | integer | Числовой ID возрастной группы из [справочника](../references/profstart-age-groups.md) |
 | `status` | enum | Статус результата: `draft`, `final` |
 | `created_at` | timestamp | Дата создания результата |
 | `expires_at` | timestamp, nullable | Дата истечения (для отображения на терминале) |
