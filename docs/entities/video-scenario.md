@@ -81,7 +81,7 @@
 |------|-----|----------|
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор сессии |
 | `device_id` | integer (int64) | ID LED-устройства, на котором запущен показ |
-| `status` | enum | Статус сессии: `active`, `finished` |
+| `status` | integer | Статус сессии: `1` — active, `2` — finished |
 | `settings` | json | Настройки показа (см. ниже) |
 | `created_at` | timestamp | Дата создания |
 | `finished_at` | timestamp, nullable | Дата завершения показа |
