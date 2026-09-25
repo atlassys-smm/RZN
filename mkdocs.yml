@@ -230,6 +230,9 @@ nav:
     - Обзор: changelog/index.md
     - Документация:
       - Версия 1.15: changelog/v1.15.md
+      - Версия 1.14: changelog/v1.14.md
+      - Версия 1.13: changelog/v1.13.md
+      - Версия 1.12: changelog/v1.12.md
       - Версия 1.10: changelog/v1.10.md
       - Версия 1.9: changelog/v1.9.md
       - Версия 1.8: changelog/v1.8.md

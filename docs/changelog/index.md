@@ -12,6 +12,9 @@
 | Версия | Дата | Описание |
 |--------|------|----------|
 | [1.15](v1.15.md) | 25.09.2026 11:39 | Реструктуризация changelog, enum→integer (справочники), User-статусы (guest/active/anonymized/deactivated), GameSession: device_id, упрощение scoring, викторина: answer_key, matching side, капитан |
+| [1.14](v1.14.md) | 25.09.2026 14:30 | Scoring в GameSession (11 параметров), score → decimal, упрощение статусов User (active/deactivated), таймер в entities/, правила начисления баллов |
+| [1.13](v1.13.md) | 24.09.2026 17:00 | API: согласия, аватары профессий/пользователей; signed URLs для файлов; поля `uuid` и `module` в File |
+| [1.12](v1.12.md) | 24.09.2026 10:37 | Enum → integer (статусы, фазы, типы), возврат кода сессии, откат v1.11 |
 | [1.10](v1.10.md) | 23.09.2026 18:09 | Два LED-экрана, поле `module_code` для файлов, автоисключение пустых команд |
 | [1.9](v1.9.md) | 23.09.2026 14:29 | Сущность InteractiveVideoSession, реструктуризация settings, упрощение State, удаление избыточных полей |
 | [1.8](v1.8.md) | 23.09.2026 13:45 | Миграция UUID → integer, LED-устройства (Device), упрощение фаз видео, эндпоинт session-advance |
