@@ -228,25 +228,15 @@ nav:
     - WebSocket API: api/websocket.md
   - История изменений:
     - Обзор: changelog/index.md
-    - Документация:
-      - Обзор: changelog/docs/index.md
-      - Версия 1.14: changelog/docs/v1.14.md
-      - Версия 1.13: changelog/docs/v1.13.md
-      - Версия 1.12: changelog/docs/v1.12.md
-      - Версия 1.10: changelog/docs/v1.10.md
-      - Версия 1.9: changelog/docs/v1.9.md
-      - Версия 1.8: changelog/docs/v1.8.md
-      - Версия 1.7: changelog/docs/v1.7.md
-      - Версия 1.6: changelog/docs/v1.6.md
-      - Версия 1.5: changelog/docs/v1.5.md
-      - Версия 1.4: changelog/docs/v1.4.md
-      - Версия 1.3: changelog/docs/v1.3.md
-      - Версия 1.2: changelog/docs/v1.2.md
-      - Версия 1.1: changelog/docs/v1.1.md
-      - Версия 1.0: changelog/docs/v1.0.md
-    - Бэкенд:
-      - Обзор: changelog/back/index.md
-      - Версия 0.4: changelog/back/v0.4.md
-      - Версия 0.3: changelog/back/v0.3.md
-      - Версия 0.2: changelog/back/v0.2.md
-      - Версия 0.1: changelog/back/v0.1.md
+    - Версия 1.15: changelog/v1.15.md
+    - Версия 1.10: changelog/v1.10.md
+    - Версия 1.9: changelog/v1.9.md
+    - Версия 1.8: changelog/v1.8.md
+    - Версия 1.7: changelog/v1.7.md
+    - Версия 1.6: changelog/v1.6.md
+    - Версия 1.5: changelog/v1.5.md
+    - Версия 1.4: changelog/v1.4.md
+    - Версия 1.3: changelog/v1.3.md
+    - Версия 1.2: changelog/v1.2.md
+    - Версия 1.1: changelog/v1.1.md
+    - Версия 1.0: changelog/v1.0.md
