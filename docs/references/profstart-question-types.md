@@ -26,7 +26,7 @@
 | `type` | enum | Тип вопроса (см. таблицу выше) |
 | `text` | text | Текст вопроса |
 | `media_id` | integer (int64), nullable | Изображение к вопросу |
-| `age_group` | enum | Возрастная группа: `12-14`, `15-17` |
+| `age_group` | integer | Числовой ID возрастной группы из [справочника](profstart-age-groups.md) |
 | `order` | integer | Порядок отображения (если фиксированный) |
 | `randomize` | boolean | Случайный порядок отображения |
 

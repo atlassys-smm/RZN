@@ -127,11 +127,21 @@ paths:
   /cms/quiz/questions:
     $ref: './paths/quiz.yaml#/cms-questions'
   /cms/quiz/questions/{id}:
-    $ref: './paths/quiz.yaml#/cms-questions-detail'
+    get:
+      $ref: './paths/quiz.yaml#/cms-questions-detail/get'
+    put:
+      $ref: './paths/quiz.yaml#/cms-questions-update/put'
+    delete:
+      $ref: './paths/quiz.yaml#/cms-questions-delete/delete'
 
   # ── CMS: Викторина — Шаблоны ────────────────────
   /cms/quiz/templates:
     $ref: './paths/quiz.yaml#/cms-templates'
+  /cms/quiz/templates/{id}:
+    put:
+      $ref: './paths/quiz.yaml#/cms-templates-update/put'
+    delete:
+      $ref: './paths/quiz.yaml#/cms-templates-delete/delete'
   /cms/quiz/templates/{id}/publish:
     $ref: './paths/quiz.yaml#/cms-templates-publish'
   /cms/quiz/templates/{id}/unpublish:
@@ -143,7 +153,10 @@ paths:
   /cms/quiz/templates/{id}/rounds/reorder:
     $ref: './paths/quiz.yaml#/cms-templates-rounds-reorder'
   /cms/quiz/templates/{id}/rounds/{roundId}:
-    $ref: './paths/quiz.yaml#/cms-templates-rounds-update'
+    put:
+      $ref: './paths/quiz.yaml#/cms-templates-rounds-update/put'
+    delete:
+      $ref: './paths/quiz.yaml#/cms-templates-rounds-delete/delete'
   /cms/quiz/templates/{id}/rounds/{roundId}/questions:
     $ref: './paths/quiz.yaml#/cms-templates-rounds-questions-add'
   /cms/quiz/templates/{id}/rounds/{roundId}/questions/reorder:
@@ -160,6 +173,12 @@ paths:
     $ref: './paths/quiz.yaml#/session-detail'
   /quiz/sessions/{id}/finish:
     $ref: './paths/quiz.yaml#/session-finish'
+  /quiz/sessions/{id}/teams/{teamId}:
+    $ref: './paths/quiz.yaml#/session-team-update'
+  /quiz/sessions/{id}/teams/{teamId}/captain:
+    $ref: './paths/quiz.yaml#/session-team-captain'
+  /quiz/sessions/{id}/participants/{participantId}/team:
+    $ref: './paths/quiz.yaml#/session-participant-team'
   /quiz/sessions/{id}/next:
     $ref: './paths/quiz.yaml#/session-next'
   /quiz/sessions/{id}/reveal:
@@ -168,6 +187,12 @@ paths:
     $ref: './paths/quiz.yaml#/session-timer-pause'
   /quiz/sessions/{id}/timer/resume:
     $ref: './paths/quiz.yaml#/session-timer-resume'
+  /quiz/sessions/{id}/timer/add-time:
+    $ref: './paths/quiz.yaml#/session-timer-add-time'
+  /quiz/sessions/{id}/timer/stop:
+    $ref: './paths/quiz.yaml#/session-timer-stop'
+  /quiz/sessions/{id}/skip:
+    $ref: './paths/quiz.yaml#/session-skip'
   /quiz/sessions/{id}/results/rounds/{roundIndex}:
     $ref: './paths/quiz.yaml#/session-results-round'
   /quiz/sessions/{id}/results/total:
@@ -533,6 +558,7 @@ components:
           type: string
           description: Новый device JWT
     QuizQuestion:
+      description: В CMS доступны ключи ответов. В состоянии сессии для LED и игрока поля is_correct и answer_key опускаются до раскрытия правильного ответа.
       type: object
       properties:
         id:
@@ -541,21 +567,32 @@ components:
         text:
           type: string
         question_type:
-          type: string
+          type: integer
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
         difficulty:
-          type: string
-          enum: [easy, medium, hard]
+          type: integer
+          enum: [1, 2, 3]
         age_group:
-          type: string
+          type: integer
           nullable: true
         time_limit:
           type: integer
+          minimum: 1
           description: Время на ответ в секундах
         points:
           type: integer
-        round_type:
+        explanation:
           type: string
           nullable: true
+        answer_key:
+          type: object
+          nullable: true
+          description: CMS-only эталонный ответ для структурированных типов; скрыт от игрока до reveal
+          additionalProperties: true
+        round_type:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
         tags:
           type: array
           items:
@@ -575,11 +612,16 @@ components:
                 type: string
               is_correct:
                 type: boolean
+                description: Не передаётся игроку до reveal
               media_url:
                 type: string
                 nullable: true
               order:
                 type: integer
+              side:
+                type: integer
+                enum: [1, 2]
+                description: 1 — left, 2 — right для matching
         created_at:
           type: string
           format: date-time
@@ -595,8 +637,9 @@ components:
           type: string
           nullable: true
         status:
-          type: string
-          enum: [draft, published]
+          type: integer
+          enum: [1, 2]
+          description: 1 — draft, 2 — published
         rounds:
           type: array
           items:
@@ -606,7 +649,8 @@ components:
                 type: integer
                 format: int64
               round_type:
-                type: string
+                type: integer
+                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
               order:
                 type: integer
               questions:
@@ -632,12 +676,18 @@ components:
         id:
           type: integer
           format: int64
+        device_id:
+          type: integer
+          format: int64
+          description: LED-устройство, на котором проводится сессия
         mode:
-          type: string
-          enum: [individual, team]
+          type: integer
+          enum: [1, 2]
+          description: 1 — individual, 2 — team
         status:
-          type: string
-          enum: [waiting, active, finished]
+          type: integer
+          enum: [1, 2, 3]
+          description: 1 — waiting, 2 — active, 3 — finished
         settings:
           type: object
         created_at:
@@ -662,11 +712,12 @@ components:
                 index:
                   type: integer
                 round_type:
-                  type: string
+                  type: integer
+                  enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
             current_question:
               type: object
               nullable: true
-              description: Текущий вопрос (заполняется при select=current_question)
+              description: Текущий вопрос (заполняется при select=current_question). До раскрытия ответа из question опускаются answer_key и is_correct у вариантов.
               properties:
                 index:
                   type: integer
@@ -677,25 +728,35 @@ components:
                   nullable: true
                   description: Заполнено после вызова reveal (ответ показан)
                   properties:
-                    answer_option_ids:
-                      type: array
-                      items:
-                        type: integer
-                        format: int64
+                    answer:
+                      type: object
+                      description: Эталонный ответ в формате соответствующего question_type
+                      additionalProperties: true
                     explanation:
                       type: string
                       nullable: true
-                votes:
-                  type: array
-                  description: Распределение голосов по вариантам ответа
-                  items:
-                    type: object
-                    properties:
-                      answer_option_id:
-                        type: integer
-                        format: int64
-                      count:
-                        type: integer
+                answer_submissions:
+                  type: object
+                  description: Счётчики принятых ответов; для капитана команды также содержит предварительные ответы участников до отправки решающего ответа
+                  properties:
+                    submitted_count:
+                      type: integer
+                    eligible_count:
+                      type: integer
+                    participant_answers:
+                      type: array
+                      description: Предварительные ответы команды, возвращаются только если participant_id запроса указывает на капитана
+                      items:
+                        type: object
+                        properties:
+                          participant_id:
+                            type: integer
+                            format: int64
+                          participant_name:
+                            type: string
+                          answer:
+                            type: object
+                            additionalProperties: true
             timer:
               $ref: '#/components/schemas/QuizTimerState'
             teams:
@@ -729,7 +790,8 @@ components:
           format: int64
           nullable: true
         score:
-          type: integer
+          type: number
+          description: Десятичное число баллов; в JSON передаётся как number
     QuizParticipant:
       description: Участник сессии викторины
       type: object
@@ -744,18 +806,20 @@ components:
           type: integer
           format: int64
           nullable: true
-          description: ID команды (null для mode=individual)
+          description: ID команды (null для mode=1, individual)
         name:
           type: string
         individual_score:
-          type: integer
+          type: number
+          description: Десятичное число баллов; в JSON передаётся как number
     QuizSessionState:
       description: Текущее состояние игры викторины (для next, reveal)
       type: object
       properties:
         status:
-          type: string
-          enum: [waiting, active, finished]
+          type: integer
+          enum: [1, 2, 3]
+          description: 1 — waiting, 2 — active, 3 — finished
         current_round:
           type: object
           nullable: true
@@ -763,7 +827,8 @@ components:
             index:
               type: integer
             round_type:
-              type: string
+              type: integer
+              enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
         current_question:
           type: object
           nullable: true
@@ -779,7 +844,8 @@ components:
                 text:
                   type: string
                 question_type:
-                  type: string
+                  type: integer
+                  enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
                 media_url:
                   type: string
                   nullable: true
@@ -803,25 +869,35 @@ components:
               nullable: true
               description: Заполнено после вызова reveal
               properties:
-                answer_option_ids:
-                  type: array
-                  items:
-                    type: integer
-                    format: int64
+                answer:
+                  type: object
+                  description: Эталонный ответ в формате соответствующего question_type
+                  additionalProperties: true
                 explanation:
                   type: string
                   nullable: true
-            votes:
-              type: array
-              description: Распределение голосов по вариантам ответа
-              items:
-                type: object
-                properties:
-                  answer_option_id:
-                    type: integer
-                    format: int64
-                  count:
-                    type: integer
+            answer_submissions:
+              type: object
+              description: Счётчики принятых ответов; для капитана команды также содержит предварительные ответы участников до отправки решающего ответа
+              properties:
+                submitted_count:
+                  type: integer
+                eligible_count:
+                  type: integer
+                participant_answers:
+                  type: array
+                  description: Предварительные ответы команды, возвращаются только если participant_id запроса указывает на капитана
+                  items:
+                    type: object
+                    properties:
+                      participant_id:
+                        type: integer
+                        format: int64
+                      participant_name:
+                        type: string
+                      answer:
+                        type: object
+                        additionalProperties: true
         timer:
           $ref: '#/components/schemas/QuizTimerState'
         scores:
@@ -841,7 +917,8 @@ components:
               name:
                 type: string
               score:
-                type: integer
+                type: number
+                description: Десятичное число баллов; в JSON передаётся как number
     QuizTimerState:
       description: |
         Состояние таймера текущего вопроса викторины.
@@ -862,7 +939,7 @@ components:
           type: boolean
           description: true — таймер идёт, false — на паузе
     QuizScoredEntry:
-      description: Запись с баллами. id — team_id для team mode, participant_id для individual.
+      description: Запись с баллами. id — team_id для mode=2 (team), participant_id для mode=1 (individual).
       type: object
       properties:
         id:
@@ -879,7 +956,8 @@ components:
             round_index:
               type: integer
             round_type:
-              type: string
+              type: integer
+              enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
         - type: object
           properties:
             scores:
@@ -890,11 +968,11 @@ components:
                   - type: object
                     properties:
                       round_score:
-                        type: integer
-                        description: Баллы за этот раунд
+                        type: number
+                        description: Десятичное число баллов за этот раунд; в JSON передаётся как number
                       total_score:
-                        type: integer
-                        description: Суммарные баллы на момент окончания раунда
+                        type: number
+                        description: Десятичное число суммарных баллов на момент окончания раунда; в JSON передаётся как number
     QuizFinalResult:
       description: Финальный результат
       allOf:
@@ -904,14 +982,16 @@ components:
             place:
               type: integer
             score:
-              type: integer
+              type: number
+              description: Десятичное число итоговых баллов; в JSON передаётся как number
     QuizTotalResult:
       description: Итоговый результат на текущий момент. mode определяет, что означает id.
       type: object
       properties:
         mode:
-          type: string
-          enum: [individual, team]
+          type: integer
+          enum: [1, 2]
+          description: 1 — individual, 2 — team
         results:
           type: array
           description: Рейтинг по убыванию баллов

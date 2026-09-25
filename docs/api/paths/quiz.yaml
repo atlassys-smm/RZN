@@ -11,22 +11,24 @@ cms-questions:
       - name: question_type
         in: query
         schema:
-          type: string
-        description: Тип вопроса (single_choice, multiple_choice, ...)
+          type: integer
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+        description: Числовой ID типа вопроса из справочника
       - name: difficulty
         in: query
         schema:
-          type: string
-          enum: [easy, medium, hard]
+          type: integer
+          enum: [1, 2, 3]
       - name: age_group
         in: query
         schema:
-          type: string
+          type: integer
       - name: round_type
         in: query
         schema:
-          type: string
-        description: Тип раунда (quick_start, tools, ...)
+          type: integer
+          enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        description: Числовой ID типа раунда из справочника
       - name: tag
         in: query
         schema:
@@ -70,26 +72,33 @@ cms-questions:
               text:
                 type: string
               question_type:
-                type: string
+                type: integer
+                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
               difficulty:
-                type: string
-                enum: [easy, medium, hard]
+                type: integer
+                enum: [1, 2, 3]
               age_group:
-                type: string
+                type: integer
               time_limit:
                 type: integer
-                description: Время на ответ в секундах
+                minimum: 1
+                description: Обязательное время на ответ в секундах
               points:
                 type: integer
               explanation:
                 type: string
                 description: Пояснение правильного ответа
               round_type:
-                type: string
+                type: integer
+                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
               tags:
                 type: array
                 items:
                   type: string
+              answer_key:
+                type: object
+                description: Эталонный ответ для структурированных типов
+                additionalProperties: true
               media_id:
                 type: integer
                 format: int64
@@ -108,6 +117,10 @@ cms-questions:
                       format: int64
                     order:
                       type: integer
+                    side:
+                      type: integer
+                      enum: [1, 2]
+                      description: Сторона элемента для вопроса matching
     responses:
       '201':
         description: Вопрос создан
@@ -142,6 +155,7 @@ cms-questions-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить вопрос
+    description: Нельзя редактировать вопрос, используемый незавершённой игровой сессией (status `1` — waiting или `2` — active).
     parameters:
       - name: id
         in: path
@@ -164,11 +178,14 @@ cms-questions-update:
               $ref: '#/components/schemas/QuizQuestion'
       '404':
         description: Вопрос не найден
+      '409':
+        description: Вопрос используется незавершённой сессией
 
 cms-questions-delete:
   delete:
     tags: [Викторина - CMS]
     summary: Удалить вопрос
+    description: Нельзя удалить вопрос, используемый незавершённой игровой сессией (status `1` — waiting или `2` — active).
     parameters:
       - name: id
         in: path
@@ -181,6 +198,8 @@ cms-questions-delete:
         description: Вопрос удалён
       '404':
         description: Вопрос не найден
+      '409':
+        description: Вопрос используется незавершённой сессией
 
 # ═══════════════════════════════════════════════════════════════
 # CMS — Шаблоны сценариев
@@ -195,8 +214,8 @@ cms-templates:
       - name: status
         in: query
         schema:
-          type: string
-          enum: [draft, published]
+          type: integer
+          enum: [1, 2]
       - name: limit
         in: query
         schema:
@@ -274,7 +293,7 @@ cms-templates-delete:
   delete:
     tags: [Викторина - CMS]
     summary: Удалить шаблон
-    description: Удалить шаблон (только если не использовался в проведённых сессиях)
+    description: Удалить шаблон. Созданные ранее сессии хранят собственный набор раундов и вопросов.
     parameters:
       - name: id
         in: path
@@ -285,14 +304,12 @@ cms-templates-delete:
     responses:
       '204':
         description: Шаблон удалён
-      '409':
-        description: Шаблон использовался в сессиях, удаление невозможно
 
 cms-templates-publish:
   post:
     tags: [Викторина - CMS]
     summary: Опубликовать шаблон
-    description: Изменить статус с draft на published — шаблон становится доступен оператору
+    description: Изменить статус с `1` (draft) на `2` (published) — шаблон становится доступен оператору
     parameters:
       - name: id
         in: path
@@ -308,7 +325,7 @@ cms-templates-unpublish:
   post:
     tags: [Викторина - CMS]
     summary: В черновик
-    description: Изменить статус с published на draft
+    description: Изменить статус с `2` (published) на `1` (draft)
     parameters:
       - name: id
         in: path
@@ -343,7 +360,8 @@ cms-templates-rounds-create:
             required: [round_type]
             properties:
               round_type:
-                type: string
+                type: integer
+                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     responses:
       '201':
         description: Раунд добавлен
@@ -522,35 +540,65 @@ session-create:
     tags: [Викторина - Оператор]
     summary: Создать сессию
     description: |
-      Создаёт сессию в статусе `waiting` (формирование команд).
-      `current_round` и `current_question` = null — игра ещё не началась.
-      Фронтенд получает список шаблонов через `GET /cms/quiz/templates`, выбирает нужный и отправляет раунды с вопросами.
-      Команды создаются автоматически по `settings.team_count` (для mode=team).
-      Оператор запускает первый вопрос через `POST /quiz/sessions/{id}/next`.
+      Создаёт сессию в статусе `1` (waiting). Она привязывается к LED-устройству `device_id`; на одном устройстве одновременно может быть только одна сессия со статусом `1` (waiting) или `2` (active).
+      API принимает только готовый массив `rounds`, без `template_id`. Если оператор выбрал шаблон, клиент переносит его типы раундов и `question_ids` в этот массив. Для каждого раунда передаются либо конкретные `question_ids`, либо `question_count` и `question_filters` для автоматического выбора вопросов.
+      Команды создаются автоматически по `settings.team_count` (для `mode = 2`, team).
+      Оператор запускает первый вопрос через `POST /quiz/sessions/{id}/next`. Для командной игры нужны не менее двух команд с не менее чем двумя участниками в каждой. Пустые команды исключаются при старте. Состав раундов и вопросов после создания не редактируется.
     requestBody:
       required: true
       content:
         application/json:
           schema:
             type: object
-            required: [mode, rounds]
+            required: [device_id, mode, rounds]
             properties:
+              device_id:
+                type: integer
+                format: int64
+                description: LED-устройство, на котором проводится сессия
               mode:
-                type: string
-                enum: [individual, team]
+                type: integer
+                enum: [1, 2]
+                description: 1 — individual, 2 — team
               rounds:
                 type: array
-                description: Раунды с вопросами (заполнены из шаблона или вручную)
+                description: Раунды с вопросами из шаблона, выбранными явно по ID или автоматически по количеству и фильтрам
                 items:
                   type: object
+                  required: [round_type]
+                  oneOf:
+                    - required: [question_ids]
+                    - required: [question_count, question_filters]
                   properties:
                     round_type:
-                      type: string
+                      type: integer
+                      enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
                     question_ids:
                       type: array
+                      description: Явно выбранные вопросы; используется вместо автоматического выбора
                       items:
                         type: integer
                         format: int64
+                    question_count:
+                      type: integer
+                      minimum: 1
+                      description: Сколько вопросов автоматически выбрать для раунда
+                    question_filters:
+                      type: object
+                      description: Фильтры кандидатов. Каждое поле необязательно; заданные поля ограничивают выбор.
+                      properties:
+                        difficulty:
+                          type: integer
+                          enum: [1, 2, 3]
+                          description: Числовой ID сложности
+                        age_group:
+                          type: integer
+                          description: Числовой ID возрастной группы
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                          description: Теги для фильтрации вопросов
               settings:
                 type: object
                 properties:
@@ -558,7 +606,13 @@ session-create:
                     type: integer
                     minimum: 2
                     maximum: 8
-                    description: Количество команд (для mode=team)
+                    description: Количество команд (для mode=2, team)
+                  team_capacity:
+                    type: integer
+                    minimum: 2
+                    maximum: 10
+                    default: 10
+                    description: Максимум участников в одной команде
                   auto_reveal:
                     type: boolean
                     default: true
@@ -598,16 +652,24 @@ session-create:
                 value:
                   error: invalid_team_count
                   message: Количество команд должно быть от 2 до 8
+      '409':
+        description: На этом устройстве уже есть незавершённая сессия
 
 session-active:
   get:
     tags: [Викторина]
     summary: Получить активную сессию
     description: |
-      Возвращает текущую активную сессию (status=waiting или active).
-      Используется оператором при перезапуске планшета для восстановления состояния.
+      Возвращает текущую незавершённую сессию (status=1, waiting или status=2, active) для указанного LED-устройства.
+      Оператор использует запрос для отображения сессии, уже запущенной на этом устройстве.
       Если активной сессии нет — возвращает 404.
     parameters:
+      - name: device_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
       - name: select
         in: query
         description: Связанные данные для включения
@@ -643,7 +705,7 @@ session-detail:
     summary: Получить сессию
     description: |
       Без параметра select возвращает только базовые поля сессии (QuizSession).
-      С параметром select возвращает QuizSessionFull с запрошенными связями.
+      С параметром select возвращает QuizSessionFull с запрошенными связями. Если `participant_id` принадлежит капитану и запрошен `current_question`, `answer_submissions` содержит предварительные ответы команды. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
     parameters:
       - name: id
         in: path
@@ -666,6 +728,12 @@ session-detail:
               - current_question
               - current_round
               - timer
+      - name: participant_id
+        in: query
+        description: ID GameSessionParticipant; when it identifies the team captain, current_question includes team-member submissions
+        schema:
+          type: integer
+          format: int64
     responses:
       '200':
         description: Сессия. Без select — только базовые поля. С select — запрошенные связи заполнены, остальные null.
@@ -684,7 +752,7 @@ session-finish:
   post:
     tags: [Викторина - Оператор]
     summary: Завершить сессию
-    description: Завершить сессию. Статус меняется на `finished`.
+    description: Завершить сессию. Статус меняется на `3` (finished).
     parameters:
       - name: id
         in: path
@@ -696,6 +764,121 @@ session-finish:
       '204':
         description: Сессия завершена
 
+session-team-update:
+  patch:
+    tags: [Викторина - Оператор]
+    summary: Переименовать команду
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+    responses:
+      '200':
+        description: Команда обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizTeam'
+      '404':
+        description: Сессия или команда не найдена
+
+session-participant-team:
+  patch:
+    tags: [Викторина - Оператор]
+    summary: Переместить участника в другую команду
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: participantId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [team_id]
+            properties:
+              team_id:
+                type: integer
+                format: int64
+    responses:
+      '200':
+        description: Участник перемещён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizParticipant'
+      '404':
+        description: Сессия, участник или команда не найдены
+      '409':
+        description: В целевой команде достигнут лимит в 10 участников
+
+session-team-captain:
+  put:
+    tags: [Викторина - Оператор]
+    summary: Назначить капитана команды
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [participant_id]
+            properties:
+              participant_id:
+                type: integer
+                format: int64
+    responses:
+      '200':
+        description: Капитан назначен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizTeam'
+      '404':
+        description: Сессия, команда или участник не найдены
+
 # ═══════════════════════════════════════════════════════════════
 # Управление ходом (оператор)
 # ═══════════════════════════════════════════════════════════════
@@ -705,10 +888,11 @@ session-next:
     tags: [Викторина - Оператор]
     summary: Следующий вопрос / Начать игру
     description: |
-      Если сессия в статусе `waiting` — запускает первый вопрос первого раунда (старт игры).
+      Если сессия в статусе `1` (waiting) — запускает первый вопрос первого раунда (старт игры).
+      При старте командной игры исключает пустые команды и требует не менее 2 оставшихся команд с минимум 2 участниками в каждой.
       Если игра идёт — переход к следующему вопросу. Между вопросами — таймер автопереключения (auto_next_delay).
       Если вопросов в раунде больше нет — показ результатов раунда, затем (через between_rounds_delay) — следующий раунд.
-      После последнего вопроса последнего раунда — показ финальных результатов. Сессия остаётся в статусе `active`, оператор завершает её явно через `POST /quiz/sessions/{id}/finish`.
+      После последнего вопроса последнего раунда — показ финальных результатов. Сессия остаётся в статусе `2` (active), оператор завершает её явно через `POST /quiz/sessions/{id}/finish`.
     parameters:
       - name: id
         in: path
@@ -730,6 +914,11 @@ session-next:
             schema:
               $ref: '#/components/schemas/Error'
             examples:
+              insufficient_team_members:
+                summary: Недостаточный состав при старте игры
+                value:
+                  error: insufficient_team_members
+                  message: Для старта нужны минимум 2 команды по 2 участника
               session_finished:
                 summary: Сессия завершена
                 value:
@@ -761,11 +950,10 @@ session-reveal:
             schema:
               type: object
               properties:
-                answer_option_ids:
-                  type: array
-                  items:
-                    type: integer
-                    format: int64
+                answer:
+                  type: object
+                  description: Эталонный ответ в формате соответствующего question_type
+                  additionalProperties: true
                 explanation:
                   type: string
                   nullable: true
@@ -826,6 +1014,84 @@ session-timer-resume:
           application/json:
             schema:
               $ref: '#/components/schemas/QuizTimerState'
+
+session-timer-add-time:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Добавить время
+    description: Увеличить оставшееся время текущего вопроса. Работает при запущенном таймере и на паузе.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [seconds]
+            properties:
+              seconds:
+                type: integer
+                minimum: 1
+                description: Сколько секунд добавить
+    responses:
+      '200':
+        description: Обновлённое состояние таймера
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizTimerState'
+      '400':
+        description: Нет текущего вопроса или приём ответов уже закрыт
+
+session-timer-stop:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Остановить таймер
+    description: Досрочно завершить приём ответов на текущий вопрос. После остановки применяется настройка `auto_reveal`; при выключенном автопоказе оператор вызывает `reveal` или `skip`.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Текущее состояние игры после остановки таймера
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
+      '400':
+        description: Нет текущего вопроса или приём ответов уже закрыт
+
+session-skip:
+  post:
+    tags: [Викторина - Оператор]
+    summary: Пропустить показ ответа
+    description: После закрытия приёма ответов перейти к следующему вопросу или результатам раунда без показа правильного ответа. Уже принятые зачётные ответы проверяются автоматически.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Текущее состояние игры после перехода
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
+      '400':
+        description: Нет текущего вопроса или приём ответов ещё открыт
 
 # ═══════════════════════════════════════════════════════════════
 # Результаты
@@ -903,19 +1169,25 @@ player-join:
           application/json:
             schema:
               type: object
+              required: [participant_id, session_id, token, mode]
               properties:
                 participant_id:
                   type: integer
                   format: int64
+                  description: ID GameSessionParticipant
                 session_id:
                   type: integer
                   format: int64
-                mode:
+                token:
                   type: string
-                  enum: [individual, team]
+                  description: User JWT гостевого пользователя
+                mode:
+                  type: integer
+                  enum: [1, 2]
+                  description: 1 — individual, 2 — team
                 teams:
                   type: array
-                  description: Список команд (для mode=team)
+                  description: Список команд (для mode=2, team)
                   items:
                     type: object
                     properties:
@@ -959,6 +1231,17 @@ player-team-join:
         schema:
           type: integer
           format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [participant_id]
+            properties:
+              participant_id:
+                type: integer
+                format: int64
     responses:
       '200':
         description: Присоединился к команде
@@ -976,6 +1259,8 @@ player-team-join:
                 is_captain:
                   type: boolean
                   description: true если участник стал капитаном (первый в команде)
+      '409':
+        description: Сессия уже началась или команда заполнена (10 участников)
 
 player-answer:
   post:
@@ -985,7 +1270,7 @@ player-answer:
       Ответ на текущий вопрос. Поведение зависит от режима и роли:
       - Individual mode: ответ засчитывается
       - Team mode, обычный участник: сохраняется как голос (для отображения капитану)
-      - Team mode, капитан: засчитывается как ответ команды
+      - Team mode, капитан: предварительный ответ при `is_final=false`, зачётный ответ команды при `is_final=true`
     parameters:
       - name: sessionId
         in: path
@@ -999,9 +1284,20 @@ player-answer:
         application/json:
           schema:
             type: object
+            required: [participant_id, answer]
             properties:
+              participant_id:
+                type: integer
+                format: int64
+                description: ID GameSessionParticipant, полученный при подключении
               answer:
-                description: Зависит от типа вопроса
+                type: object
+                description: JSON-ответ согласно типу вопроса; форматы описаны в entities/quiz.md
+                additionalProperties: true
+              is_final:
+                type: boolean
+                default: false
+                description: true только для решающего ответа капитана команды; false означает предварительный ответ участника
     responses:
       '200':
         description: Ответ принят
@@ -1024,21 +1320,21 @@ player-answer:
                 value:
                   error: already_answered
                   message: Вы уже дали ответ на этот вопрос
-              voting_closed:
+              answering_closed:
                 summary: Приём ответов завершён
                 value:
-                  error: voting_closed
+                  error: answering_closed
                   message: Приём ответов на этот вопрос завершён
               captain_already_answered:
-                summary: Капитан уже ответил
+                summary: Капитан уже отправил решающий ответ
                 value:
                   error: captain_already_answered
-                  message: Капитан команды уже дал итоговый ответ
+                  message: Капитан команды уже отправил решающий ответ
               not_captain:
-                summary: Не капитан
+                summary: Решающий ответ может отправить только капитан
                 value:
                   error: not_captain
-                  message: Только капитан может дать итоговый ответ команды
+                  message: Только капитан может отправить решающий ответ команды
       '404':
         description: Сессия или вопрос не найдены
         content:
@@ -1065,10 +1361,10 @@ player-answer:
 # {
 #   "type": "session_state",
 #   "data": {
-#     "status": "active",
-#     "current_round": { "index": 0, "round_type": "quick_start" },
+#     "status": 2,
+#     "current_round": { "index": 0, "round_type": 1 },
 #     "current_question": { ... },
-#     "timer": { "remaining": 25, "running": true },
+#     "timer": { "ends_at": 1780000000000, "remaining_at_pause": null, "running": true },
 #     "scores": [...]
 #   }
 # }
@@ -1084,17 +1380,14 @@ player-answer:
 #   }
 # }
 #
-# ### votes_update
-# Обновление количества голосов (для оператора и LED).
+# ### answers_update
+# Новый предварительный ответ участника или решающий ответ капитана. Капитан обновляет состояние запросом GET /quiz/sessions/{id}?select=current_question&participant_id={captainParticipantId}.
 #
 # {
-#   "type": "votes_update",
+#   "type": "answers_update",
 #   "data": {
-#     "votes": [
-#       { "answer_option_id": "id", "count": 5 },
-#       { "answer_option_id": "id", "count": 3 }
-#     ],
-#     "total_voters": 8
+#     "submitted_count": 8,
+#     "eligible_count": 12
 #   }
 # }
 #
@@ -1105,7 +1398,7 @@ player-answer:
 #   "type": "question_revealed",
 #   "data": {
 #     "correct_answer": {
-#       "answer_option_ids": ["id"],
+#       "answer": { ... },
 #       "explanation": "Пояснение"
 #     }
 #   }
@@ -1137,7 +1430,7 @@ player-answer:
 #
 # {
 #   "type": "subscribe",
-#   "events": ["votes_update", "question_revealed"]
+#   "events": ["answers_update", "question_revealed"]
 # }
 #
 # Если не отправлено — клиент получает все события.

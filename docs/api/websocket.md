@@ -8,6 +8,8 @@ WebSocket-эндпоинты для получения уведомлений о
 
 ## Викторина
 
+До события `question_revealed` состояние сессии не содержит `answer_key` вопроса и `is_correct` у вариантов ответа.
+
 ### Подключение
 
 ```
@@ -20,7 +22,7 @@ ws://host/api/v1/quiz/sessions/{sessionId}/ws
 |---------|----------|---------------|
 | `session_state` | Полное состояние сессии | — (данные уже в событии) |
 | `question_started` | Начался приём ответов | `GET /quiz/sessions/{id}` |
-| `votes_update` | Обновление голосов | `GET /quiz/sessions/{id}` |
+| `answers_update` | Принят предварительный ответ участника или решающий ответ капитана | `GET /quiz/sessions/{id}`; капитан передаёт `participant_id`, чтобы получить ответы команды |
 | `question_revealed` | Правильный ответ показан | `GET /quiz/sessions/{id}` |
 | `round_finished` | Раунд завершён | `GET /quiz/sessions/{id}/results/rounds/{index}` |
 | `session_finished` | Сессия завершена | — |
@@ -28,7 +30,7 @@ ws://host/api/v1/quiz/sessions/{sessionId}/ws
 ### Формат событий
 
 ```json
-{ "type": "votes_update" }
+{ "type": "answers_update" }
 { "type": "question_revealed" }
 { "type": "round_finished", "data": { "round_index": 0 } }
 ```
