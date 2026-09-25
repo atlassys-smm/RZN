@@ -955,10 +955,9 @@ components:
         - type: object
           properties:
             branches:
-              type: array
-              description: Дерево веток (стартовая ветка первая, с дочерними вложенными)
-              items:
-                $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+              $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+              nullable: true
+              description: Корневая ветка дерева (стартовая, с рекурсивно вложенными дочерними через children). null если сценарий не имеет веток.
 
     InteractiveVideoScenarioBranch:
       description: Ветка видеосценария (видеофрагмент с вариантами выбора)

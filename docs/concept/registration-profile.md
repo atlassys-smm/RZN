@@ -8,7 +8,7 @@
 
 Единая запись `User` — пользователь создаётся при первом сканировании QR-кода. В зависимости от наличия OAuth-данных он находится в гостевом или авторизованном состоянии.
 
-- **Гость** — `status = guest`, есть `guest_id`, нет OAuth-данных
+- **Гость** — `status = active`, есть `guest_id` и `guest_expires_at`, нет OAuth-данных
 - **Авторизованный** — `status = active`, заполнены OAuth-поля
 
 Результаты всех активностей всегда привязаны к `id` пользователя. При переходе из гостевого режима в авторизованный **перенос данных не требуется**.
@@ -37,7 +37,7 @@ flowchart TD
     OAuth --> CreateUserActive["Создание User\n(status=active, OAuth-поля)"]
     CreateUserActive --> Activity
 
-    Choice -->|"Гость"| CreateUserGuest["Создание User\n(status=guest, guest_id)"]
+    Choice -->|"Гость"| CreateUserGuest["Создание User\n(status=active, guest_id, guest_expires_at)"]
     CreateUserGuest --> Activity
 ```
 
@@ -47,7 +47,7 @@ flowchart TD
 - Если токен есть — пользователь узнаётся, **новая запись не создаётся**
 - Если токена нет — **экран выбора**: авторизоваться через OAuth или продолжить как гость
 - При выборе OAuth → создание User со `status = active`, принятие согласия
-- При выборе гостя → создание User со `status = guest`, `guest_id`
+- При выборе гостя → создание User со `status = active`, `guest_id`, `guest_expires_at`
 - Результаты всегда привязаны к `id` — **перенос не нужен**
 - Гость может авторизоваться позже (в течение 24ч) — OAuth-поля заполнятся у той же записи
 - Гость видит предложение авторизоваться **на каждой странице** личного кабинета
@@ -129,7 +129,7 @@ sequenceDiagram
 
     User->>Browser: Галочка поставлена → выбор «Продолжить как гость»
     Browser->>Auth: POST /qr/scan/guest?session_id=xxx (согласие подтверждено)
-    Auth->>DB: Запись ConsentAcceptance + создание User (status=guest, guest_id, guest_expires_at)
+    Auth->>DB: Запись ConsentAcceptance + создание User (status=active, guest_id, guest_expires_at)
     DB-->>Auth: User создан
     Auth->>Terminal: Уведомление: гость подключился
     Auth-->>Browser: guest_id + JWT гостя
@@ -147,7 +147,7 @@ sequenceDiagram
     participant OAuth as OAuth-провайдер
     participant DB as База данных
 
-    Note over User,DB: Гость активен (guest_id в localStorage, status=guest)
+    Note over User,DB: Гость активен (guest_id в localStorage, guest_expires_at > now)
 
     User->>Browser: Баннер «Авторизуйтесь» + чекбокс согласия
     User->>Browser: Галочка поставлена → нажимает «Войти через OAuth»
@@ -160,7 +160,7 @@ sequenceDiagram
     OAuth-->>Auth: Данные пользователя
 
     Auth->>DB: Поиск User по guest_id
-    DB-->>Auth: Найден User (status=guest)
+    DB-->>Auth: Найден User (status=active, guest_id)
 
     Auth->>DB: Обновление: oauth_provider, oauth_provider_id,<br/>email, name, avatar, status=active
     DB-->>Auth: User обновлён
@@ -177,27 +177,34 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Start["Первый контакт\n(QR-код)"] --> Guest["GUEST\n• guest_id сгенерирован\n• guest_expires_at = 24ч\n• Результаты привязаны к id"]
-    
-    Guest -->|"OAuth в течение 24ч"| Active["ACTIVE\n• OAuth-поля заполнены\n• guest_expires_at обнулён\n• Полный доступ к профилю"]
-    
-    Guest -->|"24 часа прошли\nбез авторизации"| Anonymized["ANONYMIZED\n• Гостевая сессия разорвана\n• Данные обезличены\n• Аналитика сохранена"]
-    
-    Active -->|"Действие администратора"| Deactivated["DEACTIVATED\n• Вход заблокирован\n• Данные сохранены"]
-    
+    Start["Первый контакт\n(QR-код)"] --> Guest["Гость\n• guest_id сгенерирован\n• guest_expires_at = 24ч\n• status = active\n• Результаты привязаны к id"]
+
+    Guest -->|"OAuth в течение 24ч"| Active["Авторизован\n• OAuth-поля заполнены\n• guest_expires_at обнулён\n• status = active\n• Полный доступ к профилю"]
+
+    Guest -->|"24 часа прошли\nбез авторизации"| Anonymized["Обезличен\n• guest_expires_at истёк\n• Данные обезличены\n• Аналитика сохранена"]
+
+    Active -->|"Действие администратора"| Deactivated["Заблокирован\n• status = deactivated\n• Вход заблокирован\n• Данные сохранены"]
+
+    Anonymized -->|"Действие администратора"| Deactivated
+
     Anonymized -.->|"Может создать\nнового гостя"| Guest
 ```
 
-**Описание состояний:**
+**Описание статусов и состояний:**
 
 | Статус | Описание | Как попадает |
 |--------|----------|--------------|
-| `guest` | Гостевой режим, есть `guest_id`, 24 часа на авторизацию | Первый контакт (QR-код), выбор «Продолжить как гость» |
-| `active` | Авторизован через OAuth, полноценный пользователь | Авторизация через OAuth в течение 24ч |
-| `anonymized` | Гость не авторизовался, данные обезличены | Автоматически через 24ч после создания гостя |
-| `deactivated` | Деактивирован администратором | Действие администратора |
+| `active` | Активен (независимо от способа входа) | Первый контакт (QR-код) или авторизация через OAuth |
+| `deactivated` | Заблокирован администратором | Действие администратора |
 
-**Обезличивание:** если гость не авторизовался в течение 24 часов, гостевая сессия разрывается, связь с гостем утеряна навсегда. Результаты и аналитика сохраняются, но привязаны к `id` записи без возможности восстановления личности.
+**Состояния гостевого режима** (определяются по полям `guest_id` и `guest_expires_at`, не являются статусами):
+
+| Состояние | Условие | Описание |
+|-----------|---------|----------|
+| Гость | `guest_id IS NOT NULL AND guest_expires_at > now()` | Гостевой режим, 24 часа на авторизацию через OAuth |
+| Обезличен | `guest_id IS NOT NULL AND guest_expires_at < now()` | Гость не авторизовался, данные обезличены |
+
+**Обезличивание:** если гость не авторизовался в течение 24 часов, `guest_expires_at` истекает, связь с гостем утеряна навсегда. Результаты и аналитика сохраняются, но привязаны к `id` записи без возможности восстановления личности.
 
 ---
 

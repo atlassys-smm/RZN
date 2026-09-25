@@ -2640,6 +2640,31 @@ paths:
                 $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
         '404':
           description: Ветка не найдена
+    delete:
+      tags:
+      - Профессии в действии - CMS
+      summary: Удалить ветку
+      description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: branchId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Ветка удалена
+        '400':
+          description: Нельзя удалить стартовую ветку
+        '404':
+          description: Ветка не найдена
   /interactive-video/sessions:
     post:
       tags:
@@ -4035,10 +4060,9 @@ components:
       - type: object
         properties:
           branches:
-            type: array
-            description: Дерево веток (стартовая ветка первая, с дочерними вложенными)
-            items:
-              $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+            $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+            nullable: true
+            description: Корневая ветка дерева (стартовая, с рекурсивно вложенными дочерними через children). null если сценарий не имеет веток.
     InteractiveVideoScenarioBranch:
       description: Ветка видеосценария (видеофрагмент с вариантами выбора)
       type: object

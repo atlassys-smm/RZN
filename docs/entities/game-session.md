@@ -39,8 +39,31 @@
 | `auto_next_delay` | integer | `5` | Задержка автоперехода в секундах |
 | `between_rounds_delay` | integer | `10` | Пауза между раундами в секундах (экран результатов раунда) |
 | `show_intermediate_results` | boolean | `true` | Показывать промежуточный рейтинг после каждого раунда |
+| `scoring` | json | — | Настройки системы начисления баллов — см. ниже |
 
 Время на ответ берётся из `GameQuestion.time_limit` (у каждого вопроса своё).
+
+### scoring (JSON)
+
+Параметры системы баллов, сохраняемые в снапшоте при создании сессии. Во время активной сессии изменение невозможно.
+
+| Поле | Тип | По умолчанию | Описание |
+|------|-----|--------------|----------|
+| `partial_correct.enabled` | boolean | `true` | Частичный балл за задания с несколькими правильными элементами |
+| `speed_bonus.enabled` | boolean | `true` | Бонус за быстрый ответ |
+| `speed_bonus.coefficient` | decimal | `1.5` | Множитель за быстрый ответ |
+| `speed_bonus.threshold_percent` | integer | `50` | Порог быстрого ответа (% от времени на вопрос, 0–100) |
+| `streak_bonus.enabled` | boolean | `true` | Бонус за серию последовательных правильных ответов |
+| `streak_bonus.step` | decimal | `0.05` | Шаг коэффициента за каждый последовательный правильный ответ |
+| `streak_bonus.max` | decimal | `2.0` | Предельный коэффициент серии |
+| `consensus_bonus.enabled` | boolean | `true` | Бонус за единогласный ответ команды |
+| `consensus_bonus.coefficient` | decimal | `1.2` | Множитель при единогласном правильном ответе |
+| `final_multiplier.enabled` | boolean | `true` | Повышающий множитель финального раунда |
+| `final_multiplier.coefficient` | decimal | `1.5` | Множитель баллов в финальном раунде |
+| `penalty.enabled` | boolean | `false` | Штраф за неправильный ответ |
+| `penalty.coefficient` | decimal | `0.0` | Доля баллов вопроса, вычитаемая при неправильном ответе (0.0 — нет штрафа, 1.0 — все баллы) |
+
+→ Механика расчёта — в подсистеме [Правила начисления баллов](../subsystems/led-platform/quiz.md#правила-начисления-баллов)
 
 ### Связи
 
@@ -111,7 +134,7 @@
 | `name` | string | Название команды |
 | `color` | string | Цвет команды (для визуального различия) |
 | `captain_id` | integer (int64), nullable | ID капитана команды (ссылка на GameSessionParticipant) |
-| `score` | integer | Итоговый счёт команды |
+| `score` | decimal | Итоговый счёт команды |
 | `created_at` | timestamp | Дата создания |
 
 ### Связи
@@ -140,7 +163,7 @@
 | `session_id` | integer (int64) | ID сессии |
 | `team_id` | integer (int64), nullable | ID команды (null для индивидуальной викторины) |
 | `user_id` | integer (int64), nullable | ID пользователя (null для гостя) |
-| `individual_score` | integer | Индивидуальный счёт участника |
+| `individual_score` | decimal | Индивидуальный счёт участника |
 | `joined_at` | timestamp | Дата подключения к сессии |
 
 ### Связи
@@ -171,7 +194,7 @@
 | `team_id` | integer (int64), nullable | ID команды (для team mode) |
 | `answer` | json | Ответ — структура зависит от типа вопроса |
 | `is_correct` | boolean | Правильность ответа |
-| `score` | integer | Начисленные баллы |
+| `score` | decimal | Начисленные баллы |
 | `created_at` | timestamp | Дата ответа |
 
 ### Связи
@@ -194,18 +217,11 @@
 
 | Ключ | Тип | Описание |
 |------|-----|----------|
-| `session:{id}:timer_remaining` | integer | Секунд осталось на текущий вопрос |
-| `session:{id}:timer_running` | boolean | Идёт ли отсчёт |
-| `session:{id}:timer_updated_at` | timestamp | Когда последний раз обновили |
+| `session:{id}:timer` | hash | Состояние таймера (поля `ends_at`, `remaining_at_pause`) |
 | `session:{id}:votes` | hash | `{participant_id → vote}` — голоса текущего вопроса |
 | `session:{id}:revealed` | boolean | Правильный ответ уже показан |
 
-### Логика таймера
-
-- **Старт вопроса**: `remaining = question.time_limit`, `running = true`, `updated_at = now`
-- **Пауза**: `remaining = remaining - (now - updated_at)`, `running = false`
-- **Возобновление**: `updated_at = now`, `running = true`
-- **Клиент вычисляет**: если `running` → `remaining - (now - updated_at)`, иначе → `remaining`
+Подробное описание работы таймера, операций и синхронизации — в разделе [Таймер](timer-state.md).
 
 ---
 

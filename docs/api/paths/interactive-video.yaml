@@ -242,8 +242,6 @@ cms-branches-update:
               $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
       '404':
         description: Ветка не найдена
-
-cms-branches-delete:
   delete:
     tags: [Профессии в действии - CMS]
     summary: Удалить ветку
