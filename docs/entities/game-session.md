@@ -182,13 +182,22 @@
 
 ## GameSessionAnswer (Ответ в сессии)
 
-Факт ответа на вопрос в рамках сессии. Хранится в БД для аналитики и истории.
+Факт ответа на вопрос в рамках сессии. Хранится в Redis для производительности; структура описана ниже для понимания логики.
 
-### Атрибуты
+### Структура данных в Redis
+
+Ответы хранятся в нескольких ключах Redis:
+
+| Ключ | Тип | Описание |
+|------|-----|----------|
+| `quiz:session:{id}:answers` | hash | `{participant_id → json(answer)}` — предварительные ответы участников на текущий вопрос |
+| `quiz:session:{id}:scores` | hash | `{"{session_question_id}:{participant_id}" → json({is_correct, score, team_id})}` — результаты проверки ответов с начисленными баллами |
+| `quiz:session:{id}:final_answers` | hash | `{"{session_question_id}:{team_id}" → "1"}` — отметка о том, что капитан команды уже отправил решающий ответ |
+
+### Логические атрибуты
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| `id` | integer (int64, автоинкремент) | Уникальный идентификатор |
 | `session_id` | integer (int64) | ID сессии |
 | `session_question_id` | integer (int64) | ID вопроса в сессии (GameSessionQuestion) |
 | `participant_id` | integer (int64) | ID автора зачётного ответа (капитан команды или индивидуальный участник) |
@@ -196,16 +205,8 @@
 | `answer` | json | Ответ — структура зависит от типа вопроса |
 | `is_correct` | boolean | Правильность ответа |
 | `score` | decimal | Начисленные баллы |
-| `created_at` | timestamp | Дата ответа |
 
-### Связи
-
-- **GameSessionAnswer → GameSession**: ответ в рамках сессии
-- **GameSessionAnswer → GameSessionQuestion**: ответ на конкретный вопрос
-- **GameSessionAnswer → GameSessionParticipant**: кто ответил
-- **GameSessionAnswer → GameSessionTeam**: какая команда (для team mode)
-
-В командном режиме предварительные ответы участников хранятся в состоянии текущего вопроса и доступны капитану. В `GameSessionAnswer` сохраняется только решающий ответ капитана, который участвует в расчёте счёта команды.
+В командном режиме предварительные ответы участников хранятся в `answers` и доступны капитану. В `scores` сохраняется результат проверки решающего ответа капитана, который участвует в расчёте счёта команды.
 
 Зачётные ответы в обоих режимах проверяются автоматически по эталону вопроса. Ручное выставление баллов оператором не входит в API викторины.
 
@@ -218,15 +219,15 @@
 
 ## Состояние активной сессии (Redis)
 
-Текущее состояние игры доступно через Redis. Таймер использует абсолютный UNIX timestamp в миллисекундах `ends_at`; на паузе `ends_at = null`, а оставшееся время возвращается в `remaining_at_pause`. При сбое таймер сбрасывается
+Текущее состояние игры доступно через Redis. Таймер использует абсолютный UNIX timestamp в миллисекундах `ends_at`; на паузе `ends_at = null`, а оставшееся время возвращается в `remaining_at_pause`. При сбое таймер сбрасывается.
 
 | Ключ | Тип | Описание |
 |------|-----|----------|
-| `session:{id}:timer_ends_at` | integer | UNIX timestamp (мс), когда таймер закончится; `null` на паузе |
-| `session:{id}:timer_remaining_at_pause` | integer | Секунд осталось на момент паузы |
-| `session:{id}:timer_running` | boolean | Идёт ли отсчёт |
-| `session:{id}:answers` | hash | `{participant_id → answer}` — принятые ответы на текущий вопрос |
-| `session:{id}:revealed` | boolean | Правильный ответ уже показан |
+| `quiz:session:{id}:timer` | hash | Таймер текущего вопроса. Поля: `ends_at` (UNIX timestamp мс, null на паузе), `remaining_at_pause` (секунд осталось на момент паузы), `running` (boolean) |
+| `quiz:session:{id}:answers` | hash | `{participant_id → json(answer)}` — предварительные ответы участников на текущий вопрос |
+| `quiz:session:{id}:scores` | hash | `{"{session_question_id}:{participant_id}" → json({is_correct, score, team_id})}` — результаты проверки ответов |
+| `quiz:session:{id}:final_answers` | hash | `{"{session_question_id}:{team_id}" → "1"}` — отметка о решающем ответе капитана |
+| `quiz:session:{id}:revealed` | string | `"0"` или `"1"` — правильный ответ уже показан |
 
 ### Логика таймера
 
