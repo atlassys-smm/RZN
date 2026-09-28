@@ -164,6 +164,18 @@ paths:
   /cms/quiz/templates/{id}/rounds/{roundId}/questions/{questionId}:
     $ref: './paths/quiz.yaml#/cms-templates-rounds-questions-remove'
 
+  # ── CMS: Викторина — Настройки ──────────────────
+  /cms/quiz/settings/defaults:
+    get:
+      $ref: './paths/quiz.yaml#/cms-settings-defaults-get/get'
+    put:
+      $ref: './paths/quiz.yaml#/cms-settings-defaults-update/put'
+  /cms/quiz/settings/scoring:
+    get:
+      $ref: './paths/quiz.yaml#/cms-settings-scoring-get/get'
+    put:
+      $ref: './paths/quiz.yaml#/cms-settings-scoring-update/put'
+
   # ── Игровая сессия ──────────────────────────────
   /quiz/sessions:
     $ref: './paths/quiz.yaml#/session-create'
