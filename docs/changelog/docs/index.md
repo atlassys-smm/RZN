@@ -6,6 +6,7 @@
 
 | Версия | Дата | Описание |
 |--------|------|----------|
+| [1.16](v1.16.md) | 28.09.2026 12:05 | Сборка OpenAPI bundled: `bundle_openapi.py` запускается напрямую, Scalar читает свежесгенерированный файл (real-time при `mkdocs serve`) |
 | [1.15](v1.15.md) | 25.09.2026 11:39 | Реструктуризация changelog, enum→integer (справочники), User-статусы (guest/active/anonymized/deactivated), GameSession: device_id, упрощение scoring, викторина: answer_key, matching side, капитан |
 | [1.14](v1.14.md) | 25.09.2026 14:30 | Scoring в GameSession (11 параметров), score → decimal, упрощение статусов User (active/deactivated), таймер в entities/, правила начисления баллов |
 | [1.13](v1.13.md) | 24.09.2026 17:00 | API: согласия, аватары профессий/пользователей; signed URLs для файлов; поля `uuid` и `module` в File |

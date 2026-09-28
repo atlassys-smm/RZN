@@ -3166,7 +3166,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Удалить ветку
-      description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
+      description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить
+        нельзя.
       parameters:
       - name: id
         in: path
@@ -4733,7 +4734,8 @@ components:
           branches:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
             nullable: true
-            description: Корневая ветка дерева (стартовая, с рекурсивно вложенными дочерними через children). null если сценарий не имеет веток.
+            description: Корневая ветка дерева (стартовая, с рекурсивно вложенными
+              дочерними через children). null если сценарий не имеет веток.
     InteractiveVideoScenarioBranch:
       description: Ветка видеосценария (видеофрагмент с вариантами выбора)
       type: object

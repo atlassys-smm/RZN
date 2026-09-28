@@ -51,3 +51,10 @@ def bundle(docs_dir, output_path):
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f:
         yaml.dump(resolved, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+if __name__ == '__main__':
+    docs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'docs', 'api')
+    output_path = os.path.join(docs_dir, 'bundled', 'openapi.yaml')
+    bundle(docs_dir, output_path)
+    print(f'Bundled → {output_path}')
