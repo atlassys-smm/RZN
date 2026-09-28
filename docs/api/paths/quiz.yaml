@@ -1007,7 +1007,7 @@ session-finish:
   post:
     tags: [Викторина - Оператор]
     summary: Завершить сессию
-    description: Завершить сессию. Статус меняется на `3` (finished).
+    description: Завершить сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой сессии.
     parameters:
       - name: id
         in: path
@@ -1016,8 +1016,12 @@ session-finish:
           type: integer
           format: int64
     responses:
-      '204':
+      '200':
         description: Сессия завершена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
 
 session-team-update:
   patch:
@@ -1348,44 +1352,39 @@ session-skip:
       '400':
         description: Нет текущего вопроса или приём ответов ещё открыт
 
+session-led-next:
+  post:
+    tags: [Викторина - LED]
+    summary: Следующий вопрос (LED)
+    description: |
+      LED-экран вызывает этот endpoint после окончания таймера.
+      Если время вышло и `auto_reveal = true` — автоматически показывает правильный ответ и начисляет баллы.
+      Если ответ уже показан — переходит к следующему вопросу.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Текущее состояние сессии
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
+
 # ═══════════════════════════════════════════════════════════════
 # Результаты
 # ═══════════════════════════════════════════════════════════════
 
-session-results-round:
+session-results:
   get:
     tags: [Викторина - Оператор]
-    summary: Результат раунда
-    description: Результаты конкретного раунда. Используется LED для показа после окончания раунда.
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: roundIndex
-        in: path
-        required: true
-        schema:
-          type: integer
-    responses:
-      '200':
-        description: Результат раунда
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuizRoundResult'
-      '404':
-        description: Раунд не найден
-
-session-results-total:
-  get:
-    tags: [Викторина - Оператор]
-    summary: Итоговый результат
+    summary: Текущий результат
     description: |
-      Итоговый результат на текущий момент (сумма по завершённым раундам).
-      Можно запрашивать в любой момент — между раундами или после завершения сессии.
+      Актуальный рейтинг на текущий момент. Можно запрашивать в любой момент — между раундами или после завершения сессии.
     parameters:
       - name: id
         in: path
@@ -1395,7 +1394,7 @@ session-results-total:
           format: int64
     responses:
       '200':
-        description: Итоговый результат
+        description: Текущий результат
         content:
           application/json:
             schema:
