@@ -589,7 +589,7 @@ player-vote:
 #
 # ## Подключение
 #
-# ws://host/api/v1/interactive-video/sessions/{sessionId}/ws
+# ws://host/api/interactive-video/sessions/{sessionId}/ws
 #
 # ## События от сервера
 #

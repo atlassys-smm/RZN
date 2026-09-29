@@ -2,21 +2,42 @@
 # Обратная связь — Пользователь
 # ═══════════════════════════════════════════════════════════════
 
-surveys:
-  get:
+join:
+  post:
     tags: [Обратная связь - Пользователь]
-    summary: Доступные анкеты
-    description: Получить список активных анкет обратной связи с вопросами
+    summary: Вход для гостя
+    description: Создать гостевого пользователя и получить JWT для прохождения анкет
     security: []
     responses:
-      '200':
-        description: Список активных анкет
+      '201':
+        description: Гость создан, токен выдан
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/FeedbackSurvey'
+              $ref: '#/components/schemas/FeedbackJoinResponse'
+
+survey-by-external-id:
+  get:
+    tags: [Обратная связь - LED]
+    summary: Активная анкета по external_id
+    description: Получить активную анкету по символьному идентификатору (используется LED-плеером)
+    security: []
+    parameters:
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Символьный идентификатор анкеты (например, videoresume_feedback)
+    responses:
+      '200':
+        description: Активная анкета с вопросами
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSurvey'
+      '404':
+        description: Активная анкета не найдена
 
 respond:
   post:

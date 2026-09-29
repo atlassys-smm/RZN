@@ -96,8 +96,8 @@ https://app.example.com/join?session_id={sessionId}&device_id={deviceId}
 ## Получение обновлений
 
 Мобильный клиент подключается к WebSocket для получения уведомлений об изменениях:
-- **Викторина:** `ws://host/api/v1/quiz/sessions/{id}/ws` — обновление таймера, результаты
-- **Профессии в действии:** `ws://host/api/v1/interactive-video/sessions/{id}/ws` — смена фазы, обновление голосов
+- **Викторина:** `ws://host/api/quiz/sessions/{id}/ws` — обновление таймера, результаты
+- **Профессии в действии:** `ws://host/api/interactive-video/sessions/{id}/ws` — смена фазы, обновление голосов
 
 При получении события клиент загружает актуальное состояние через REST API:
 - **Викторина:** `GET /quiz/sessions/{id}`
