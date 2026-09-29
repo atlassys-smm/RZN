@@ -1,34 +1,51 @@
+# ═══════════════════════════════════════════════════════════════
+# Обратная связь — Пользователь
+# ═══════════════════════════════════════════════════════════════
+
 surveys:
   get:
-    tags: [feedback]
+    tags: [Обратная связь - Пользователь]
     summary: Доступные анкеты
-    description: Получить список анкет обратной связи
+    description: Получить список активных анкет обратной связи с вопросами
     security: []
     responses:
       '200':
-        description: Список анкет
+        description: Список активных анкет
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/FeedbackSurvey'
 
 respond:
   post:
-    tags: [feedback]
+    tags: [Обратная связь - Пользователь]
     summary: Ответить на анкету
     description: Отправить ответы на анкету обратной связи
     security: []
     parameters:
-      - name: id
+      - name: survey_id
         in: path
         required: true
         schema:
-          type: string
+          type: integer
+          format: int64
         description: Идентификатор анкеты
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
+            $ref: '#/components/schemas/FeedbackSubmitRequest'
     responses:
       '201':
         description: Ответы отправлены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSubmitResponse'
       '404':
         description: Анкета не найдена
+      '422':
+        description: Анкета не активна

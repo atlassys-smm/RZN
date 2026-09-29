@@ -133,22 +133,301 @@ quiz-questions:
 
 surveys:
   get:
-    tags: [cms]
-    summary: Анкеты
-    description: Получить список анкет (CMS)
+    tags: [Обратная связь - CMS]
+    summary: Список анкет
+    description: Получить список анкет обратной связи с пагинацией
+    parameters:
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+        description: Фильтр по статусу активности
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
     responses:
       '200':
         description: Список анкет
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CmsSurvey'
+                total:
+                  type: integer
   post:
-    tags: [cms]
+    tags: [Обратная связь - CMS]
     summary: Создать анкету
-    description: Добавить новую анкету
+    description: Создать новую анкету (черновик)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CmsSurveyCreateRequest'
+    responses:
+      '201':
+        description: Анкета создана
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurvey'
+
+surveys-detail:
+  get:
+    tags: [Обратная связь - CMS]
+    summary: Детали анкеты
+    description: Получить анкету с вопросами
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Анкета с вопросами
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurvey'
+      '404':
+        description: Анкета не найдена
+  put:
+    tags: [Обратная связь - CMS]
+    summary: Обновить анкету
+    description: Обновить название и описание анкеты. Нельзя редактировать активную анкету.
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CmsSurveyUpdateRequest'
+    responses:
+      '200':
+        description: Анкета обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurvey'
+      '404':
+        description: Анкета не найдена
+      '422':
+        description: Нельзя редактировать активную анкету
+  delete:
+    tags: [Обратная связь - CMS]
+    summary: Удалить анкету
+    description: Удалить анкету-черновик. Нельзя удалить активную анкету или анкету с ответами.
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: Анкета удалена
+      '404':
+        description: Анкета не найдена
+      '409':
+        description: Нельзя удалить — есть связанные ответы
+      '422':
+        description: Нельзя удалить активную анкету
+
+surveys-copy:
+  post:
+    tags: [Обратная связь - CMS]
+    summary: Создать новую версию анкеты
+    description: Скопировать анкету и все её вопросы в новый черновик с тем же external_id
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '201':
+        description: Новая версия создана
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurvey'
+      '404':
+        description: Анкета не найдена
+
+surveys-publish:
+  post:
+    tags: [Обратная связь - CMS]
+    summary: Опубликовать анкету
+    description: Активировать анкету. Предыдущая активная анкета с тем же external_id автоматически деактивируется.
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Анкета опубликована
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurvey'
+      '404':
+        description: Анкета не найдена
+      '422':
+        description: Анкета уже активна
+
+surveys-questions-create:
+  post:
+    tags: [Обратная связь - CMS]
+    summary: Добавить вопрос
+    description: Добавить вопрос в анкету-черновик
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CmsSurveyQuestionCreateRequest'
+    responses:
+      '201':
+        description: Вопрос добавлен
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyQuestion'
+      '404':
+        description: Анкета не найдена
+      '422':
+        description: Нельзя редактировать активную анкету
+
+surveys-questions-update:
+  put:
+    tags: [Обратная связь - CMS]
+    summary: Обновить вопрос
+    description: Обновить вопрос анкеты-черновика
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CmsSurveyQuestionUpdateRequest'
+    responses:
+      '200':
+        description: Вопрос обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyQuestion'
+      '404':
+        description: Вопрос не найден
+      '422':
+        description: Нельзя редактировать вопросы активной анкеты
+
+surveys-questions-delete:
+  delete:
+    tags: [Обратная связь - CMS]
+    summary: Удалить вопрос
+    description: Удалить вопрос из анкеты-черновика
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: Вопрос удалён
+      '404':
+        description: Вопрос не найден
+      '422':
+        description: Нельзя редактировать вопросы активной анкеты
+
+surveys-questions-reorder:
+  put:
+    tags: [Обратная связь - CMS]
+    summary: Изменить порядок вопросов
+    description: Переупорядочить вопросы анкеты
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
     requestBody:
       required: true
       content:
         application/json:
           schema:
             type: object
+            required: [question_ids]
+            properties:
+              question_ids:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                description: ID вопросов в новом порядке
     responses:
-      '201':
-        description: Анкета создана
+      '200':
+        description: Порядок обновлён
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CmsSurveyQuestion'
+      '404':
+        description: Анкета не найдена
+      '422':
+        description: question_ids не совпадают с существующими вопросами
