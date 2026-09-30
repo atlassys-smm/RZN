@@ -532,6 +532,200 @@ cms-templates-rounds-questions-reorder:
         description: Порядок изменён
 
 # ═══════════════════════════════════════════════════════════════
+# CMS — Настройки сессий
+# ═══════════════════════════════════════════════════════════════
+
+cms-settings-defaults-get:
+  get:
+    tags: [Викторина - CMS]
+    summary: Стандартные настройки сессии
+    description: Получить стандартные настройки, которые подставляются при создании сессии, если не переданы в запросе
+    responses:
+      '200':
+        description: Стандартные настройки
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team_count:
+                  type: integer
+                team_capacity:
+                  type: integer
+                auto_reveal:
+                  type: boolean
+                auto_next:
+                  type: boolean
+                auto_next_delay:
+                  type: integer
+                between_rounds_delay:
+                  type: integer
+                show_intermediate_results:
+                  type: boolean
+
+cms-settings-defaults-update:
+  put:
+    tags: [Викторина - CMS]
+    summary: Обновить стандартные настройки сессии
+    description: Обновить стандартные настройки. Передаются только изменяемые поля.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              team_count:
+                type: integer
+              team_capacity:
+                type: integer
+              auto_reveal:
+                type: boolean
+              auto_next:
+                type: boolean
+              auto_next_delay:
+                type: integer
+              between_rounds_delay:
+                type: integer
+              show_intermediate_results:
+                type: boolean
+    responses:
+      '200':
+        description: Настройки обновлены
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team_count:
+                  type: integer
+                team_capacity:
+                  type: integer
+                auto_reveal:
+                  type: boolean
+                auto_next:
+                  type: boolean
+                auto_next_delay:
+                  type: integer
+                between_rounds_delay:
+                  type: integer
+                show_intermediate_results:
+                  type: boolean
+
+cms-settings-scoring-get:
+  get:
+    tags: [Викторина - CMS]
+    summary: Стандартные настройки баллов
+    description: Получить стандартные настройки системы начисления баллов
+    responses:
+      '200':
+        description: Стандартные настройки баллов
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                partial_correct_enabled:
+                  type: boolean
+                speed_bonus_enabled:
+                  type: boolean
+                speed_bonus_coefficient:
+                  type: number
+                speed_bonus_threshold_percent:
+                  type: integer
+                streak_bonus_enabled:
+                  type: boolean
+                streak_bonus_step:
+                  type: number
+                streak_bonus_max:
+                  type: number
+                consensus_bonus_enabled:
+                  type: boolean
+                consensus_bonus_coefficient:
+                  type: number
+                final_multiplier_enabled:
+                  type: boolean
+                final_multiplier_coefficient:
+                  type: number
+                penalty_enabled:
+                  type: boolean
+                penalty_coefficient:
+                  type: number
+
+cms-settings-scoring-update:
+  put:
+    tags: [Викторина - CMS]
+    summary: Обновить стандартные настройки баллов
+    description: Обновить стандартные настройки системы начисления баллов. Передаются только изменяемые поля.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              partial_correct_enabled:
+                type: boolean
+              speed_bonus_enabled:
+                type: boolean
+              speed_bonus_coefficient:
+                type: number
+              speed_bonus_threshold_percent:
+                type: integer
+              streak_bonus_enabled:
+                type: boolean
+              streak_bonus_step:
+                type: number
+              streak_bonus_max:
+                type: number
+              consensus_bonus_enabled:
+                type: boolean
+              consensus_bonus_coefficient:
+                type: number
+              final_multiplier_enabled:
+                type: boolean
+              final_multiplier_coefficient:
+                type: number
+              penalty_enabled:
+                type: boolean
+              penalty_coefficient:
+                type: number
+    responses:
+      '200':
+        description: Настройки обновлены
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                partial_correct_enabled:
+                  type: boolean
+                speed_bonus_enabled:
+                  type: boolean
+                speed_bonus_coefficient:
+                  type: number
+                speed_bonus_threshold_percent:
+                  type: integer
+                streak_bonus_enabled:
+                  type: boolean
+                streak_bonus_step:
+                  type: number
+                streak_bonus_max:
+                  type: number
+                consensus_bonus_enabled:
+                  type: boolean
+                consensus_bonus_coefficient:
+                  type: number
+                final_multiplier_enabled:
+                  type: boolean
+                final_multiplier_coefficient:
+                  type: number
+                penalty_enabled:
+                  type: boolean
+                penalty_coefficient:
+                  type: number
+
+# ═══════════════════════════════════════════════════════════════
 # Игровая сессия — создание и управление
 # ═══════════════════════════════════════════════════════════════
 
@@ -628,6 +822,67 @@ session-create:
                   show_intermediate_results:
                     type: boolean
                     default: true
+                  scoring:
+                    type: object
+                    description: Настройки системы начисления баллов. Если не переданы — подставляются стандартные из CMS
+                    properties:
+                      partial_correct:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            default: true
+                      speed_bonus:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            default: true
+                          coefficient:
+                            type: number
+                            default: 1.5
+                          threshold_percent:
+                            type: integer
+                            default: 50
+                      streak_bonus:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            default: true
+                          step:
+                            type: number
+                            default: 0.05
+                          max:
+                            type: number
+                            default: 2.0
+                      consensus_bonus:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            default: true
+                          coefficient:
+                            type: number
+                            default: 1.2
+                      final_multiplier:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            default: true
+                          coefficient:
+                            type: number
+                            default: 1.5
+                      penalty:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            default: false
+                          coefficient:
+                            type: number
+                            default: 0.0
     responses:
       '201':
         description: Сессия создана (статус waiting, ожидает старта оператора)
@@ -752,7 +1007,7 @@ session-finish:
   post:
     tags: [Викторина - Оператор]
     summary: Завершить сессию
-    description: Завершить сессию. Статус меняется на `3` (finished).
+    description: Завершить сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой сессии.
     parameters:
       - name: id
         in: path
@@ -761,8 +1016,12 @@ session-finish:
           type: integer
           format: int64
     responses:
-      '204':
+      '200':
         description: Сессия завершена
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
 
 session-team-update:
   patch:
@@ -1093,44 +1352,39 @@ session-skip:
       '400':
         description: Нет текущего вопроса или приём ответов ещё открыт
 
+session-led-next:
+  post:
+    tags: [Викторина - LED]
+    summary: Следующий вопрос (LED)
+    description: |
+      LED-экран вызывает этот endpoint после окончания таймера.
+      Если время вышло и `auto_reveal = true` — автоматически показывает правильный ответ и начисляет баллы.
+      Если ответ уже показан — переходит к следующему вопросу.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Текущее состояние сессии
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizSessionState'
+
 # ═══════════════════════════════════════════════════════════════
 # Результаты
 # ═══════════════════════════════════════════════════════════════
 
-session-results-round:
+session-results:
   get:
     tags: [Викторина - Оператор]
-    summary: Результат раунда
-    description: Результаты конкретного раунда. Используется LED для показа после окончания раунда.
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: roundIndex
-        in: path
-        required: true
-        schema:
-          type: integer
-    responses:
-      '200':
-        description: Результат раунда
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuizRoundResult'
-      '404':
-        description: Раунд не найден
-
-session-results-total:
-  get:
-    tags: [Викторина - Оператор]
-    summary: Итоговый результат
+    summary: Текущий результат
     description: |
-      Итоговый результат на текущий момент (сумма по завершённым раундам).
-      Можно запрашивать в любой момент — между раундами или после завершения сессии.
+      Актуальный рейтинг на текущий момент. Можно запрашивать в любой момент — между раундами или после завершения сессии.
     parameters:
       - name: id
         in: path
@@ -1140,7 +1394,7 @@ session-results-total:
           format: int64
     responses:
       '200':
-        description: Итоговый результат
+        description: Текущий результат
         content:
           application/json:
             schema:

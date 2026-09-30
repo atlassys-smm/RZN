@@ -41,6 +41,8 @@ tags:
     description: Игровая сессия — создание, управление ходом, результаты
   - name: Викторина - Игрок
     description: Мобильный клиент — подключение к сессии и ответы
+  - name: Викторина - LED
+    description: LED-экран — проверка таймера и автоматическое продвижение сессии
   - name: Профессии в действии
     description: Общие методы — получение состояния показа (используется LED-экраном)
   - name: Профессии в действии - CMS
@@ -170,6 +172,18 @@ paths:
   /cms/quiz/templates/{id}/rounds/{roundId}/questions/{questionId}:
     $ref: './paths/quiz.yaml#/cms-templates-rounds-questions-remove'
 
+  # ── CMS: Викторина — Настройки ──────────────────
+  /cms/quiz/settings/defaults:
+    get:
+      $ref: './paths/quiz.yaml#/cms-settings-defaults-get/get'
+    put:
+      $ref: './paths/quiz.yaml#/cms-settings-defaults-update/put'
+  /cms/quiz/settings/scoring:
+    get:
+      $ref: './paths/quiz.yaml#/cms-settings-scoring-get/get'
+    put:
+      $ref: './paths/quiz.yaml#/cms-settings-scoring-update/put'
+
   # ── Игровая сессия ──────────────────────────────
   /quiz/sessions:
     $ref: './paths/quiz.yaml#/session-create'
@@ -199,10 +213,10 @@ paths:
     $ref: './paths/quiz.yaml#/session-timer-stop'
   /quiz/sessions/{id}/skip:
     $ref: './paths/quiz.yaml#/session-skip'
-  /quiz/sessions/{id}/results/rounds/{roundIndex}:
-    $ref: './paths/quiz.yaml#/session-results-round'
-  /quiz/sessions/{id}/results/total:
-    $ref: './paths/quiz.yaml#/session-results-total'
+  /quiz/sessions/{id}/led/next:
+    $ref: './paths/quiz.yaml#/session-led-next'
+  /quiz/sessions/{id}/results:
+    $ref: './paths/quiz.yaml#/session-results'
 
   # ── Мобильный клиент ────────────────────────────
   /quiz/sessions/{sessionId}/join:
