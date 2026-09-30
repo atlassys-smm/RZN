@@ -300,8 +300,6 @@ paths:
       $ref: './paths/cms.yaml#/surveys-questions-delete/delete'
 
   # ── Обратная связь — Пользователь ────────────────
-  /feedback/join:
-    $ref: './paths/feedback.yaml#/join'
   /feedback/surveys/{external_id}:
     $ref: './paths/feedback.yaml#/survey-by-external-id'
   /feedback/surveys/{survey_id}/respond:
@@ -1513,21 +1511,10 @@ components:
                 type: integer
                 nullable: true
 
-    FeedbackJoinResponse:
-      description: Результат входа для гостя
-      type: object
-      properties:
-        participant_id:
-          type: integer
-          format: int64
-        token:
-          type: string
-          description: JWT для авторизации
-
     FeedbackSubmitRequest:
       description: Запрос на отправку ответов
       type: object
-      required: [source_id, duration, answers]
+      required: [source_id, user_id, duration, answers]
       properties:
         source_id:
           type: string
@@ -1535,7 +1522,7 @@ components:
         user_id:
           type: integer
           format: int64
-          description: ID пользователя (временно)
+          description: ID пользователя
         duration:
           type: integer
           description: Время прохождения в секундах

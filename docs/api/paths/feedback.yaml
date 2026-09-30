@@ -2,20 +2,6 @@
 # Обратная связь — Пользователь
 # ═══════════════════════════════════════════════════════════════
 
-join:
-  post:
-    tags: [Обратная связь - Пользователь]
-    summary: Вход для гостя
-    description: Создать гостевого пользователя и получить JWT для прохождения анкет
-    security: []
-    responses:
-      '201':
-        description: Гость создан, токен выдан
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FeedbackJoinResponse'
-
 survey-by-external-id:
   get:
     tags: [Обратная связь - LED]
