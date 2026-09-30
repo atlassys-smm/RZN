@@ -431,3 +431,68 @@ surveys-questions-reorder:
         description: Анкета не найдена
       '422':
         description: question_ids не совпадают с существующими вопросами
+
+responses:
+  get:
+    tags: [Обратная связь - CMS]
+    summary: Список ответов
+    description: Получить список ответов пользователей на анкеты с фильтрами
+    parameters:
+      - name: survey_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Фильтр по ID анкеты
+      - name: external_id
+        in: query
+        schema:
+          type: string
+        description: Фильтр по external_id анкеты
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+        description: Фильтр по статусу активности анкеты
+      - name: user_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Фильтр по ID пользователя
+      - name: completed_from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Фильтр по дате начала (completed_at >=)
+      - name: completed_to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Фильтр по дате окончания (completed_at <=)
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+    responses:
+      '200':
+        description: Список ответов
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CmsSurveyResponse'
+                total:
+                  type: integer

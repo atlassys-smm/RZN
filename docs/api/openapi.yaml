@@ -298,6 +298,8 @@ paths:
       $ref: './paths/cms.yaml#/surveys-questions-update/put'
     delete:
       $ref: './paths/cms.yaml#/surveys-questions-delete/delete'
+  /cms/surveys/responses:
+    $ref: './paths/cms.yaml#/responses'
 
   # ── Обратная связь — Пользователь ────────────────
   /feedback/surveys/{external_id}:
@@ -1460,6 +1462,50 @@ components:
           type: integer
           format: int64
           nullable: true
+
+    CmsSurveyResponse:
+      description: Ответ пользователя на анкету (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        user_id:
+          type: integer
+          format: int64
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+        survey:
+          $ref: '#/components/schemas/CmsSurvey'
+          nullable: true
+          description: Анкета, на которую дан ответ
 
     FeedbackSurvey:
       description: Активная анкета для прохождения (клиент)
