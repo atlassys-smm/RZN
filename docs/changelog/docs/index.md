@@ -6,6 +6,7 @@
 
 | Версия | Дата | Описание |
 |--------|------|----------|
+| [1.18](v1.18.md) | 30.09.2026 10:11 | Викторина: баллы только между раундами (накопительный рейтинг), убраны с экрана ответа и финального экрана |
 | [1.17](v1.17.md) | 29.09.2026 17:14 | CMS: настройки сессий и баллов (defaults/scoring), LED next endpoint, Redis-ключи с префиксом `quiz:`, GameSessionAnswer в Redis |
 | [1.16](v1.16.md) | 28.09.2026 12:05 | Сборка OpenAPI bundled: `bundle_openapi.py` запускается напрямую, Scalar читает свежесгенерированный файл (real-time при `mkdocs serve`) |
 | [1.15](v1.15.md) | 25.09.2026 11:39 | Реструктуризация changelog, enum→integer (справочники), User-статусы (guest/active/anonymized/deactivated), GameSession: device_id, упрощение scoring, викторина: answer_key, matching side, капитан |
