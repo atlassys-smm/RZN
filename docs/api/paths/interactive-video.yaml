@@ -43,7 +43,7 @@ cms-scenarios:
     summary: Создать видеосценарий
     description: |
       Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
-      её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`) — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
+      её видео заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`) — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
       Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
     requestBody:
       required: true
@@ -156,7 +156,7 @@ cms-branches-create:
     summary: Добавить ветку
     description: |
       Добавить дочернюю ветку к указанному родителю.
-      Если `parent_id` не указан — добавляется как вариант выбора для стартовой ветки.
+      `parent_id` обязателен. Файл передаётся в поле `file` multipart/form-data.
     parameters:
       - name: id
         in: path
@@ -168,25 +168,34 @@ cms-branches-create:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            type: object
-            required: [parent_id, text, media_id]
             properties:
               parent_id:
                 type: integer
-                format: int64
-                description: ID родительской ветки
+                title: Parent Id
               text:
                 type: string
-                description: Текст варианта выбора
-              media_id:
-                type: integer
-                format: int64
-                description: ID видеофайла
-              prompt:
+                title: Text
+              file:
                 type: string
-                description: Текст вопроса в точке выбора (для родительской ветки)
+                contentMediaType: application/octet-stream
+                title: File
+              prompt:
+                type: [string, 'null']
+                title: Prompt
+              file_title:
+                type: [string, 'null']
+                title: File Title
+              file_description:
+                type: [string, 'null']
+                title: File Description
+            type: object
+            required:
+            - parent_id
+            - text
+            - file
+            title: Body_create_branch_api_cms_video_scenarios__scenario_id__branches_post
     responses:
       '201':
         description: Ветка добавлена
@@ -220,19 +229,28 @@ cms-branches-update:
           type: integer
           format: int64
     requestBody:
-      required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            type: object
             properties:
               text:
-                type: string
+                type: [string, 'null']
+                title: Text
               prompt:
-                type: string
-              media_id:
-                type: integer
-                format: int64
+                type: [string, 'null']
+                title: Prompt
+              file:
+                type: [string, 'null']
+                contentMediaType: application/octet-stream
+                title: File
+              file_title:
+                type: [string, 'null']
+                title: File Title
+              file_description:
+                type: [string, 'null']
+                title: File Description
+            type: object
+            title: Body_update_branch_api_cms_video_scenarios__scenario_id__branches__branch_id__put
     responses:
       '200':
         description: Ветка обновлена

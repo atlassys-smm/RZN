@@ -64,63 +64,137 @@ cms-questions:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            type: object
-            required: [text, question_type, difficulty, time_limit, points, answer_options]
+            additionalProperties: false
             properties:
               text:
+                title: Text
                 type: string
               question_type:
+                title: Question Type
                 type: integer
-                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
               difficulty:
-                type: integer
-                enum: [1, 2, 3]
-              age_group:
+                title: Difficulty
                 type: integer
               time_limit:
+                title: Time Limit
                 type: integer
-                minimum: 1
-                description: Обязательное время на ответ в секундах
               points:
+                title: Points
                 type: integer
+              age_group:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Age Group
               explanation:
-                type: string
-                description: Пояснение правильного ответа
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Explanation
               round_type:
-                type: integer
-                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Round Type
               tags:
-                type: array
-                items:
-                  type: string
+                anyOf:
+                - items:
+                    type: string
+                  type: array
+                - type: 'null'
+                default: null
+                title: Tags
               answer_key:
-                type: object
-                description: Эталонный ответ для структурированных типов
-                additionalProperties: true
-              media_id:
-                type: integer
-                format: int64
-              answer_options:
-                type: array
-                items:
+                anyOf:
+                - additionalProperties: true
                   type: object
-                  required: [text, is_correct]
+                - type: 'null'
+                default: null
+                title: Answer Key
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              answer_options:
+                items:
+                  additionalProperties: false
                   properties:
                     text:
+                      title: Text
                       type: string
                     is_correct:
+                      default: false
+                      title: Is Correct
                       type: boolean
-                    media_id:
-                      type: integer
-                      format: int64
+                    file_title:
+                      anyOf:
+                      - type: string
+                      - type: 'null'
+                      default: null
+                      title: File Title
+                    file_description:
+                      anyOf:
+                      - type: string
+                      - type: 'null'
+                      default: null
+                      title: File Description
                     order:
+                      default: 0
+                      title: Order
                       type: integer
                     side:
-                      type: integer
-                      enum: [1, 2]
-                      description: Сторона элемента для вопроса matching
+                      anyOf:
+                      - type: integer
+                      - type: 'null'
+                      default: null
+                      title: Side
+                  required:
+                  - text
+                  title: AnswerOptionCreate
+                  type: object
+                title: Answer Options
+                type: array
+              file:
+                type: string
+                format: binary
+              answer_option_files[0]:
+                type: string
+                format: binary
+                description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+            required:
+            - text
+            - question_type
+            - difficulty
+            - time_limit
+            - points
+            - answer_options
+            title: QuestionCreateRequest
+            type: object
+            patternProperties:
+              ^answer_option_files\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
+          encoding:
+            answer_options:
+              contentType: application/json
+            answer_key:
+              contentType: application/json
+            tags:
+              style: form
+              explode: true
     responses:
       '201':
         description: Вопрос создан
@@ -164,11 +238,106 @@ cms-questions-update:
           type: integer
           format: int64
     requestBody:
-      required: true
+      required: false
       content:
-        application/json:
+        multipart/form-data:
           schema:
+            additionalProperties: false
+            properties:
+              text:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Text
+              question_type:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Question Type
+              difficulty:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Difficulty
+              time_limit:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Time Limit
+              points:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Points
+              age_group:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Age Group
+              explanation:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Explanation
+              round_type:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Round Type
+              tags:
+                anyOf:
+                - items:
+                    type: string
+                  type: array
+                - type: 'null'
+                default: null
+                title: Tags
+              answer_key:
+                anyOf:
+                - additionalProperties: true
+                  type: object
+                - type: 'null'
+                default: null
+                title: Answer Key
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              file:
+                type: string
+                format: binary
+              answer_option_files[0]:
+                type: string
+                format: binary
+                description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+            title: QuestionUpdateRequest
             type: object
+            patternProperties:
+              ^answer_option_files\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
+          encoding:
+            answer_key:
+              contentType: application/json
+            tags:
+              style: form
+              explode: true
     responses:
       '200':
         description: Вопрос обновлён

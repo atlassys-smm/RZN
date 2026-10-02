@@ -39,22 +39,38 @@ avatars:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            type: object
-            required: [profession_id, male_photo_file_id, female_photo_file_id]
             properties:
               profession_id:
                 type: integer
-                format: int64
-              male_photo_file_id:
-                type: integer
-                format: int64
-                description: ID файла — фото мужчины
-              female_photo_file_id:
-                type: integer
-                format: int64
-                description: ID файла — фото женщины
+                title: Profession Id
+              male_photo:
+                type: string
+                contentMediaType: application/octet-stream
+                title: Male Photo
+              female_photo:
+                type: string
+                contentMediaType: application/octet-stream
+                title: Female Photo
+              male_file_title:
+                type: [string, 'null']
+                title: Male File Title
+              male_file_description:
+                type: [string, 'null']
+                title: Male File Description
+              female_file_title:
+                type: [string, 'null']
+                title: Female File Title
+              female_file_description:
+                type: [string, 'null']
+                title: Female File Description
+            type: object
+            required:
+            - profession_id
+            - male_photo
+            - female_photo
+            title: Body_create_avatar_api_avatars_post
     responses:
       '201':
         description: Аватар создан
@@ -99,18 +115,32 @@ avatars-detail:
           type: integer
           format: int64
     requestBody:
-      required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            type: object
             properties:
-              male_photo_file_id:
-                type: integer
-                format: int64
-              female_photo_file_id:
-                type: integer
-                format: int64
+              male_photo:
+                type: [string, 'null']
+                contentMediaType: application/octet-stream
+                title: Male Photo
+              female_photo:
+                type: [string, 'null']
+                contentMediaType: application/octet-stream
+                title: Female Photo
+              male_file_title:
+                type: [string, 'null']
+                title: Male File Title
+              male_file_description:
+                type: [string, 'null']
+                title: Male File Description
+              female_file_title:
+                type: [string, 'null']
+                title: Female File Title
+              female_file_description:
+                type: [string, 'null']
+                title: Female File Description
+            type: object
+            title: Body_update_avatar_api_avatars__profession_id__put
     responses:
       '200':
         description: Аватар обновлён

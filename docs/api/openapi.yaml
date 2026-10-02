@@ -274,7 +274,23 @@ paths:
   /cms/references:
     $ref: './paths/cms.yaml#/references'
   /cms/surveys:
-    $ref: './paths/cms.yaml#/surveys'
+    $ref: ./paths/surveys.yaml#/cms-surveys
+  /cms/surveys/responses:
+    $ref: ./paths/surveys.yaml#/cms-survey-responses
+  /cms/surveys/{survey_id}:
+    $ref: ./paths/surveys.yaml#/cms-survey-detail
+  /cms/surveys/{survey_id}/copy:
+    $ref: ./paths/surveys.yaml#/cms-survey-copy
+  /cms/surveys/{survey_id}/publish:
+    $ref: ./paths/surveys.yaml#/cms-survey-publish
+  /cms/surveys/{survey_id}/questions:
+    $ref: ./paths/surveys.yaml#/cms-survey-questions
+  /cms/surveys/{survey_id}/questions/reorder:
+    $ref: ./paths/surveys.yaml#/cms-survey-questions-reorder
+  /cms/surveys/{survey_id}/questions/{question_id}:
+    $ref: ./paths/surveys.yaml#/cms-survey-question-detail
+  /feedback/surveys/{external_id}:
+    $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь ───────────────────────────────
   /feedback/surveys:
@@ -303,6 +319,698 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    QuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        question_type:
+          title: Question Type
+          type: integer
+        difficulty:
+          title: Difficulty
+          type: integer
+        time_limit:
+          title: Time Limit
+          type: integer
+        points:
+          title: Points
+          type: integer
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        answer_options:
+          items:
+            $ref: '#/components/schemas/AnswerOptionCreate'
+          title: Answer Options
+          type: array
+      required:
+      - text
+      - question_type
+      - difficulty
+      - time_limit
+      - points
+      - answer_options
+      title: QuestionCreateRequest
+      type: object
+    QuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        question_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Question Type
+        difficulty:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Difficulty
+        time_limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Time Limit
+        points:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Points
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: QuestionUpdateRequest
+      type: object
+    AnswerOptionCreate:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        is_correct:
+          default: false
+          title: Is Correct
+          type: boolean
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        order:
+          default: 0
+          title: Order
+          type: integer
+        side:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Side
+      required:
+      - text
+      title: AnswerOptionCreate
+      type: object
+    SurveyQuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          title: Text
+          type: string
+        order:
+          title: Order
+          type: integer
+        required:
+          default: false
+          title: Required
+          type: boolean
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Parent Id
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+      required:
+      - type
+      - text
+      - order
+      title: SurveyQuestionCreateRequest
+      type: object
+    SurveyQuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        required:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Required
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: SurveyQuestionUpdateRequest
+      type: object
+    FeedbackQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: FeedbackQuestionResponse
+    FeedbackSurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        questions:
+          items:
+            $ref: '#/components/schemas/FeedbackQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      title: FeedbackSurveyResponse
+    FileResponse:
+      properties:
+        url:
+          type: string
+          title: Url
+        mime_type:
+          type: string
+          title: Mime Type
+        title:
+          type: string
+          title: Title
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - url
+      - mime_type
+      - title
+      - description
+      title: FileResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PaginatedResponse_SurveyResponseItem_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponseItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponseItem]
+    PaginatedResponse_SurveyResponse_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponse'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponse]
+    ReorderRequest:
+      properties:
+        question_ids:
+          items:
+            type: integer
+          type: array
+          title: Question Ids
+      type: object
+      required:
+      - question_ids
+      title: ReorderRequest
+    SurveyAnswerResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        question_id:
+          type: integer
+          title: Question Id
+        value:
+          type: string
+          title: Value
+      type: object
+      required:
+      - id
+      - question_id
+      - value
+      title: SurveyAnswerResponse
+    SurveyCreateRequest:
+      properties:
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - external_id
+      - name
+      title: SurveyCreateRequest
+    SurveyQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - survey_id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: SurveyQuestionResponse
+    SurveyQuestionType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      title: SurveyQuestionType
+    SurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        is_active:
+          type: boolean
+          title: Is Active
+        copied_from_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Copied From Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        questions:
+          items:
+            $ref: '#/components/schemas/SurveyQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      - is_active
+      - copied_from_id
+      - created_at
+      - updated_at
+      title: SurveyResponse
+    SurveyResponseItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        source_id:
+          type: string
+          title: Source Id
+        user_id:
+          type: integer
+          title: User Id
+        consent_version_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Consent Version Id
+        completed_at:
+          type: string
+          format: date-time
+          title: Completed At
+        duration:
+          type: integer
+          title: Duration
+        answers:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerResponse'
+          type: array
+          title: Answers
+          default: []
+        survey:
+          anyOf:
+          - $ref: '#/components/schemas/SurveyResponse'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - survey_id
+      - source_id
+      - user_id
+      - consent_version_id
+      - completed_at
+      - duration
+      title: SurveyResponseItem
+    SurveyUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      title: SurveyUpdateRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     # ── Справочники ────────────────────────────────
     Industry:
       description: Отрасль экономики
@@ -494,14 +1202,14 @@ components:
         profession_id:
           type: integer
           format: int64
-        male_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото мужчины
-        female_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото женщины
+        male_file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
+        female_file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         created_at:
           type: string
           format: date-time
@@ -522,9 +1230,10 @@ components:
         profession_id:
           type: integer
           format: int64
-        image_url:
-          type: string
-          description: Подписанный URL для скачивания (TTL 24ч)
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         qr_token:
           type: string
           description: Токен для доступа по QR-коду
@@ -611,9 +1320,10 @@ components:
           type: array
           items:
             type: string
-        media_url:
-          type: string
-          nullable: true
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         answer_options:
           type: array
           items:
@@ -627,9 +1337,10 @@ components:
               is_correct:
                 type: boolean
                 description: Не передаётся игроку до reveal
-              media_url:
-                type: string
-                nullable: true
+              file:
+                anyOf:
+                  - $ref: '#/components/schemas/FileResponse'
+                  - type: 'null'
               order:
                 type: integer
               side:
@@ -860,9 +1571,10 @@ components:
                 question_type:
                   type: integer
                   enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-                media_url:
-                  type: string
-                  nullable: true
+                file:
+                  anyOf:
+                    - $ref: '#/components/schemas/FileResponse'
+                    - type: 'null'
                 time_limit:
                   type: integer
                 answer_options:
@@ -875,9 +1587,10 @@ components:
                         format: int64
                       text:
                         type: string
-                      media_url:
-                        type: string
-                        nullable: true
+                      file:
+                        anyOf:
+                          - $ref: '#/components/schemas/FileResponse'
+                          - type: 'null'
             correct_answer:
               type: object
               nullable: true
@@ -1068,15 +1781,10 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID видеофайла
-        media_url:
-          type: string
-          nullable: true
-          description: URL видеофайла
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         text:
           type: string
           nullable: true
@@ -1179,9 +1887,10 @@ components:
             id:
               type: integer
               format: int64
-            media_url:
-              type: string
-              nullable: true
+            file:
+              anyOf:
+                - $ref: '#/components/schemas/FileResponse'
+                - type: 'null'
             prompt:
               type: string
               nullable: true

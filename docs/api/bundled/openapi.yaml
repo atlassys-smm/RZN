@@ -1207,25 +1207,46 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
-              required:
-              - profession_id
-              - male_photo_file_id
-              - female_photo_file_id
               properties:
                 profession_id:
                   type: integer
-                  format: int64
-                male_photo_file_id:
-                  type: integer
-                  format: int64
-                  description: ID файла — фото мужчины
-                female_photo_file_id:
-                  type: integer
-                  format: int64
-                  description: ID файла — фото женщины
+                  title: Profession Id
+                male_photo:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  title: Male Photo
+                female_photo:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  title: Female Photo
+                male_file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: Male File Title
+                male_file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: Male File Description
+                female_file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: Female File Title
+                female_file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: Female File Description
+              type: object
+              required:
+              - profession_id
+              - male_photo
+              - female_photo
+              title: Body_create_avatar_api_avatars_post
       responses:
         '201':
           description: Аватар создан
@@ -1271,18 +1292,44 @@ paths:
           type: integer
           format: int64
       requestBody:
-        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
               properties:
-                male_photo_file_id:
-                  type: integer
-                  format: int64
-                female_photo_file_id:
-                  type: integer
-                  format: int64
+                male_photo:
+                  type:
+                  - string
+                  - 'null'
+                  contentMediaType: application/octet-stream
+                  title: Male Photo
+                female_photo:
+                  type:
+                  - string
+                  - 'null'
+                  contentMediaType: application/octet-stream
+                  title: Female Photo
+                male_file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: Male File Title
+                male_file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: Male File Description
+                female_file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: Female File Title
+                female_file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: Female File Description
+              type: object
+              title: Body_update_avatar_api_avatars__profession_id__put
       responses:
         '200':
           description: Аватар обновлён
@@ -1403,9 +1450,116 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
+              additionalProperties: false
+              properties:
+                text:
+                  title: Text
+                  type: string
+                question_type:
+                  title: Question Type
+                  type: integer
+                difficulty:
+                  title: Difficulty
+                  type: integer
+                time_limit:
+                  title: Time Limit
+                  type: integer
+                points:
+                  title: Points
+                  type: integer
+                age_group:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Age Group
+                explanation:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Explanation
+                round_type:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Round Type
+                tags:
+                  anyOf:
+                  - items:
+                      type: string
+                    type: array
+                  - type: 'null'
+                  default: null
+                  title: Tags
+                answer_key:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Answer Key
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                answer_options:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        title: Text
+                        type: string
+                      is_correct:
+                        default: false
+                        title: Is Correct
+                        type: boolean
+                      file_title:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Title
+                      file_description:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Description
+                      order:
+                        default: 0
+                        title: Order
+                        type: integer
+                      side:
+                        anyOf:
+                        - type: integer
+                        - type: 'null'
+                        default: null
+                        title: Side
+                    required:
+                    - text
+                    title: AnswerOptionCreate
+                    type: object
+                  title: Answer Options
+                  type: array
+                file:
+                  type: string
+                  format: binary
+                answer_option_files[0]:
+                  type: string
+                  format: binary
+                  description: Файл варианта 0; для других индексов используйте answer_option_files[n].
               required:
               - text
               - question_type
@@ -1413,93 +1567,20 @@ paths:
               - time_limit
               - points
               - answer_options
-              properties:
-                text:
+              title: QuestionCreateRequest
+              type: object
+              patternProperties:
+                ^answer_option_files\[(0|[1-9]\d*)\]$:
                   type: string
-                question_type:
-                  type: integer
-                  enum:
-                  - 1
-                  - 2
-                  - 3
-                  - 4
-                  - 5
-                  - 6
-                  - 7
-                  - 8
-                  - 9
-                  - 10
-                  - 11
-                  - 12
-                  - 13
-                  - 14
-                  - 15
-                  - 16
-                  - 17
-                  - 18
-                difficulty:
-                  type: integer
-                  enum:
-                  - 1
-                  - 2
-                  - 3
-                age_group:
-                  type: integer
-                time_limit:
-                  type: integer
-                  minimum: 1
-                  description: Обязательное время на ответ в секундах
-                points:
-                  type: integer
-                explanation:
-                  type: string
-                  description: Пояснение правильного ответа
-                round_type:
-                  type: integer
-                  enum:
-                  - 1
-                  - 2
-                  - 3
-                  - 4
-                  - 5
-                  - 6
-                  - 7
-                  - 8
-                  - 9
-                tags:
-                  type: array
-                  items:
-                    type: string
-                answer_key:
-                  type: object
-                  description: Эталонный ответ для структурированных типов
-                  additionalProperties: true
-                media_id:
-                  type: integer
-                  format: int64
-                answer_options:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                    - text
-                    - is_correct
-                    properties:
-                      text:
-                        type: string
-                      is_correct:
-                        type: boolean
-                      media_id:
-                        type: integer
-                        format: int64
-                      order:
-                        type: integer
-                      side:
-                        type: integer
-                        enum:
-                        - 1
-                        - 2
-                        description: Сторона элемента для вопроса matching
+                  format: binary
+            encoding:
+              answer_options:
+                contentType: application/json
+              answer_key:
+                contentType: application/json
+              tags:
+                style: form
+                explode: true
       responses:
         '201':
           description: Вопрос создан
@@ -1543,11 +1624,106 @@ paths:
           type: integer
           format: int64
       requestBody:
-        required: true
+        required: false
         content:
-          application/json:
+          multipart/form-data:
             schema:
+              additionalProperties: false
+              properties:
+                text:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Text
+                question_type:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Question Type
+                difficulty:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Difficulty
+                time_limit:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Time Limit
+                points:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Points
+                age_group:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Age Group
+                explanation:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Explanation
+                round_type:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Round Type
+                tags:
+                  anyOf:
+                  - items:
+                      type: string
+                    type: array
+                  - type: 'null'
+                  default: null
+                  title: Tags
+                answer_key:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Answer Key
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                file:
+                  type: string
+                  format: binary
+                answer_option_files[0]:
+                  type: string
+                  format: binary
+                  description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+              title: QuestionUpdateRequest
               type: object
+              patternProperties:
+                ^answer_option_files\[(0|[1-9]\d*)\]$:
+                  type: string
+                  format: binary
+            encoding:
+              answer_key:
+                contentType: application/json
+              tags:
+                style: form
+                explode: true
       responses:
         '200':
           description: Вопрос обновлён
@@ -3208,7 +3384,7 @@ paths:
       summary: Создать видеосценарий
       description: 'Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
 
-        её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`)
+        её видео заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`)
         — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
 
         Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
@@ -3327,8 +3503,7 @@ paths:
       summary: Добавить ветку
       description: 'Добавить дочернюю ветку к указанному родителю.
 
-        Если `parent_id` не указан — добавляется как вариант выбора для стартовой
-        ветки.
+        `parent_id` обязателен. Файл передаётся в поле `file` multipart/form-data.
 
         '
       parameters:
@@ -3342,28 +3517,40 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
+              properties:
+                parent_id:
+                  type: integer
+                  title: Parent Id
+                text:
+                  type: string
+                  title: Text
+                file:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  title: File
+                prompt:
+                  type:
+                  - string
+                  - 'null'
+                  title: Prompt
+                file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: File Title
+                file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: File Description
               type: object
               required:
               - parent_id
               - text
-              - media_id
-              properties:
-                parent_id:
-                  type: integer
-                  format: int64
-                  description: ID родительской ветки
-                text:
-                  type: string
-                  description: Текст варианта выбора
-                media_id:
-                  type: integer
-                  format: int64
-                  description: ID видеофайла
-                prompt:
-                  type: string
-                  description: Текст вопроса в точке выбора (для родительской ветки)
+              - file
+              title: Body_create_branch_api_cms_video_scenarios__scenario_id__branches_post
       responses:
         '201':
           description: Ветка добавлена
@@ -3397,19 +3584,38 @@ paths:
           type: integer
           format: int64
       requestBody:
-        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
               properties:
                 text:
-                  type: string
+                  type:
+                  - string
+                  - 'null'
+                  title: Text
                 prompt:
-                  type: string
-                media_id:
-                  type: integer
-                  format: int64
+                  type:
+                  - string
+                  - 'null'
+                  title: Prompt
+                file:
+                  type:
+                  - string
+                  - 'null'
+                  contentMediaType: application/octet-stream
+                  title: File
+                file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: File Title
+                file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: File Description
+              type: object
+              title: Body_update_branch_api_cms_video_scenarios__scenario_id__branches__branch_id__put
       responses:
         '200':
           description: Ветка обновлена
@@ -3892,26 +4098,597 @@ paths:
   /cms/surveys:
     get:
       tags:
-      - cms
-      summary: Анкеты
-      description: Получить список анкет (CMS)
+      - Обратная связь — CMS
+      summary: Список анкет
+      operationId: list_surveys_api_cms_surveys_get
+      parameters:
+      - name: is_active
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
       responses:
         '200':
-          description: Список анкет
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_SurveyResponse_'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
     post:
       tags:
-      - cms
+      - Обратная связь — CMS
       summary: Создать анкету
-      description: Добавить новую анкету
+      operationId: create_survey_api_cms_surveys_post
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/SurveyCreateRequest'
       responses:
         '201':
-          description: Анкета создана
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /cms/surveys/responses:
+    get:
+      tags:
+      - Обратная связь — CMS
+      summary: Список ответов на анкеты
+      operationId: list_responses_api_cms_surveys_responses_get
+      parameters:
+      - name: survey_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Survey Id
+      - name: external_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Id
+      - name: is_active
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: User Id
+      - name: completed_from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed From
+      - name: completed_to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed To
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_SurveyResponseItem_'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+  /cms/surveys/{survey_id}:
+    get:
+      tags:
+      - Обратная связь — CMS
+      summary: Получить анкету с вопросами
+      operationId: get_survey_api_cms_surveys__survey_id__get
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+    put:
+      tags:
+      - Обратная связь — CMS
+      summary: Обновить анкету
+      operationId: update_survey_api_cms_surveys__survey_id__put
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyUpdateRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+    delete:
+      tags:
+      - Обратная связь — CMS
+      summary: Удалить анкету
+      operationId: delete_survey_api_cms_surveys__survey_id__delete
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      responses:
+        '204':
+          description: Удалено
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+  /cms/surveys/{survey_id}/copy:
+    post:
+      tags:
+      - Обратная связь — CMS
+      summary: Копировать анкету
+      operationId: copy_survey_api_cms_surveys__survey_id__copy_post
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+  /cms/surveys/{survey_id}/publish:
+    post:
+      tags:
+      - Обратная связь — CMS
+      summary: Опубликовать анкету
+      operationId: publish_survey_api_cms_surveys__survey_id__publish_post
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+  /cms/surveys/{survey_id}/questions:
+    post:
+      tags:
+      - Обратная связь — CMS
+      summary: Добавить вопрос анкеты
+      operationId: add_question_api_cms_surveys__survey_id__questions_post
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              additionalProperties: false
+              properties:
+                type:
+                  enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 5
+                  title: SurveyQuestionType
+                  type: integer
+                text:
+                  title: Text
+                  type: string
+                order:
+                  title: Order
+                  type: integer
+                required:
+                  default: false
+                  title: Required
+                  type: boolean
+                parent_id:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Parent Id
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                condition:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Condition
+                scale_min:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Scale Min
+                scale_max:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Scale Max
+                file:
+                  type: string
+                  format: binary
+              required:
+              - type
+              - text
+              - order
+              title: SurveyQuestionCreateRequest
+              type: object
+            encoding:
+              condition:
+                contentType: application/json
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyQuestionResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+      description: Поля вопроса передаются отдельно в multipart/form-data; file —
+        необязательный файл, file_title и file_description — его метаданные. condition
+        передаётся JSON в одноимённом поле. ID файла не принимается.
+  /cms/surveys/{survey_id}/questions/reorder:
+    put:
+      tags:
+      - Обратная связь — CMS
+      summary: Изменить порядок вопросов
+      operationId: reorder_questions_api_cms_surveys__survey_id__questions_reorder_put
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReorderRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyQuestionResponse'
+                title: Response Reorder Questions Api Cms Surveys  Survey Id  Questions
+                  Reorder Put
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+  /cms/surveys/{survey_id}/questions/{question_id}:
+    put:
+      tags:
+      - Обратная связь — CMS
+      summary: Обновить вопрос анкеты
+      operationId: update_question_api_cms_surveys__survey_id__questions__question_id__put
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Question Id
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              additionalProperties: false
+              properties:
+                text:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Text
+                required:
+                  anyOf:
+                  - type: boolean
+                  - type: 'null'
+                  default: null
+                  title: Required
+                condition:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Condition
+                scale_min:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Scale Min
+                scale_max:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Scale Max
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                file:
+                  type: string
+                  format: binary
+              title: SurveyQuestionUpdateRequest
+              type: object
+            encoding:
+              condition:
+                contentType: application/json
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyQuestionResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+      description: Поля вопроса передаются отдельно в multipart/form-data; file —
+        необязательный файл, file_title и file_description — его метаданные. condition
+        передаётся JSON в одноимённом поле. ID файла не принимается.
+    delete:
+      tags:
+      - Обратная связь — CMS
+      summary: Удалить вопрос анкеты
+      operationId: delete_question_api_cms_surveys__survey_id__questions__question_id__delete
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Question Id
+      responses:
+        '204':
+          description: Удалено
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
+  /feedback/surveys/{external_id}:
+    get:
+      tags:
+      - Обратная связь - LED
+      summary: Получить активную анкету с вопросами
+      operationId: get_survey_by_external_id_api_feedback_surveys__external_id__get
+      parameters:
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: External Id
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSurveyResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Анкета или вопрос не найдены
   /feedback/surveys:
     get:
       tags:
@@ -4098,11 +4875,25 @@ paths:
         content:
           multipart/form-data:
             schema:
-              type: object
               properties:
                 photo:
                   type: string
-                  format: binary
+                  contentMediaType: application/octet-stream
+                  title: Photo
+                file_title:
+                  type:
+                  - string
+                  - 'null'
+                  title: File Title
+                file_description:
+                  type:
+                  - string
+                  - 'null'
+                  title: File Description
+              type: object
+              required:
+              - photo
+              title: Body_create_user_avatar_api_users__user_id__avatars_post
       responses:
         '201':
           description: Аватар сохранён
@@ -4138,6 +4929,698 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    QuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        question_type:
+          title: Question Type
+          type: integer
+        difficulty:
+          title: Difficulty
+          type: integer
+        time_limit:
+          title: Time Limit
+          type: integer
+        points:
+          title: Points
+          type: integer
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        answer_options:
+          items:
+            $ref: '#/components/schemas/AnswerOptionCreate'
+          title: Answer Options
+          type: array
+      required:
+      - text
+      - question_type
+      - difficulty
+      - time_limit
+      - points
+      - answer_options
+      title: QuestionCreateRequest
+      type: object
+    QuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        question_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Question Type
+        difficulty:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Difficulty
+        time_limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Time Limit
+        points:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Points
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: QuestionUpdateRequest
+      type: object
+    AnswerOptionCreate:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        is_correct:
+          default: false
+          title: Is Correct
+          type: boolean
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        order:
+          default: 0
+          title: Order
+          type: integer
+        side:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Side
+      required:
+      - text
+      title: AnswerOptionCreate
+      type: object
+    SurveyQuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          title: Text
+          type: string
+        order:
+          title: Order
+          type: integer
+        required:
+          default: false
+          title: Required
+          type: boolean
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Parent Id
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+      required:
+      - type
+      - text
+      - order
+      title: SurveyQuestionCreateRequest
+      type: object
+    SurveyQuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        required:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Required
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: SurveyQuestionUpdateRequest
+      type: object
+    FeedbackQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: FeedbackQuestionResponse
+    FeedbackSurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        questions:
+          items:
+            $ref: '#/components/schemas/FeedbackQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      title: FeedbackSurveyResponse
+    FileResponse:
+      properties:
+        url:
+          type: string
+          title: Url
+        mime_type:
+          type: string
+          title: Mime Type
+        title:
+          type: string
+          title: Title
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - url
+      - mime_type
+      - title
+      - description
+      title: FileResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PaginatedResponse_SurveyResponseItem_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponseItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponseItem]
+    PaginatedResponse_SurveyResponse_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponse'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponse]
+    ReorderRequest:
+      properties:
+        question_ids:
+          items:
+            type: integer
+          type: array
+          title: Question Ids
+      type: object
+      required:
+      - question_ids
+      title: ReorderRequest
+    SurveyAnswerResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        question_id:
+          type: integer
+          title: Question Id
+        value:
+          type: string
+          title: Value
+      type: object
+      required:
+      - id
+      - question_id
+      - value
+      title: SurveyAnswerResponse
+    SurveyCreateRequest:
+      properties:
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - external_id
+      - name
+      title: SurveyCreateRequest
+    SurveyQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - survey_id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: SurveyQuestionResponse
+    SurveyQuestionType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      title: SurveyQuestionType
+    SurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        is_active:
+          type: boolean
+          title: Is Active
+        copied_from_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Copied From Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        questions:
+          items:
+            $ref: '#/components/schemas/SurveyQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      - is_active
+      - copied_from_id
+      - created_at
+      - updated_at
+      title: SurveyResponse
+    SurveyResponseItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        source_id:
+          type: string
+          title: Source Id
+        user_id:
+          type: integer
+          title: User Id
+        consent_version_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Consent Version Id
+        completed_at:
+          type: string
+          format: date-time
+          title: Completed At
+        duration:
+          type: integer
+          title: Duration
+        answers:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerResponse'
+          type: array
+          title: Answers
+          default: []
+        survey:
+          anyOf:
+          - $ref: '#/components/schemas/SurveyResponse'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - survey_id
+      - source_id
+      - user_id
+      - consent_version_id
+      - completed_at
+      - duration
+      title: SurveyResponseItem
+    SurveyUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      title: SurveyUpdateRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     Industry:
       description: Отрасль экономики
       type: object
@@ -4324,14 +5807,14 @@ components:
         profession_id:
           type: integer
           format: int64
-        male_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото мужчины
-        female_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото женщины
+        male_file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        female_file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         created_at:
           type: string
           format: date-time
@@ -4351,9 +5834,10 @@ components:
         profession_id:
           type: integer
           format: int64
-        image_url:
-          type: string
-          description: Подписанный URL для скачивания (TTL 24ч)
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         qr_token:
           type: string
           description: Токен для доступа по QR-коду
@@ -4472,9 +5956,10 @@ components:
           type: array
           items:
             type: string
-        media_url:
-          type: string
-          nullable: true
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         answer_options:
           type: array
           items:
@@ -4488,9 +5973,10 @@ components:
               is_correct:
                 type: boolean
                 description: Не передаётся игроку до reveal
-              media_url:
-                type: string
-                nullable: true
+              file:
+                anyOf:
+                - $ref: '#/components/schemas/FileResponse'
+                - type: 'null'
               order:
                 type: integer
               side:
@@ -4784,9 +6270,10 @@ components:
                   - 16
                   - 17
                   - 18
-                media_url:
-                  type: string
-                  nullable: true
+                file:
+                  anyOf:
+                  - $ref: '#/components/schemas/FileResponse'
+                  - type: 'null'
                 time_limit:
                   type: integer
                 answer_options:
@@ -4799,9 +6286,10 @@ components:
                         format: int64
                       text:
                         type: string
-                      media_url:
-                        type: string
-                        nullable: true
+                      file:
+                        anyOf:
+                        - $ref: '#/components/schemas/FileResponse'
+                        - type: 'null'
             correct_answer:
               type: object
               nullable: true
@@ -5008,15 +6496,10 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID видеофайла
-        media_url:
-          type: string
-          nullable: true
-          description: URL видеофайла
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         text:
           type: string
           nullable: true
@@ -5127,9 +6610,10 @@ components:
             id:
               type: integer
               format: int64
-            media_url:
-              type: string
-              nullable: true
+            file:
+              anyOf:
+              - $ref: '#/components/schemas/FileResponse'
+              - type: 'null'
             prompt:
               type: string
               nullable: true

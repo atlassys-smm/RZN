@@ -1,0 +1,594 @@
+cms-surveys:
+  get:
+    tags:
+    - Обратная связь — CMS
+    summary: Список анкет
+    operationId: list_surveys_api_cms_surveys_get
+    parameters:
+    - name: is_active
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: boolean
+        - type: 'null'
+        title: Is Active
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        title: Limit
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        title: Offset
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaginatedResponse_SurveyResponse_'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+  post:
+    tags:
+    - Обратная связь — CMS
+    summary: Создать анкету
+    operationId: create_survey_api_cms_surveys_post
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SurveyCreateRequest'
+    responses:
+      '201':
+        description: Создано
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+cms-survey-responses:
+  get:
+    tags:
+    - Обратная связь — CMS
+    summary: Список ответов на анкеты
+    operationId: list_responses_api_cms_surveys_responses_get
+    parameters:
+    - name: survey_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Survey Id
+    - name: external_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: External Id
+    - name: is_active
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: boolean
+        - type: 'null'
+        title: Is Active
+    - name: user_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: User Id
+    - name: completed_from
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: string
+          format: date-time
+        - type: 'null'
+        title: Completed From
+    - name: completed_to
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: string
+          format: date-time
+        - type: 'null'
+        title: Completed To
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        title: Limit
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        title: Offset
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaginatedResponse_SurveyResponseItem_'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+cms-survey-detail:
+  get:
+    tags:
+    - Обратная связь — CMS
+    summary: Получить анкету с вопросами
+    operationId: get_survey_api_cms_surveys__survey_id__get
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+  put:
+    tags:
+    - Обратная связь — CMS
+    summary: Обновить анкету
+    operationId: update_survey_api_cms_surveys__survey_id__put
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SurveyUpdateRequest'
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+  delete:
+    tags:
+    - Обратная связь — CMS
+    summary: Удалить анкету
+    operationId: delete_survey_api_cms_surveys__survey_id__delete
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    responses:
+      '204':
+        description: Удалено
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+cms-survey-copy:
+  post:
+    tags:
+    - Обратная связь — CMS
+    summary: Копировать анкету
+    operationId: copy_survey_api_cms_surveys__survey_id__copy_post
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    responses:
+      '201':
+        description: Создано
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+cms-survey-publish:
+  post:
+    tags:
+    - Обратная связь — CMS
+    summary: Опубликовать анкету
+    operationId: publish_survey_api_cms_surveys__survey_id__publish_post
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+cms-survey-questions:
+  post:
+    tags:
+    - Обратная связь — CMS
+    summary: Добавить вопрос анкеты
+    operationId: add_question_api_cms_surveys__survey_id__questions_post
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            additionalProperties: false
+            properties:
+              type:
+                enum:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+                title: SurveyQuestionType
+                type: integer
+              text:
+                title: Text
+                type: string
+              order:
+                title: Order
+                type: integer
+              required:
+                default: false
+                title: Required
+                type: boolean
+              parent_id:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Parent Id
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              condition:
+                anyOf:
+                - additionalProperties: true
+                  type: object
+                - type: 'null'
+                default: null
+                title: Condition
+              scale_min:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Scale Min
+              scale_max:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Scale Max
+              file:
+                type: string
+                format: binary
+            required:
+            - type
+            - text
+            - order
+            title: SurveyQuestionCreateRequest
+            type: object
+          encoding:
+            condition:
+              contentType: application/json
+    responses:
+      '201':
+        description: Создано
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyQuestionResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+    description: Поля вопроса передаются отдельно в multipart/form-data; file — необязательный
+      файл, file_title и file_description — его метаданные. condition передаётся JSON
+      в одноимённом поле. ID файла не принимается.
+cms-survey-questions-reorder:
+  put:
+    tags:
+    - Обратная связь — CMS
+    summary: Изменить порядок вопросов
+    operationId: reorder_questions_api_cms_surveys__survey_id__questions_reorder_put
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReorderRequest'
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyQuestionResponse'
+              title: Response Reorder Questions Api Cms Surveys  Survey Id  Questions
+                Reorder Put
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+cms-survey-question-detail:
+  put:
+    tags:
+    - Обратная связь — CMS
+    summary: Обновить вопрос анкеты
+    operationId: update_question_api_cms_surveys__survey_id__questions__question_id__put
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Question Id
+    requestBody:
+      required: false
+      content:
+        multipart/form-data:
+          schema:
+            additionalProperties: false
+            properties:
+              text:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Text
+              required:
+                anyOf:
+                - type: boolean
+                - type: 'null'
+                default: null
+                title: Required
+              condition:
+                anyOf:
+                - additionalProperties: true
+                  type: object
+                - type: 'null'
+                default: null
+                title: Condition
+              scale_min:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Scale Min
+              scale_max:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Scale Max
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              file:
+                type: string
+                format: binary
+            title: SurveyQuestionUpdateRequest
+            type: object
+          encoding:
+            condition:
+              contentType: application/json
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyQuestionResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+    description: Поля вопроса передаются отдельно в multipart/form-data; file — необязательный
+      файл, file_title и file_description — его метаданные. condition передаётся JSON
+      в одноимённом поле. ID файла не принимается.
+  delete:
+    tags:
+    - Обратная связь — CMS
+    summary: Удалить вопрос анкеты
+    operationId: delete_question_api_cms_surveys__survey_id__questions__question_id__delete
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Question Id
+    responses:
+      '204':
+        description: Удалено
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
+feedback-survey:
+  get:
+    tags:
+    - Обратная связь - LED
+    summary: Получить активную анкету с вопросами
+    operationId: get_survey_by_external_id_api_feedback_surveys__external_id__get
+    parameters:
+    - name: external_id
+      in: path
+      required: true
+      schema:
+        type: string
+        title: External Id
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSurveyResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Анкета или вопрос не найдены
