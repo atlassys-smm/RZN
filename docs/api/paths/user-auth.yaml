@@ -103,10 +103,14 @@ user-info:
                   type: string
                   nullable: true
                   description: Email (только для авторизованных)
-                name:
+                first_name:
                   type: string
                   nullable: true
                   description: Имя (только для авторизованных)
+                last_name:
+                  type: string
+                  nullable: true
+                  description: Фамилия (только для авторизованных)
                 avatar_url:
                   type: string
                   nullable: true
