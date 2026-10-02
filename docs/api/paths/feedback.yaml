@@ -29,8 +29,7 @@ respond:
   post:
     tags: [Обратная связь - Пользователь]
     summary: Ответить на анкету
-    description: Отправить ответы на анкету обратной связи
-    security: []
+    description: Отправить ответы от текущего пользователя из user access-токена.
     parameters:
       - name: survey_id
         in: path
@@ -46,6 +45,8 @@ respond:
           schema:
             $ref: '#/components/schemas/FeedbackSubmitRequest'
     responses:
+      '401':
+        description: Недействительный или отсутствующий user access-токен
       '201':
         description: Ответы отправлены
         content:

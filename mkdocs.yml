@@ -104,6 +104,7 @@ nav:
   - Архитектура подсистем:
     - Обзор: subsystems.md
     - Идентификация и регистрация: subsystems/identification.md
+    - Авторизация и сессии: subsystems/auth-sessions.md
     - LED-медиаплатформа:
       - Обзор: subsystems/led-platform/index.md
       - Заставка: subsystems/led-platform/screensaver.md

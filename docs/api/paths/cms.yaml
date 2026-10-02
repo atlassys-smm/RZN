@@ -3,6 +3,7 @@ cms-devices:
     tags: [LED-устройства]
     summary: Зарегистрировать устройство
     description: |
+      Требуется staff access-токен оператора.
       Зарегистрировать новое LED-устройство и выпустить для него device-токен (JWT, привязан к `device_id`).
       Токен возвращается только один раз, в ответе на регистрацию — сохраните его в конфигурации плеера.
     requestBody:
@@ -19,6 +20,10 @@ cms-devices:
                 type: string
                 nullable: true
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Устройство зарегистрировано
         content:
@@ -28,8 +33,12 @@ cms-devices:
   get:
     tags: [LED-устройства]
     summary: Список устройств
-    description: Получить список зарегистрированных LED-устройств
+    description: Требуется staff access-токен оператора. Получить список зарегистрированных LED-устройств
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Список устройств
         content:
@@ -43,6 +52,7 @@ cms-devices-detail:
   get:
     tags: [LED-устройства]
     summary: Получить устройство
+    description: Требуется staff access-токен оператора.
     parameters:
       - name: id
         in: path
@@ -51,6 +61,10 @@ cms-devices-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Устройство
         content:
@@ -62,7 +76,7 @@ cms-devices-detail:
   delete:
     tags: [LED-устройства]
     summary: Отозвать устройство
-    description: Отзывает device-токен устройства (`is_active = false`). Существующий токен перестаёт приниматься сервером.
+    description: Требуется staff access-токен оператора. Отзывает device-токен устройства (`is_active = false`). Существующий токен перестаёт приниматься сервером.
     parameters:
       - name: id
         in: path
@@ -71,6 +85,10 @@ cms-devices-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Устройство отозвано
       '404':
@@ -80,7 +98,7 @@ cms-device-refresh-token:
   post:
     tags: [LED-устройства]
     summary: Обновить JWT устройства
-    description: Выпустить новый device JWT по идентификатору активного устройства.
+    description: Требуется staff access-токен оператора. Выпустить новый device JWT по идентификатору активного устройства.
     parameters:
       - name: device_id
         in: path
@@ -89,6 +107,10 @@ cms-device-refresh-token:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Новый токен устройства
         content:
@@ -135,7 +157,7 @@ surveys:
   get:
     tags: [Обратная связь - CMS]
     summary: Список анкет
-    description: Получить список анкет обратной связи с пагинацией
+    description: Требуется staff access-токен редактора контента или аналитика. Получить список анкет обратной связи с пагинацией
     parameters:
       - name: is_active
         in: query
@@ -153,6 +175,10 @@ surveys:
           type: integer
           default: 0
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Список анкет
         content:
@@ -169,7 +195,7 @@ surveys:
   post:
     tags: [Обратная связь - CMS]
     summary: Создать анкету
-    description: Создать новую анкету (черновик)
+    description: Требуется staff access-токен редактора контента. Создать новую анкету (черновик)
     requestBody:
       required: true
       content:
@@ -177,6 +203,10 @@ surveys:
           schema:
             $ref: '#/components/schemas/CmsSurveyCreateRequest'
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Анкета создана
         content:
@@ -188,7 +218,7 @@ surveys-detail:
   get:
     tags: [Обратная связь - CMS]
     summary: Детали анкеты
-    description: Получить анкету с вопросами
+    description: Требуется staff access-токен редактора контента или аналитика. Получить анкету с вопросами
     parameters:
       - name: survey_id
         in: path
@@ -197,6 +227,10 @@ surveys-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Анкета с вопросами
         content:
@@ -208,7 +242,7 @@ surveys-detail:
   put:
     tags: [Обратная связь - CMS]
     summary: Обновить анкету
-    description: Обновить название и описание анкеты. Нельзя редактировать активную анкету.
+    description: Требуется staff access-токен редактора контента. Обновить название и описание анкеты. Нельзя редактировать активную анкету.
     parameters:
       - name: survey_id
         in: path
@@ -223,6 +257,10 @@ surveys-detail:
           schema:
             $ref: '#/components/schemas/CmsSurveyUpdateRequest'
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Анкета обновлена
         content:
@@ -236,7 +274,7 @@ surveys-detail:
   delete:
     tags: [Обратная связь - CMS]
     summary: Удалить анкету
-    description: Удалить анкету-черновик. Нельзя удалить активную анкету или анкету с ответами.
+    description: Требуется staff access-токен редактора контента. Удалить анкету-черновик. Нельзя удалить активную анкету или анкету с ответами.
     parameters:
       - name: survey_id
         in: path
@@ -245,6 +283,10 @@ surveys-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Анкета удалена
       '404':
@@ -258,7 +300,7 @@ surveys-copy:
   post:
     tags: [Обратная связь - CMS]
     summary: Создать новую версию анкеты
-    description: Скопировать анкету и все её вопросы в новый черновик с тем же external_id
+    description: Требуется staff access-токен редактора контента. Скопировать анкету и все её вопросы в новый черновик с тем же external_id
     parameters:
       - name: survey_id
         in: path
@@ -267,6 +309,10 @@ surveys-copy:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Новая версия создана
         content:
@@ -280,7 +326,7 @@ surveys-publish:
   post:
     tags: [Обратная связь - CMS]
     summary: Опубликовать анкету
-    description: Активировать анкету. Предыдущая активная анкета с тем же external_id автоматически деактивируется.
+    description: Требуется staff access-токен редактора контента. Активировать анкету. Предыдущая активная анкета с тем же external_id автоматически деактивируется.
     parameters:
       - name: survey_id
         in: path
@@ -289,6 +335,10 @@ surveys-publish:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Анкета опубликована
         content:
@@ -304,7 +354,7 @@ surveys-questions-create:
   post:
     tags: [Обратная связь - CMS]
     summary: Добавить вопрос
-    description: Добавить вопрос в анкету-черновик
+    description: Требуется staff access-токен редактора контента. Добавить вопрос в анкету-черновик
     parameters:
       - name: survey_id
         in: path
@@ -319,6 +369,10 @@ surveys-questions-create:
           schema:
             $ref: '#/components/schemas/CmsSurveyQuestionCreateRequest'
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Вопрос добавлен
         content:
@@ -334,7 +388,7 @@ surveys-questions-update:
   put:
     tags: [Обратная связь - CMS]
     summary: Обновить вопрос
-    description: Обновить вопрос анкеты-черновика
+    description: Требуется staff access-токен редактора контента. Обновить вопрос анкеты-черновика
     parameters:
       - name: survey_id
         in: path
@@ -355,6 +409,10 @@ surveys-questions-update:
           schema:
             $ref: '#/components/schemas/CmsSurveyQuestionUpdateRequest'
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Вопрос обновлён
         content:
@@ -370,7 +428,7 @@ surveys-questions-delete:
   delete:
     tags: [Обратная связь - CMS]
     summary: Удалить вопрос
-    description: Удалить вопрос из анкеты-черновика
+    description: Требуется staff access-токен редактора контента. Удалить вопрос из анкеты-черновика
     parameters:
       - name: survey_id
         in: path
@@ -385,6 +443,10 @@ surveys-questions-delete:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Вопрос удалён
       '404':
@@ -396,7 +458,7 @@ surveys-questions-reorder:
   put:
     tags: [Обратная связь - CMS]
     summary: Изменить порядок вопросов
-    description: Переупорядочить вопросы анкеты
+    description: Требуется staff access-токен редактора контента. Переупорядочить вопросы анкеты
     parameters:
       - name: survey_id
         in: path
@@ -419,6 +481,10 @@ surveys-questions-reorder:
                   format: int64
                 description: ID вопросов в новом порядке
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Порядок обновлён
         content:
@@ -436,7 +502,7 @@ responses:
   get:
     tags: [Обратная связь - CMS]
     summary: Список ответов
-    description: Получить список ответов пользователей на анкеты с фильтрами
+    description: Требуется staff access-токен аналитика. Получить список ответов пользователей на анкеты с фильтрами
     parameters:
       - name: survey_id
         in: query
@@ -483,6 +549,10 @@ responses:
           type: integer
           default: 0
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Список ответов
         content:

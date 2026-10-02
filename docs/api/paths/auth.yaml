@@ -1,8 +1,10 @@
 login:
   post:
-    tags: [auth]
+    tags:
+    - Авторизация сотрудников
     summary: Вход в систему
-    description: Аутентификация пользователя и получение JWT-токенов
+    description: Вход сотрудника. Refresh устанавливается только в HttpOnly cookie
+      staff_refresh; Origin обязателен.
     security: []
     requestBody:
       required: true
@@ -10,34 +12,171 @@ login:
         application/json:
           schema:
             type: object
-            required: [login, password]
+            required:
+            - email
+            - password
             properties:
-              login:
+              email:
                 type: string
+                description: Email сотрудника
               password:
                 type: string
+                description: Пароль
     responses:
       '200':
         description: Успешная аутентификация
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/AuthTokenResponse'
+              - type: object
+                required:
+                - staff_user_id
+                - role
+                properties:
+                  staff_user_id:
+                    type: integer
+                  role:
+                    type: integer
+                    enum:
+                    - 1
+                    - 2
+                    - 3
+                    - 4
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+            description: staff_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth
       '401':
         description: Неверные учётные данные
-
+      '403':
+        description: Недопустимый Origin
+staff:
+  post:
+    tags:
+    - Авторизация сотрудников
+    summary: Создание сотрудника
+    description: Создание новой учётной записи сотрудника (только для администраторов)
+    security:
+    - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - first_name
+            - last_name
+            - email
+            - password
+            - role
+            properties:
+              first_name:
+                type: string
+                description: Имя сотрудника
+              last_name:
+                type: string
+                description: Фамилия сотрудника
+              email:
+                type: string
+                description: Email для входа и уведомлений
+              password:
+                type: string
+                description: Пароль без требований сложности; сохраняется хешем
+              role:
+                type: integer
+                enum:
+                - 1
+                - 2
+                - 3
+                - 4
+                description: Роль сотрудника (1=admin, 2=operator, 3=analyst, 4=content_editor)
+    responses:
+      '201':
+        description: Сотрудник создан
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - id
+              - first_name
+              - last_name
+              - email
+              - role
+              - status
+              properties:
+                id:
+                  type: integer
+                  description: ID сотрудника
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  description: Роль сотрудника (1=admin, 2=operator, 3=analyst, 4=content_editor)
+                status:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  description: Статус (1=active, 2=blocked)
+      '401':
+        description: Недействительный токен
+      '403':
+        description: Только для администраторов
+      '409':
+        description: Пользователь с таким email уже существует
+      '422':
+        description: Некорректные поля или роль
 logout:
   post:
-    tags: [auth]
-    summary: Выход из системы
-    description: Инвалидация текущего токена
+    tags:
+    - Авторизация сотрудников
+    summary: Выход из текущей сессии
+    description: Отзыв сессии и удаление refresh-cookie; её access сразу перестаёт
+      работать. Остальные сессии сохраняются. Обязателен доверенный Origin или Referer.
+    security:
+    - staffRefresh: []
     responses:
       '204':
-        description: Токен инвалидирован
-
+        description: Сессия отозвана, cookie удалена
+      '401':
+        description: Недействительная сессия; cookie удаляется
+      '403':
+        description: Недопустимый или отсутствующий Origin/Referer
 refresh:
   post:
-    tags: [auth]
-    summary: Обновление токена
-    description: Получение новой пары access/refresh токенов
+    tags:
+    - Авторизация сотрудников
+    summary: Ротация токенов
+    description: Одноразовый refresh из cookie staff_refresh; тело и CSRF-токен не
+      требуются. Повтор отзывает сессию. Обязателен доверенный Origin или Referer.
+    security:
+    - staffRefresh: []
     responses:
       '200':
-        description: Токены обновлены
+        description: Новый access; refresh заменён в HttpOnly cookie
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthTokenResponse'
       '401':
-        description: Refresh-токен недействителен
+        description: Недействительная сессия; cookie удаляется
+      '403':
+        description: Недопустимый или отсутствующий Origin/Referer

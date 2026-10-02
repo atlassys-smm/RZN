@@ -53,7 +53,7 @@ professions:
   post:
     tags: [Профессии]
     summary: Создать профессию
-    description: Создать новую профессию (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Создать новую профессию (требуются права CMS)
     requestBody:
       required: true
       content:
@@ -73,6 +73,10 @@ professions:
                 type: integer
                 format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Профессия создана
         content:
@@ -105,7 +109,7 @@ professions-detail:
   put:
     tags: [Профессии]
     summary: Обновить профессию
-    description: Обновить профессию (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Обновить профессию (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -131,6 +135,10 @@ professions-detail:
                 type: integer
                 format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Профессия обновлена
         content:
@@ -142,7 +150,7 @@ professions-detail:
   delete:
     tags: [Профессии]
     summary: Удалить профессию
-    description: Удалить профессию (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Удалить профессию (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -151,6 +159,10 @@ professions-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Профессия удалена
       '404':
@@ -193,7 +205,7 @@ industries:
   post:
     tags: [Профессии]
     summary: Создать отрасль
-    description: Создать новую отрасль (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Создать новую отрасль (требуются права CMS)
     requestBody:
       required: true
       content:
@@ -205,6 +217,10 @@ industries:
               name:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Отрасль создана
         content:
@@ -216,7 +232,7 @@ industries-detail:
   put:
     tags: [Профессии]
     summary: Обновить отрасль
-    description: Обновить отрасль (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Обновить отрасль (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -234,6 +250,10 @@ industries-detail:
               name:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Отрасль обновлена
         content:
@@ -245,7 +265,7 @@ industries-detail:
   delete:
     tags: [Профессии]
     summary: Удалить отрасль
-    description: Удалить отрасль (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Удалить отрасль (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -254,6 +274,10 @@ industries-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Отрасль удалена
       '409':
@@ -296,7 +320,7 @@ directions:
   post:
     tags: [Профессии]
     summary: Создать направление
-    description: Создать новое направление (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Создать новое направление (требуются права CMS)
     requestBody:
       required: true
       content:
@@ -310,6 +334,10 @@ directions:
               description:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Направление создано
         content:
@@ -321,7 +349,7 @@ directions-detail:
   put:
     tags: [Профессии]
     summary: Обновить направление
-    description: Обновить направление (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Обновить направление (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -341,6 +369,10 @@ directions-detail:
               description:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Направление обновлено
         content:
@@ -352,7 +384,7 @@ directions-detail:
   delete:
     tags: [Профессии]
     summary: Удалить направление
-    description: Удалить направление (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Удалить направление (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -361,6 +393,10 @@ directions-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Направление удалено
       '409':

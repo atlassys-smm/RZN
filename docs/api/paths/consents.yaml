@@ -35,7 +35,7 @@ consent-types:
   post:
     tags: [Согласия]
     summary: Создать тип согласия
-    description: Создать новый тип согласия (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Создать новый тип согласия (требуются права CMS)
     requestBody:
       required: true
       content:
@@ -52,6 +52,10 @@ consent-types:
               description:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Тип согласия создан
         content:
@@ -83,7 +87,7 @@ consent-types-detail:
   put:
     tags: [Согласия]
     summary: Обновить тип согласия
-    description: Обновить тип согласия (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Обновить тип согласия (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -103,6 +107,10 @@ consent-types-detail:
               description:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Тип согласия обновлён
         content:
@@ -114,7 +122,7 @@ consent-types-detail:
   delete:
     tags: [Согласия]
     summary: Удалить тип согласия
-    description: Удалить тип согласия (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Удалить тип согласия (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -123,6 +131,10 @@ consent-types-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Тип согласия удалён
       '404':
@@ -169,7 +181,7 @@ consent-versions:
   post:
     tags: [Согласия]
     summary: Создать версию согласия (черновик)
-    description: Создать новую черновую версию согласия (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Создать новую черновую версию согласия (требуются права CMS)
     parameters:
       - name: type_id
         in: path
@@ -189,6 +201,10 @@ consent-versions:
                 type: string
                 description: Полный текст согласия
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Черновик создан
         content:
@@ -249,7 +265,7 @@ consent-version-detail:
   put:
     tags: [Согласия]
     summary: Обновить версию согласия
-    description: Обновить черновик версии (требуются права CMS). Опубликованные версии нельзя редактировать.
+    description: Требуется staff access-токен редактора контента. Обновить черновик версии (требуются права CMS). Опубликованные версии нельзя редактировать.
     parameters:
       - name: type_id
         in: path
@@ -273,6 +289,10 @@ consent-version-detail:
               text:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Версия обновлена
         content:
@@ -288,7 +308,7 @@ consent-version-publish:
   post:
     tags: [Согласия]
     summary: Опубликовать версию согласия
-    description: Опубликовать черновик версии согласия (требуются права CMS). Присваивается номер версии и дата вступления в силу.
+    description: Требуется staff access-токен редактора контента. Опубликовать черновик версии согласия (требуются права CMS). Присваивается номер версии и дата вступления в силу.
     parameters:
       - name: type_id
         in: path
@@ -303,6 +323,10 @@ consent-version-publish:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Версия опубликована
         content:
@@ -317,14 +341,9 @@ consent-version-publish:
 consent-acceptances:
   get:
     tags: [Согласия]
-    summary: Список принятых согласий пользователя
+    summary: Список моих принятых согласий
+    description: Пользователь определяется по user access-токену.
     parameters:
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
       - name: limit
         in: query
         schema:
@@ -336,6 +355,8 @@ consent-acceptances:
           type: integer
           default: 0
     responses:
+      '401':
+        description: Недействительный или отсутствующий user access-токен
       '200':
         description: Список принятых согласий
         content:

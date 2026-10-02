@@ -47,7 +47,7 @@ organizations:
   post:
     tags: [Организации]
     summary: Создать организацию
-    description: Создать новую организацию (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Создать новую организацию (требуются права CMS)
     requestBody:
       required: true
       content:
@@ -77,6 +77,10 @@ organizations:
               phone:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Организация создана
         content:
@@ -109,7 +113,7 @@ organizations-detail:
   put:
     tags: [Организации]
     summary: Обновить организацию
-    description: Обновить организацию (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Обновить организацию (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -145,6 +149,10 @@ organizations-detail:
               phone:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Организация обновлена
         content:
@@ -156,7 +164,7 @@ organizations-detail:
   delete:
     tags: [Организации]
     summary: Удалить организацию
-    description: Удалить организацию (требуются права CMS)
+    description: Требуется staff access-токен редактора контента. Удалить организацию (требуются права CMS)
     parameters:
       - name: id
         in: path
@@ -165,6 +173,10 @@ organizations-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Организация удалена
       '404':

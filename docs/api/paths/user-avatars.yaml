@@ -42,15 +42,8 @@ user-avatars-list:
   get:
     tags: [Аватары пользователей]
     summary: Список моих аватаров
-    description: Получить свои аватары (user_id позже будет из токена авторизации)
+    description: Получить свои аватары. Пользователь определяется по user access-токену.
     parameters:
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: Временный параметр, позже будет из токена
       - name: limit
         in: query
         schema:
@@ -62,6 +55,8 @@ user-avatars-list:
           type: integer
           default: 0
     responses:
+      '401':
+        description: Недействительный или отсутствующий user access-токен
       '200':
         description: Список аватаров
         content:
@@ -80,6 +75,7 @@ user-avatars-detail:
   get:
     tags: [Аватары пользователей]
     summary: Детали моего аватара
+    description: Проверка владельца по user access-токену; чужой аватар возвращает 404.
     parameters:
       - name: avatar_id
         in: path
@@ -87,14 +83,9 @@ user-avatars-detail:
         schema:
           type: integer
           format: int64
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: Временный параметр, позже будет из токена
     responses:
+      '401':
+        description: Недействительный или отсутствующий user access-токен
       '200':
         description: Аватар
         content:
@@ -106,6 +97,7 @@ user-avatars-detail:
   delete:
     tags: [Аватары пользователей]
     summary: Удалить мой аватар
+    description: Проверка владельца по user access-токену; чужой аватар возвращает 404.
     parameters:
       - name: avatar_id
         in: path
@@ -113,14 +105,9 @@ user-avatars-detail:
         schema:
           type: integer
           format: int64
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: Временный параметр, позже будет из токена
     responses:
+      '401':
+        description: Недействительный или отсутствующий user access-токен
       '204':
         description: Аватар удалён
       '404':

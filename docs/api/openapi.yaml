@@ -13,10 +13,12 @@ servers:
     description: Локальная разработка
 
 tags:
-  - name: auth
-    description: Авторизация и аутентификация
-  - name: users
-    description: Пользователи и профили
+  - name: Авторизация пользователей
+    description: Гостевой вход, OAuth и сессии посетителей
+  - name: Авторизация сотрудников
+    description: Вход сотрудников, управление учётными записями и сессиями
+  - name: Пользователь
+    description: Данные и профиль текущего пользователя
   - name: LED-устройства
     description: Регистрация LED-устройств, управление ими и device-токенами
   - name: Профессии
@@ -74,10 +76,24 @@ paths:
   # ── Авторизация ──────────────────────────────────
   /auth/login:
     $ref: './paths/auth.yaml#/login'
+  /auth/staff:
+    $ref: './paths/auth.yaml#/staff'
   /auth/logout:
     $ref: './paths/auth.yaml#/logout'
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
+
+  # ── Авторизация пользователя ─────────────────────
+  /auth/user/guest:
+    $ref: './paths/user-auth.yaml#/user-guest'
+  /auth/user/refresh:
+    $ref: './paths/user-auth.yaml#/user-refresh'
+  /auth/user/logout:
+    $ref: './paths/user-auth.yaml#/user-logout'
+  /auth/user/oauth/{provider}:
+    $ref: './paths/user-auth.yaml#/user-oauth'
+  /auth/user/info:
+    $ref: './paths/user-auth.yaml#/user-info'
 
   # ── Пользователи ─────────────────────────────────
   /users/me:
@@ -327,7 +343,28 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    staffRefresh:
+      type: apiKey
+      in: cookie
+      name: staff_refresh
+    userRefresh:
+      type: apiKey
+      in: cookie
+      name: user_refresh
   schemas:
+    AuthTokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+          description: JWT, максимум 30 минут; для гостя ограничен сроком гостя
+        token_type:
+          type: string
+          enum: [bearer]
+        expires_in:
+          type: integer
+          description: Оставшийся срок access в секундах
     # ── Справочники ────────────────────────────────
     Industry:
       description: Отрасль экономики
@@ -1560,15 +1597,12 @@ components:
     FeedbackSubmitRequest:
       description: Запрос на отправку ответов
       type: object
-      required: [source_id, user_id, duration, answers]
+      required: [source_id, duration, answers]
+      additionalProperties: false
       properties:
         source_id:
           type: string
           description: XML_ID устройства (ПАК, веб)
-        user_id:
-          type: integer
-          format: int64
-          description: ID пользователя
         duration:
           type: integer
           description: Время прохождения в секундах

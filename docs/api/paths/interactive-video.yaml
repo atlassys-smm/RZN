@@ -6,7 +6,7 @@ cms-scenarios:
   get:
     tags: [Профессии в действии - CMS]
     summary: Список видеосценариев
-    description: Получить список видеосценариев с фильтрацией и пагинацией
+    description: Требуется staff access-токен редактора контента или оператора. Получить список видеосценариев с фильтрацией и пагинацией
     parameters:
       - name: profession_id
         in: query
@@ -25,6 +25,10 @@ cms-scenarios:
           type: integer
           default: 0
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Список видеосценариев
         content:
@@ -42,6 +46,7 @@ cms-scenarios:
     tags: [Профессии в действии - CMS]
     summary: Создать видеосценарий
     description: |
+      Требуется staff access-токен редактора контента.
       Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
       её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`) — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
       Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
@@ -62,6 +67,10 @@ cms-scenarios:
                 format: int64
                 nullable: true
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Видеосценарий создан
         content:
@@ -79,7 +88,7 @@ cms-scenarios-detail:
   get:
     tags: [Профессии в действии - CMS]
     summary: Получить видеосценарий
-    description: Получить видеосценарий с деревом веток
+    description: Требуется staff access-токен редактора контента или оператора. Получить видеосценарий с деревом веток
     parameters:
       - name: id
         in: path
@@ -88,6 +97,10 @@ cms-scenarios-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Видеосценарий с деревом веток
         content:
@@ -99,7 +112,7 @@ cms-scenarios-detail:
   put:
     tags: [Профессии в действии - CMS]
     summary: Обновить видеосценарий
-    description: Обновить название, описание или профессию
+    description: Требуется staff access-токен редактора контента. Обновить название, описание или профессию
     parameters:
       - name: id
         in: path
@@ -123,6 +136,10 @@ cms-scenarios-detail:
                 format: int64
                 nullable: true
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Видеосценарий обновлён
         content:
@@ -134,7 +151,7 @@ cms-scenarios-detail:
   delete:
     tags: [Профессии в действии - CMS]
     summary: Удалить видеосценарий
-    description: Удалить видеосценарий (только если не использовался в активных сессиях)
+    description: Требуется staff access-токен редактора контента. Удалить видеосценарий (только если не использовался в активных сессиях)
     parameters:
       - name: id
         in: path
@@ -143,6 +160,10 @@ cms-scenarios-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Видеосценарий удалён
       '409':
@@ -155,6 +176,7 @@ cms-branches-create:
     tags: [Профессии в действии - CMS]
     summary: Добавить ветку
     description: |
+      Требуется staff access-токен редактора контента.
       Добавить дочернюю ветку к указанному родителю.
       Если `parent_id` не указан — добавляется как вариант выбора для стартовой ветки.
     parameters:
@@ -188,6 +210,10 @@ cms-branches-create:
                 type: string
                 description: Текст вопроса в точке выбора (для родительской ветки)
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Ветка добавлена
         content:
@@ -205,7 +231,7 @@ cms-branches-update:
   put:
     tags: [Профессии в действии - CMS]
     summary: Обновить ветку
-    description: Обновить текст вопроса, текст варианта или видеофайл
+    description: Требуется staff access-токен редактора контента. Обновить текст вопроса, текст варианта или видеофайл
     parameters:
       - name: id
         in: path
@@ -234,6 +260,10 @@ cms-branches-update:
                 type: integer
                 format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Ветка обновлена
         content:
@@ -245,7 +275,7 @@ cms-branches-update:
   delete:
     tags: [Профессии в действии - CMS]
     summary: Удалить ветку
-    description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
+    description: Требуется staff access-токен редактора контента. Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
     parameters:
       - name: id
         in: path
@@ -260,6 +290,10 @@ cms-branches-update:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Ветка удалена
       '400':
@@ -276,7 +310,7 @@ session-create:
     tags: [Профессии в действии - Оператор]
     summary: Запустить показ
     description: |
-      Запустить показ видеосценариев на LED-экране.
+      Запустить показ видеосценариев на LED-экране. Требуется staff access-токен оператора или администратора.
       В `settings` передаётся либо `scenario_ids` (ручной выбор), либо `profession_count` (случайный выбор N сценариев).
       Бэкенд конвертит `profession_count` в `scenario_ids` перед сохранением.
       Статус сессии сразу становится `active`.
@@ -317,6 +351,10 @@ session-create:
                     default: 5
                     description: Длительность показа результата в секундах
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff access-токен
+      '403':
+        description: Требуется роль оператора или администратора
       '201':
         description: Показ запущен
         content:
@@ -346,6 +384,7 @@ session-active:
     tags: [Профессии в действии]
     summary: Получить активную сессию
     description: |
+      Доступ для оператора/администратора со staff access-токеном или LED с device-токеном. Для LED используется устройство из токена.
       Возвращает текущую активную сессию показа с полным состоянием.
       Если указан `device_id` — возвращает сессию для этого устройства.
       Если `device_id` не указан — возвращает любую активную сессию (для оператора).
@@ -360,6 +399,10 @@ session-active:
           format: int64
         description: Идентификатор LED-устройства (если не указан — возвращается любая активная сессия)
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Активная сессия с полным состоянием
         content:
@@ -373,7 +416,7 @@ session-stop:
   post:
     tags: [Профессии в действии - Оператор]
     summary: Остановить показ
-    description: Остановить показ и вернуть LED-экран в режим ожидания
+    description: Остановить показ и вернуть LED-экран в режим ожидания. Требуется staff access-токен оператора или администратора.
     parameters:
       - name: id
         in: path
@@ -382,6 +425,10 @@ session-stop:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff access-токен
+      '403':
+        description: Требуется роль оператора или администратора
       '204':
         description: Показ остановлен
       '404':
@@ -456,7 +503,7 @@ session-voting:
     tags: [Профессии в действии - Зритель]
     summary: Получить информацию о голосовании
     description: |
-      Информация о текущей точке голосования для мобильного клиента.
+      Информация о текущей точке голосования для мобильного клиента. Пользователь определяется по user access-токену.
       Включает варианты выбора, таймер, статус участника (проголосовал/не проголосовал), результат.
     parameters:
       - name: id
@@ -465,14 +512,9 @@ session-voting:
         schema:
           type: integer
           format: int64
-      - name: participant_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: ID участника (получен при подключении через /join)
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный user access-токен
       '200':
         description: Информация о голосовании
         content:
@@ -490,7 +532,7 @@ player-join:
   post:
     tags: [Профессии в действии - Зритель]
     summary: Подключиться к показу
-    description: Подключиться к показу по QR-коду
+    description: Подключиться с user access-токеном после гостевого входа или OAuth. Возвращает ID текущего пользователя. Повторный запрос возвращает тот же ID.
     parameters:
       - name: sessionId
         in: path
@@ -499,6 +541,8 @@ player-join:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный user access-токен
       '200':
         description: Подключён
         content:
@@ -522,7 +566,7 @@ player-vote:
     tags: [Профессии в действии - Зритель]
     summary: Проголосовать
     description: |
-      Проголосовать за вариант продолжения в точке голосования.
+      Проголосовать за вариант продолжения в точке голосования. Пользователь определяется по user access-токену.
       Один участник может проголосовать только один раз за каждую точку голосования.
     parameters:
       - name: sessionId
@@ -538,12 +582,15 @@ player-vote:
           schema:
             type: object
             required: [branch_id]
+            additionalProperties: false
             properties:
               branch_id:
                 type: integer
                 format: int64
                 description: ID выбранной ветки (варианта продолжения)
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный user access-токен
       '200':
         description: Голос принят
         content:

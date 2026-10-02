@@ -29,8 +29,8 @@
 
 **API:**
 - Регистрация устройства (CMS): `POST /cms/devices`
-- Запуск показа: `POST /interactive-video/sessions`
-- Остановка показа: `POST /interactive-video/sessions/{id}/stop`
+- Запуск показа оператором/администратором со staff access-токеном: `POST /interactive-video/sessions`
+- Остановка показа оператором/администратором со staff access-токеном: `POST /interactive-video/sessions/{id}/stop`
 - Получение состояния (для LED): `GET /interactive-video/sessions/{id}/state`
 
 → [Сущности видеосценария](../../entities/video-scenario.md)

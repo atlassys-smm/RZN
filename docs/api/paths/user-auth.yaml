@@ -1,0 +1,235 @@
+user-guest:
+  post:
+    tags:
+    - Авторизация пользователей
+    summary: Создание гостя
+    description: Гость на 24 часа. Обязательны существующая версия согласия
+      и consent_accepted=true. Тип, статус, дата и актуальность версии не проверяются. Origin обязателен. Refresh только в HttpOnly
+      cookie user_refresh.
+    security: []
+    responses:
+      '201':
+        description: Гость создан
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/AuthTokenResponse'
+              - type: object
+                required:
+                - user_id
+                - is_guest
+                properties:
+                  user_id:
+                    type: integer
+                  is_guest:
+                    type: boolean
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+            description: user_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/user
+      '403':
+        description: Недопустимый Origin
+      '422':
+        description: Согласие не принято или версия не существует
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - consent_version_id
+            - consent_accepted
+            properties:
+              consent_version_id:
+                type: integer
+                minimum: 1
+              consent_accepted:
+                type: boolean
+                enum:
+                - true
+user-refresh:
+  post:
+    tags:
+    - Авторизация пользователей
+    summary: Ротация токенов
+    description: Одноразовый refresh из cookie user_refresh; тело и CSRF-токен не
+      требуются. Повтор отзывает сессию. Обязателен доверенный Origin или Referer.
+    security:
+    - userRefresh: []
+    responses:
+      '200':
+        description: Новый access; refresh заменён в HttpOnly cookie
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthTokenResponse'
+      '401':
+        description: Недействительная сессия; cookie удаляется
+      '403':
+        description: Недопустимый или отсутствующий Origin/Referer
+user-info:
+  get:
+    tags:
+    - Пользователь
+    summary: Данные пользователя
+    description: Получение данных текущего пользователя по токену
+    security:
+    - bearerAuth: []
+    responses:
+      '200':
+        description: Данные пользователя
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - id
+              - is_guest
+              properties:
+                id:
+                  type: integer
+                  description: ID пользователя
+                is_guest:
+                  type: boolean
+                  description: true — гость, false — авторизован
+                email:
+                  type: string
+                  nullable: true
+                  description: Email (только для авторизованных)
+                name:
+                  type: string
+                  nullable: true
+                  description: Имя (только для авторизованных)
+                avatar_url:
+                  type: string
+                  nullable: true
+                  description: URL аватара (только для авторизованных)
+      '401':
+        description: Недействительный токен
+user-logout:
+  post:
+    tags:
+    - Авторизация пользователей
+    summary: Выход из текущей сессии
+    description: Отзыв сессии и удаление refresh-cookie; её access сразу перестаёт
+      работать. Остальные сессии сохраняются. Обязателен доверенный Origin или Referer.
+    security:
+    - userRefresh: []
+    responses:
+      '204':
+        description: Сессия отозвана, cookie удалена
+      '401':
+        description: Недействительная сессия; cookie удаляется
+      '403':
+        description: Недопустимый или отсутствующий Origin/Referer
+user-oauth:
+  get:
+    tags:
+    - Авторизация пользователей
+    summary: Вход через Яндекс ID / VK ID
+    description: Фронтенд самостоятельно запускает OAuth и проверяет state. API принимает
+      одноразовый код в параметре token, для VK также device_id, state, redirect_uri.
+      Обязательны существующая версия согласия, consent_accepted=true и доверенный
+      Origin/Referer. Access текущего гостя необязателен; он позволяет сохранить его
+      ID при авторизации. При существующем OAuth-аккаунте выполняется вход в него
+      без объединения истории. Access возвращается в JSON, refresh — в HttpOnly cookie.
+      Аватар из OAuth не сохраняется.
+    security:
+    - {}
+    - bearerAuth: []
+    parameters:
+    - name: provider
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+        - yandex
+        - vk
+    - name: token
+      in: query
+      required: true
+      description: Одноразовый код авторизации от провайдера
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 4096
+    - name: consent_version_id
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    - name: consent_accepted
+      in: query
+      required: true
+      schema:
+        type: boolean
+        enum:
+        - true
+    - name: device_id
+      in: query
+      required: false
+      description: 'Обязателен для VK: ID устройства из ответа VK ID'
+      schema:
+        type: string
+        minLength: 1
+    - name: state
+      in: query
+      required: false
+      description: 'Обязателен для VK: state, проверенный фронтендом'
+      schema:
+        type: string
+        minLength: 1
+    - name: redirect_uri
+      in: query
+      required: false
+      description: 'Обязателен для VK: URI фронтенда, использованный при получении
+        кода; его origin должен быть в AUTH_ALLOWED_ORIGINS'
+      schema:
+        type: string
+        minLength: 1
+    responses:
+      '200':
+        description: Авторизация завершена
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+            description: user_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/user
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/AuthTokenResponse'
+              - type: object
+                required:
+                - user_id
+                - is_guest
+                properties:
+                  user_id:
+                    type: integer
+                  is_guest:
+                    type: boolean
+                    enum:
+                    - false
+      '400':
+        description: Отказ провайдера, недействительный или повторный код, неправильные
+          параметры VK
+      '401':
+        description: Связанный аккаунт заблокирован или сессия отозвана
+      '409':
+        description: Смена OAuth-аккаунта у авторизованного пользователя не поддерживается
+      '503':
+        description: Провайдер не настроен или сервис временно недоступен
+      '422':
+        description: Некорректные параметры, согласие не принято или версия не существует
+      '403':
+        description: Недопустимый Origin/Referer

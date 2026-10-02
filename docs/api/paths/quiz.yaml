@@ -6,7 +6,7 @@ cms-questions:
   get:
     tags: [Викторина - CMS]
     summary: Список вопросов
-    description: Получить список вопросов викторины с фильтрацией и пагинацией
+    description: Требуется staff access-токен редактора контента или оператора. Получить список вопросов викторины с фильтрацией и пагинацией
     parameters:
       - name: question_type
         in: query
@@ -44,6 +44,10 @@ cms-questions:
           type: integer
           default: 0
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Список вопросов
         content:
@@ -60,7 +64,7 @@ cms-questions:
   post:
     tags: [Викторина - CMS]
     summary: Создать вопрос
-    description: Создать новый вопрос с вариантами ответов
+    description: Требуется staff access-токен редактора контента. Создать новый вопрос с вариантами ответов
     requestBody:
       required: true
       content:
@@ -122,6 +126,10 @@ cms-questions:
                       enum: [1, 2]
                       description: Сторона элемента для вопроса matching
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Вопрос создан
         content:
@@ -133,7 +141,7 @@ cms-questions-detail:
   get:
     tags: [Викторина - CMS]
     summary: Получить вопрос
-    description: Получить вопрос со всеми вариантами ответов
+    description: Требуется staff access-токен редактора контента или оператора. Получить вопрос со всеми вариантами ответов
     parameters:
       - name: id
         in: path
@@ -142,6 +150,10 @@ cms-questions-detail:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Вопрос с вариантами ответов
         content:
@@ -155,7 +167,7 @@ cms-questions-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить вопрос
-    description: Нельзя редактировать вопрос, используемый незавершённой игровой сессией (status `1` — waiting или `2` — active).
+    description: Требуется staff access-токен редактора контента. Нельзя редактировать вопрос, используемый незавершённой игровой сессией (status `1` — waiting или `2` — active).
     parameters:
       - name: id
         in: path
@@ -170,6 +182,10 @@ cms-questions-update:
           schema:
             type: object
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Вопрос обновлён
         content:
@@ -185,7 +201,7 @@ cms-questions-delete:
   delete:
     tags: [Викторина - CMS]
     summary: Удалить вопрос
-    description: Нельзя удалить вопрос, используемый незавершённой игровой сессией (status `1` — waiting или `2` — active).
+    description: Требуется staff access-токен редактора контента. Нельзя удалить вопрос, используемый незавершённой игровой сессией (status `1` — waiting или `2` — active).
     parameters:
       - name: id
         in: path
@@ -194,6 +210,10 @@ cms-questions-delete:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Вопрос удалён
       '404':
@@ -209,7 +229,7 @@ cms-templates:
   get:
     tags: [Викторина - CMS]
     summary: Список шаблонов
-    description: Получить список шаблонов сценариев
+    description: Требуется staff access-токен редактора контента или оператора. Получить список шаблонов сценариев
     parameters:
       - name: status
         in: query
@@ -227,6 +247,10 @@ cms-templates:
           type: integer
           default: 0
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Список шаблонов
         content:
@@ -243,7 +267,7 @@ cms-templates:
   post:
     tags: [Викторина - CMS]
     summary: Создать шаблон
-    description: Создать новый шаблон сценария
+    description: Требуется staff access-токен редактора контента. Создать новый шаблон сценария
     requestBody:
       required: true
       content:
@@ -257,6 +281,10 @@ cms-templates:
               description:
                 type: string
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Шаблон создан
         content:
@@ -268,6 +296,7 @@ cms-templates-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить шаблон
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -282,6 +311,10 @@ cms-templates-update:
           schema:
             type: object
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Шаблон обновлён
         content:
@@ -293,7 +326,7 @@ cms-templates-delete:
   delete:
     tags: [Викторина - CMS]
     summary: Удалить шаблон
-    description: Удалить шаблон. Созданные ранее сессии хранят собственный набор раундов и вопросов.
+    description: Требуется staff access-токен редактора контента. Удалить шаблон. Созданные ранее сессии хранят собственный набор раундов и вопросов.
     parameters:
       - name: id
         in: path
@@ -302,6 +335,10 @@ cms-templates-delete:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Шаблон удалён
 
@@ -309,7 +346,7 @@ cms-templates-publish:
   post:
     tags: [Викторина - CMS]
     summary: Опубликовать шаблон
-    description: Изменить статус с `1` (draft) на `2` (published) — шаблон становится доступен оператору
+    description: Требуется staff access-токен редактора контента. Изменить статус с `1` (draft) на `2` (published) — шаблон становится доступен оператору
     parameters:
       - name: id
         in: path
@@ -318,6 +355,10 @@ cms-templates-publish:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Шаблон опубликован
 
@@ -325,7 +366,7 @@ cms-templates-unpublish:
   post:
     tags: [Викторина - CMS]
     summary: В черновик
-    description: Изменить статус с `2` (published) на `1` (draft)
+    description: Требуется staff access-токен редактора контента. Изменить статус с `2` (published) на `1` (draft)
     parameters:
       - name: id
         in: path
@@ -334,6 +375,10 @@ cms-templates-unpublish:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Шаблон переведён в черновик
 
@@ -343,6 +388,7 @@ cms-templates-rounds-create:
   post:
     tags: [Викторина - CMS]
     summary: Добавить раунд
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -363,6 +409,10 @@ cms-templates-rounds-create:
                 type: integer
                 enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Раунд добавлен
 
@@ -370,6 +420,7 @@ cms-templates-rounds-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить раунд
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -384,6 +435,10 @@ cms-templates-rounds-update:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Раунд обновлён
 
@@ -391,6 +446,7 @@ cms-templates-rounds-delete:
   delete:
     tags: [Викторина - CMS]
     summary: Удалить раунд
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -405,6 +461,10 @@ cms-templates-rounds-delete:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Раунд удалён
 
@@ -412,6 +472,7 @@ cms-templates-rounds-reorder:
   put:
     tags: [Викторина - CMS]
     summary: Изменить порядок раундов
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -433,6 +494,10 @@ cms-templates-rounds-reorder:
                   format: int64
                 description: ID раундов в новом порядке
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Порядок изменён
 
@@ -442,6 +507,7 @@ cms-templates-rounds-questions-add:
   post:
     tags: [Викторина - CMS]
     summary: Добавить вопрос в раунд
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -467,6 +533,10 @@ cms-templates-rounds-questions-add:
                 type: integer
                 format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '201':
         description: Вопрос добавлен в раунд
 
@@ -474,6 +544,7 @@ cms-templates-rounds-questions-remove:
   delete:
     tags: [Викторина - CMS]
     summary: Убрать вопрос из раунда
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -494,6 +565,10 @@ cms-templates-rounds-questions-remove:
           type: integer
           format: int64
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '204':
         description: Вопрос убран из раунда
 
@@ -501,6 +576,7 @@ cms-templates-rounds-questions-reorder:
   put:
     tags: [Викторина - CMS]
     summary: Изменить порядок вопросов в раунде
+    description: Требуется staff access-токен редактора контента.
     parameters:
       - name: id
         in: path
@@ -528,6 +604,10 @@ cms-templates-rounds-questions-reorder:
                   format: int64
                 description: ID вопросов в новом порядке
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Порядок изменён
 
@@ -539,8 +619,12 @@ cms-settings-defaults-get:
   get:
     tags: [Викторина - CMS]
     summary: Стандартные настройки сессии
-    description: Получить стандартные настройки, которые подставляются при создании сессии, если не переданы в запросе
+    description: Требуется staff access-токен редактора контента или оператора. Получить стандартные настройки, которые подставляются при создании сессии, если не переданы в запросе
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Стандартные настройки
         content:
@@ -567,7 +651,7 @@ cms-settings-defaults-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить стандартные настройки сессии
-    description: Обновить стандартные настройки. Передаются только изменяемые поля.
+    description: Требуется staff access-токен редактора контента. Обновить стандартные настройки. Передаются только изменяемые поля.
     requestBody:
       required: true
       content:
@@ -590,6 +674,10 @@ cms-settings-defaults-update:
               show_intermediate_results:
                 type: boolean
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Настройки обновлены
         content:
@@ -616,8 +704,12 @@ cms-settings-scoring-get:
   get:
     tags: [Викторина - CMS]
     summary: Стандартные настройки баллов
-    description: Получить стандартные настройки системы начисления баллов
+    description: Требуется staff access-токен редактора контента или оператора. Получить стандартные настройки системы начисления баллов
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Стандартные настройки баллов
         content:
@@ -656,7 +748,7 @@ cms-settings-scoring-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить стандартные настройки баллов
-    description: Обновить стандартные настройки системы начисления баллов. Передаются только изменяемые поля.
+    description: Требуется staff access-токен редактора контента. Обновить стандартные настройки системы начисления баллов. Передаются только изменяемые поля.
     requestBody:
       required: true
       content:
@@ -691,6 +783,10 @@ cms-settings-scoring-update:
               penalty_coefficient:
                 type: number
     responses:
+      '403':
+        description: Недостаточно прав
+      '401':
+        description: Недействительный или отсутствующий токен
       '200':
         description: Настройки обновлены
         content:
@@ -884,6 +980,10 @@ session-create:
                             type: number
                             default: 0.0
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '201':
         description: Сессия создана (статус waiting, ожидает старта оператора)
         content:
@@ -941,6 +1041,10 @@ session-active:
               - current_round
               - timer
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Активная сессия
         content:
@@ -960,7 +1064,7 @@ session-detail:
     summary: Получить сессию
     description: |
       Без параметра select возвращает только базовые поля сессии (QuizSession).
-      С параметром select возвращает QuizSessionFull с запрошенными связями. Если `participant_id` принадлежит капитану и запрошен `current_question`, `answer_submissions` содержит предварительные ответы команды. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
+      С параметром select возвращает QuizSessionFull с запрошенными связями. Пользователь определяется по access-токену и должен быть участником сессии; device-токен разрешён только для устройства этой сессии. `answer_submissions` сейчас содержит счётчики ответов. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
     parameters:
       - name: id
         in: path
@@ -983,13 +1087,11 @@ session-detail:
               - current_question
               - current_round
               - timer
-      - name: participant_id
-        in: query
-        description: ID GameSessionParticipant; when it identifies the team captain, current_question includes team-member submissions
-        schema:
-          type: integer
-          format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Сессия. Без select — только базовые поля. С select — запрошенные связи заполнены, остальные null.
         content:
@@ -1016,6 +1118,10 @@ session-finish:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Сессия завершена
         content:
@@ -1051,6 +1157,10 @@ session-team-update:
               name:
                 type: string
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Команда обновлена
         content:
@@ -1089,6 +1199,10 @@ session-participant-team:
                 type: integer
                 format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Участник перемещён
         content:
@@ -1129,6 +1243,10 @@ session-team-captain:
                 type: integer
                 format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Капитан назначен
         content:
@@ -1160,6 +1278,10 @@ session-next:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Текущее состояние игры
         content:
@@ -1202,6 +1324,10 @@ session-reveal:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Правильный ответ
         content:
@@ -1247,6 +1373,10 @@ session-timer-pause:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Состояние таймера
         content:
@@ -1267,6 +1397,10 @@ session-timer-resume:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Состояние таймера
         content:
@@ -1299,6 +1433,10 @@ session-timer-add-time:
                 minimum: 1
                 description: Сколько секунд добавить
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Обновлённое состояние таймера
         content:
@@ -1321,6 +1459,10 @@ session-timer-stop:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Текущее состояние игры после остановки таймера
         content:
@@ -1343,6 +1485,10 @@ session-skip:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Текущее состояние игры после перехода
         content:
@@ -1368,6 +1514,10 @@ session-led-next:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Текущее состояние сессии
         content:
@@ -1393,6 +1543,10 @@ session-results:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Текущий результат
         content:
@@ -1402,13 +1556,15 @@ session-results:
 
 # ═══════════════════════════════════════════════════════════════
 # Мобильный клиент — подключение и ответы
+# Все запросы требуют user access-токен. Управление сессией выше — staff ADMIN/OPERATOR; LED next — device-токен своей сессии.
+# Чтение состояния/результатов — участник сессии, сотрудник или устройство сессии.
 # ═══════════════════════════════════════════════════════════════
 
 player-join:
   post:
     tags: [Викторина - Игрок]
     summary: Подключиться к сессии
-    description: Подключиться к сессии по QR-коду
+    description: Подключиться с user access-токеном после гостевого входа или OAuth. Повторный запрос возвращает того же участника.
     parameters:
       - name: sessionId
         in: path
@@ -1417,13 +1573,17 @@ player-join:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Подключён
         content:
           application/json:
             schema:
               type: object
-              required: [participant_id, session_id, token, mode]
+              required: [participant_id, session_id, mode]
               properties:
                 participant_id:
                   type: integer
@@ -1432,9 +1592,6 @@ player-join:
                 session_id:
                   type: integer
                   format: int64
-                token:
-                  type: string
-                  description: User JWT гостевого пользователя
                 mode:
                   type: integer
                   enum: [1, 2]
@@ -1471,7 +1628,7 @@ player-team-join:
   post:
     tags: [Викторина - Игрок]
     summary: Выбрать команду
-    description: Присоединиться к команде (для mode=team)
+    description: Присоединиться к команде (для mode=team). Участник определяется по текущему пользователю. Сначала вызовите /join; смена команды доступна оператору.
     parameters:
       - name: sessionId
         in: path
@@ -1485,18 +1642,11 @@ player-team-join:
         schema:
           type: integer
           format: int64
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required: [participant_id]
-            properties:
-              participant_id:
-                type: integer
-                format: int64
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Присоединился к команде
         content:
@@ -1521,6 +1671,7 @@ player-answer:
     tags: [Викторина - Игрок]
     summary: Ответ на вопрос
     description: |
+      User access-токен обязателен. Участник определяется по пользователю и сессии.
       Ответ на текущий вопрос. Поведение зависит от режима и роли:
       - Individual mode: ответ засчитывается
       - Team mode, обычный участник: сохраняется как голос (для отображения капитану)
@@ -1538,12 +1689,9 @@ player-answer:
         application/json:
           schema:
             type: object
-            required: [participant_id, answer]
+            required: [answer]
+            additionalProperties: false
             properties:
-              participant_id:
-                type: integer
-                format: int64
-                description: ID GameSessionParticipant, полученный при подключении
               answer:
                 type: object
                 description: JSON-ответ согласно типу вопроса; форматы описаны в entities/quiz.md
@@ -1553,6 +1701,10 @@ player-answer:
                 default: false
                 description: true только для решающего ответа капитана команды; false означает предварительный ответ участника
     responses:
+      '401':
+        description: Отсутствующий, истёкший или недействительный токен
+      '403':
+        description: Нет доступа к сессии или операция недоступна роли
       '200':
         description: Ответ принят
         content:
@@ -1635,7 +1787,7 @@ player-answer:
 # }
 #
 # ### answers_update
-# Новый предварительный ответ участника или решающий ответ капитана. Капитан обновляет состояние запросом GET /quiz/sessions/{id}?select=current_question&participant_id={captainParticipantId}.
+# Новый предварительный ответ участника или решающий ответ капитана. Капитан обновляет состояние запросом GET /quiz/sessions/{id}?select=current_question.
 #
 # {
 #   "type": "answers_update",

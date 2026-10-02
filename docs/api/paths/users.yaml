@@ -1,13 +1,13 @@
 me:
   get:
-    tags: [users]
+    tags: [Пользователь]
     summary: Текущий пользователь
     description: Получить профиль текущего аутентифицированного пользователя
     responses:
       '200':
         description: Профиль пользователя
   patch:
-    tags: [users]
+    tags: [Пользователь]
     summary: Обновить профиль
     description: Частичное обновление профиля текущего пользователя
     requestBody:

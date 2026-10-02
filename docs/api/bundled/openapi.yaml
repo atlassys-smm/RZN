@@ -14,10 +14,12 @@ servers:
 - url: http://localhost:8000/api
   description: Локальная разработка
 tags:
-- name: auth
-  description: Авторизация и аутентификация
-- name: users
-  description: Пользователи и профили
+- name: Авторизация пользователей
+  description: Гостевой вход, OAuth и сессии посетителей
+- name: Авторизация сотрудников
+  description: Вход сотрудников, управление учётными записями и сессиями
+- name: Пользователь
+  description: Данные и профиль текущего пользователя
 - name: LED-устройства
   description: Регистрация LED-устройств, управление ими и device-токенами
 - name: Профессии
@@ -63,15 +65,22 @@ tags:
   description: CMS — управление контентом
 - name: feedback
   description: Обратная связь и анкеты
+- name: Обратная связь - CMS
+  description: Управление анкетами и вопросами обратной связи
+- name: Обратная связь - LED
+  description: Получение анкет для LED-плееров
+- name: Обратная связь - Пользователь
+  description: Прохождение анкет обратной связи
 - name: files
   description: Загрузка и управление файлами
 paths:
   /auth/login:
     post:
       tags:
-      - auth
+      - Авторизация сотрудников
       summary: Вход в систему
-      description: Аутентификация пользователя и получение JWT-токенов
+      description: Вход сотрудника. Refresh устанавливается только в HttpOnly cookie
+        staff_refresh; Origin обязателен.
       security: []
       requestBody:
         required: true
@@ -80,42 +89,413 @@ paths:
             schema:
               type: object
               required:
-              - login
+              - email
               - password
               properties:
-                login:
+                email:
                   type: string
+                  description: Email сотрудника
                 password:
                   type: string
+                  description: Пароль
       responses:
         '200':
           description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required:
+                  - staff_user_id
+                  - role
+                  properties:
+                    staff_user_id:
+                      type: integer
+                    role:
+                      type: integer
+                      enum:
+                      - 1
+                      - 2
+                      - 3
+                      - 4
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: staff_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth
         '401':
           description: Неверные учётные данные
+        '403':
+          description: Недопустимый Origin
+  /auth/staff:
+    post:
+      tags:
+      - Авторизация сотрудников
+      summary: Создание сотрудника
+      description: Создание новой учётной записи сотрудника (только для администраторов)
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - first_name
+              - last_name
+              - email
+              - password
+              - role
+              properties:
+                first_name:
+                  type: string
+                  description: Имя сотрудника
+                last_name:
+                  type: string
+                  description: Фамилия сотрудника
+                email:
+                  type: string
+                  description: Email для входа и уведомлений
+                password:
+                  type: string
+                  description: Пароль без требований сложности; сохраняется хешем
+                role:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  description: Роль сотрудника (1=admin, 2=operator, 3=analyst, 4=content_editor)
+      responses:
+        '201':
+          description: Сотрудник создан
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - first_name
+                - last_name
+                - email
+                - role
+                - status
+                properties:
+                  id:
+                    type: integer
+                    description: ID сотрудника
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: integer
+                    enum:
+                    - 1
+                    - 2
+                    - 3
+                    - 4
+                    description: Роль сотрудника (1=admin, 2=operator, 3=analyst,
+                      4=content_editor)
+                  status:
+                    type: integer
+                    enum:
+                    - 1
+                    - 2
+                    description: Статус (1=active, 2=blocked)
+        '401':
+          description: Недействительный токен
+        '403':
+          description: Только для администраторов
+        '409':
+          description: Пользователь с таким email уже существует
+        '422':
+          description: Некорректные поля или роль
   /auth/logout:
     post:
       tags:
-      - auth
-      summary: Выход из системы
-      description: Инвалидация текущего токена
+      - Авторизация сотрудников
+      summary: Выход из текущей сессии
+      description: Отзыв сессии и удаление refresh-cookie; её access сразу перестаёт
+        работать. Остальные сессии сохраняются. Обязателен доверенный Origin или Referer.
+      security:
+      - staffRefresh: []
       responses:
         '204':
-          description: Токен инвалидирован
+          description: Сессия отозвана, cookie удалена
+        '401':
+          description: Недействительная сессия; cookie удаляется
+        '403':
+          description: Недопустимый или отсутствующий Origin/Referer
   /auth/refresh:
     post:
       tags:
-      - auth
-      summary: Обновление токена
-      description: Получение новой пары access/refresh токенов
+      - Авторизация сотрудников
+      summary: Ротация токенов
+      description: Одноразовый refresh из cookie staff_refresh; тело и CSRF-токен
+        не требуются. Повтор отзывает сессию. Обязателен доверенный Origin или Referer.
+      security:
+      - staffRefresh: []
       responses:
         '200':
-          description: Токены обновлены
+          description: Новый access; refresh заменён в HttpOnly cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
         '401':
-          description: Refresh-токен недействителен
+          description: Недействительная сессия; cookie удаляется
+        '403':
+          description: Недопустимый или отсутствующий Origin/Referer
+  /auth/user/guest:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Создание гостя
+      description: Гость на 24 часа. Обязательны существующая версия согласия и consent_accepted=true.
+        Тип, статус, дата и актуальность версии не проверяются. Origin обязателен.
+        Refresh только в HttpOnly cookie user_refresh.
+      security: []
+      responses:
+        '201':
+          description: Гость создан
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required:
+                  - user_id
+                  - is_guest
+                  properties:
+                    user_id:
+                      type: integer
+                    is_guest:
+                      type: boolean
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: user_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/user
+        '403':
+          description: Недопустимый Origin
+        '422':
+          description: Согласие не принято или версия не существует
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - consent_version_id
+              - consent_accepted
+              properties:
+                consent_version_id:
+                  type: integer
+                  minimum: 1
+                consent_accepted:
+                  type: boolean
+                  enum:
+                  - true
+  /auth/user/refresh:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Ротация токенов
+      description: Одноразовый refresh из cookie user_refresh; тело и CSRF-токен не
+        требуются. Повтор отзывает сессию. Обязателен доверенный Origin или Referer.
+      security:
+      - userRefresh: []
+      responses:
+        '200':
+          description: Новый access; refresh заменён в HttpOnly cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Недействительная сессия; cookie удаляется
+        '403':
+          description: Недопустимый или отсутствующий Origin/Referer
+  /auth/user/logout:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Выход из текущей сессии
+      description: Отзыв сессии и удаление refresh-cookie; её access сразу перестаёт
+        работать. Остальные сессии сохраняются. Обязателен доверенный Origin или Referer.
+      security:
+      - userRefresh: []
+      responses:
+        '204':
+          description: Сессия отозвана, cookie удалена
+        '401':
+          description: Недействительная сессия; cookie удаляется
+        '403':
+          description: Недопустимый или отсутствующий Origin/Referer
+  /auth/user/oauth/{provider}:
+    get:
+      tags:
+      - Авторизация пользователей
+      summary: Вход через Яндекс ID / VK ID
+      description: Фронтенд самостоятельно запускает OAuth и проверяет state. API
+        принимает одноразовый код в параметре token, для VK также device_id, state,
+        redirect_uri. Обязательны существующая версия согласия, consent_accepted=true
+        и доверенный Origin/Referer. Access текущего гостя необязателен; он позволяет
+        сохранить его ID при авторизации. При существующем OAuth-аккаунте выполняется
+        вход в него без объединения истории. Access возвращается в JSON, refresh —
+        в HttpOnly cookie. Аватар из OAuth не сохраняется.
+      security:
+      - {}
+      - bearerAuth: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - yandex
+          - vk
+      - name: token
+        in: query
+        required: true
+        description: Одноразовый код авторизации от провайдера
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 4096
+      - name: consent_version_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: consent_accepted
+        in: query
+        required: true
+        schema:
+          type: boolean
+          enum:
+          - true
+      - name: device_id
+        in: query
+        required: false
+        description: 'Обязателен для VK: ID устройства из ответа VK ID'
+        schema:
+          type: string
+          minLength: 1
+      - name: state
+        in: query
+        required: false
+        description: 'Обязателен для VK: state, проверенный фронтендом'
+        schema:
+          type: string
+          minLength: 1
+      - name: redirect_uri
+        in: query
+        required: false
+        description: 'Обязателен для VK: URI фронтенда, использованный при получении
+          кода; его origin должен быть в AUTH_ALLOWED_ORIGINS'
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Авторизация завершена
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: user_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/user
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required:
+                  - user_id
+                  - is_guest
+                  properties:
+                    user_id:
+                      type: integer
+                    is_guest:
+                      type: boolean
+                      enum:
+                      - false
+        '400':
+          description: Отказ провайдера, недействительный или повторный код, неправильные
+            параметры VK
+        '401':
+          description: Связанный аккаунт заблокирован или сессия отозвана
+        '409':
+          description: Смена OAuth-аккаунта у авторизованного пользователя не поддерживается
+        '503':
+          description: Провайдер не настроен или сервис временно недоступен
+        '422':
+          description: Некорректные параметры, согласие не принято или версия не существует
+        '403':
+          description: Недопустимый Origin/Referer
+  /auth/user/info:
+    get:
+      tags:
+      - Пользователь
+      summary: Данные пользователя
+      description: Получение данных текущего пользователя по токену
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - id
+                - is_guest
+                properties:
+                  id:
+                    type: integer
+                    description: ID пользователя
+                  is_guest:
+                    type: boolean
+                    description: true — гость, false — авторизован
+                  email:
+                    type: string
+                    nullable: true
+                    description: Email (только для авторизованных)
+                  name:
+                    type: string
+                    nullable: true
+                    description: Имя (только для авторизованных)
+                  avatar_url:
+                    type: string
+                    nullable: true
+                    description: URL аватара (только для авторизованных)
+        '401':
+          description: Недействительный токен
   /users/me:
     get:
       tags:
-      - users
+      - Пользователь
       summary: Текущий пользователь
       description: Получить профиль текущего аутентифицированного пользователя
       responses:
@@ -123,7 +503,7 @@ paths:
           description: Профиль пользователя
     patch:
       tags:
-      - users
+      - Пользователь
       summary: Обновить профиль
       description: Частичное обновление профиля текущего пользователя
       requestBody:
@@ -188,7 +568,8 @@ paths:
       tags:
       - Профессии
       summary: Создать профессию
-      description: Создать новую профессию (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Создать новую
+        профессию (требуются права CMS)
       requestBody:
         required: true
         content:
@@ -211,6 +592,10 @@ paths:
                   type: integer
                   format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Профессия создана
           content:
@@ -244,7 +629,8 @@ paths:
       tags:
       - Профессии
       summary: Обновить профессию
-      description: Обновить профессию (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Обновить профессию
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -270,6 +656,10 @@ paths:
                   type: integer
                   format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Профессия обновлена
           content:
@@ -282,7 +672,8 @@ paths:
       tags:
       - Профессии
       summary: Удалить профессию
-      description: Удалить профессию (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Удалить профессию
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -291,6 +682,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Профессия удалена
         '404':
@@ -330,7 +725,8 @@ paths:
       tags:
       - Профессии
       summary: Создать отрасль
-      description: Создать новую отрасль (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Создать новую
+        отрасль (требуются права CMS)
       requestBody:
         required: true
         content:
@@ -343,6 +739,10 @@ paths:
                 name:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Отрасль создана
           content:
@@ -354,7 +754,8 @@ paths:
       tags:
       - Профессии
       summary: Обновить отрасль
-      description: Обновить отрасль (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Обновить отрасль
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -372,6 +773,10 @@ paths:
                 name:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Отрасль обновлена
           content:
@@ -384,7 +789,8 @@ paths:
       tags:
       - Профессии
       summary: Удалить отрасль
-      description: Удалить отрасль (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Удалить отрасль
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -393,6 +799,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Отрасль удалена
         '409':
@@ -432,7 +842,8 @@ paths:
       tags:
       - Профессии
       summary: Создать направление
-      description: Создать новое направление (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Создать новое
+        направление (требуются права CMS)
       requestBody:
         required: true
         content:
@@ -447,6 +858,10 @@ paths:
                 description:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Направление создано
           content:
@@ -458,7 +873,8 @@ paths:
       tags:
       - Профессии
       summary: Обновить направление
-      description: Обновить направление (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Обновить направление
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -478,6 +894,10 @@ paths:
                 description:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Направление обновлено
           content:
@@ -490,7 +910,8 @@ paths:
       tags:
       - Профессии
       summary: Удалить направление
-      description: Удалить направление (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Удалить направление
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -499,6 +920,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Направление удалено
         '409':
@@ -679,7 +1104,8 @@ paths:
       tags:
       - Организации
       summary: Создать организацию
-      description: Создать новую организацию (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Создать новую
+        организацию (требуются права CMS)
       requestBody:
         required: true
         content:
@@ -713,6 +1139,10 @@ paths:
                 phone:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Организация создана
           content:
@@ -746,7 +1176,8 @@ paths:
       tags:
       - Организации
       summary: Обновить организацию
-      description: Обновить организацию (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Обновить организацию
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -784,6 +1215,10 @@ paths:
                 phone:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Организация обновлена
           content:
@@ -796,7 +1231,8 @@ paths:
       tags:
       - Организации
       summary: Удалить организацию
-      description: Удалить организацию (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Удалить организацию
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -805,6 +1241,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Организация удалена
         '404':
@@ -844,7 +1284,8 @@ paths:
       tags:
       - Согласия
       summary: Создать тип согласия
-      description: Создать новый тип согласия (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Создать новый
+        тип согласия (требуются права CMS)
       requestBody:
         required: true
         content:
@@ -863,6 +1304,10 @@ paths:
                 description:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Тип согласия создан
           content:
@@ -895,7 +1340,8 @@ paths:
       tags:
       - Согласия
       summary: Обновить тип согласия
-      description: Обновить тип согласия (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Обновить тип согласия
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -915,6 +1361,10 @@ paths:
                 description:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Тип согласия обновлён
           content:
@@ -927,7 +1377,8 @@ paths:
       tags:
       - Согласия
       summary: Удалить тип согласия
-      description: Удалить тип согласия (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Удалить тип согласия
+        (требуются права CMS)
       parameters:
       - name: id
         in: path
@@ -936,6 +1387,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Тип согласия удалён
         '404':
@@ -983,7 +1438,8 @@ paths:
       tags:
       - Согласия
       summary: Создать версию согласия (черновик)
-      description: Создать новую черновую версию согласия (требуются права CMS)
+      description: Требуется staff access-токен редактора контента. Создать новую
+        черновую версию согласия (требуются права CMS)
       parameters:
       - name: type_id
         in: path
@@ -1004,6 +1460,10 @@ paths:
                   type: string
                   description: Полный текст согласия
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Черновик создан
           content:
@@ -1065,8 +1525,8 @@ paths:
       tags:
       - Согласия
       summary: Обновить версию согласия
-      description: Обновить черновик версии (требуются права CMS). Опубликованные
-        версии нельзя редактировать.
+      description: Требуется staff access-токен редактора контента. Обновить черновик
+        версии (требуются права CMS). Опубликованные версии нельзя редактировать.
       parameters:
       - name: type_id
         in: path
@@ -1090,6 +1550,10 @@ paths:
                 text:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Версия обновлена
           content:
@@ -1105,8 +1569,9 @@ paths:
       tags:
       - Согласия
       summary: Опубликовать версию согласия
-      description: Опубликовать черновик версии согласия (требуются права CMS). Присваивается
-        номер версии и дата вступления в силу.
+      description: Требуется staff access-токен редактора контента. Опубликовать черновик
+        версии согласия (требуются права CMS). Присваивается номер версии и дата вступления
+        в силу.
       parameters:
       - name: type_id
         in: path
@@ -1121,6 +1586,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Версия опубликована
           content:
@@ -1135,14 +1604,9 @@ paths:
     get:
       tags:
       - Согласия
-      summary: Список принятых согласий пользователя
+      summary: Список моих принятых согласий
+      description: Пользователь определяется по user access-токену.
       parameters:
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
       - name: limit
         in: query
         schema:
@@ -1154,6 +1618,8 @@ paths:
           type: integer
           default: 0
       responses:
+        '401':
+          description: Недействительный или отсутствующий user access-токен
         '200':
           description: Список принятых согласий
           content:
@@ -1314,7 +1780,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Список вопросов
-      description: Получить список вопросов викторины с фильтрацией и пагинацией
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить список вопросов викторины с фильтрацией и пагинацией
       parameters:
       - name: question_type
         in: query
@@ -1382,6 +1849,10 @@ paths:
           type: integer
           default: 0
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Список вопросов
           content:
@@ -1399,7 +1870,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Создать вопрос
-      description: Создать новый вопрос с вариантами ответов
+      description: Требуется staff access-токен редактора контента. Создать новый
+        вопрос с вариантами ответов
       requestBody:
         required: true
         content:
@@ -1501,6 +1973,10 @@ paths:
                         - 2
                         description: Сторона элемента для вопроса matching
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Вопрос создан
           content:
@@ -1512,7 +1988,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Получить вопрос
-      description: Получить вопрос со всеми вариантами ответов
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить вопрос со всеми вариантами ответов
       parameters:
       - name: id
         in: path
@@ -1521,6 +1998,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Вопрос с вариантами ответов
           content:
@@ -1533,8 +2014,9 @@ paths:
       tags:
       - Викторина - CMS
       summary: Обновить вопрос
-      description: Нельзя редактировать вопрос, используемый незавершённой игровой
-        сессией (status `1` — waiting или `2` — active).
+      description: Требуется staff access-токен редактора контента. Нельзя редактировать
+        вопрос, используемый незавершённой игровой сессией (status `1` — waiting или
+        `2` — active).
       parameters:
       - name: id
         in: path
@@ -1549,6 +2031,10 @@ paths:
             schema:
               type: object
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Вопрос обновлён
           content:
@@ -1563,8 +2049,9 @@ paths:
       tags:
       - Викторина - CMS
       summary: Удалить вопрос
-      description: Нельзя удалить вопрос, используемый незавершённой игровой сессией
-        (status `1` — waiting или `2` — active).
+      description: Требуется staff access-токен редактора контента. Нельзя удалить
+        вопрос, используемый незавершённой игровой сессией (status `1` — waiting или
+        `2` — active).
       parameters:
       - name: id
         in: path
@@ -1573,6 +2060,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Вопрос удалён
         '404':
@@ -1584,7 +2075,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Список шаблонов
-      description: Получить список шаблонов сценариев
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить список шаблонов сценариев
       parameters:
       - name: status
         in: query
@@ -1604,6 +2096,10 @@ paths:
           type: integer
           default: 0
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Список шаблонов
           content:
@@ -1621,7 +2117,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Создать шаблон
-      description: Создать новый шаблон сценария
+      description: Требуется staff access-токен редактора контента. Создать новый
+        шаблон сценария
       requestBody:
         required: true
         content:
@@ -1636,6 +2133,10 @@ paths:
                 description:
                   type: string
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Шаблон создан
           content:
@@ -1647,6 +2148,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Обновить шаблон
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1661,6 +2163,10 @@ paths:
             schema:
               type: object
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Шаблон обновлён
           content:
@@ -1671,8 +2177,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Удалить шаблон
-      description: Удалить шаблон. Созданные ранее сессии хранят собственный набор
-        раундов и вопросов.
+      description: Требуется staff access-токен редактора контента. Удалить шаблон.
+        Созданные ранее сессии хранят собственный набор раундов и вопросов.
       parameters:
       - name: id
         in: path
@@ -1681,6 +2187,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Шаблон удалён
   /cms/quiz/templates/{id}/publish:
@@ -1688,8 +2198,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Опубликовать шаблон
-      description: Изменить статус с `1` (draft) на `2` (published) — шаблон становится
-        доступен оператору
+      description: Требуется staff access-токен редактора контента. Изменить статус
+        с `1` (draft) на `2` (published) — шаблон становится доступен оператору
       parameters:
       - name: id
         in: path
@@ -1698,6 +2208,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Шаблон опубликован
   /cms/quiz/templates/{id}/unpublish:
@@ -1705,7 +2219,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: В черновик
-      description: Изменить статус с `2` (published) на `1` (draft)
+      description: Требуется staff access-токен редактора контента. Изменить статус
+        с `2` (published) на `1` (draft)
       parameters:
       - name: id
         in: path
@@ -1714,6 +2229,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Шаблон переведён в черновик
   /cms/quiz/templates/{id}/rounds:
@@ -1721,6 +2240,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Добавить раунд
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1751,6 +2271,10 @@ paths:
                   - 8
                   - 9
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Раунд добавлен
   /cms/quiz/templates/{id}/rounds/reorder:
@@ -1758,6 +2282,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Изменить порядок раундов
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1779,6 +2304,10 @@ paths:
                     format: int64
                   description: ID раундов в новом порядке
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Порядок изменён
   /cms/quiz/templates/{id}/rounds/{roundId}:
@@ -1786,6 +2315,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Обновить раунд
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1800,12 +2330,17 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Раунд обновлён
     delete:
       tags:
       - Викторина - CMS
       summary: Удалить раунд
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1820,6 +2355,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Раунд удалён
   /cms/quiz/templates/{id}/rounds/{roundId}/questions:
@@ -1827,6 +2366,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Добавить вопрос в раунд
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1853,6 +2393,10 @@ paths:
                   type: integer
                   format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Вопрос добавлен в раунд
   /cms/quiz/templates/{id}/rounds/{roundId}/questions/reorder:
@@ -1860,6 +2404,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Изменить порядок вопросов в раунде
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1887,6 +2432,10 @@ paths:
                     format: int64
                   description: ID вопросов в новом порядке
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Порядок изменён
   /cms/quiz/templates/{id}/rounds/{roundId}/questions/{questionId}:
@@ -1894,6 +2443,7 @@ paths:
       tags:
       - Викторина - CMS
       summary: Убрать вопрос из раунда
+      description: Требуется staff access-токен редактора контента.
       parameters:
       - name: id
         in: path
@@ -1914,6 +2464,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Вопрос убран из раунда
   /cms/quiz/settings/defaults:
@@ -1921,9 +2475,14 @@ paths:
       tags:
       - Викторина - CMS
       summary: Стандартные настройки сессии
-      description: Получить стандартные настройки, которые подставляются при создании
-        сессии, если не переданы в запросе
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить стандартные настройки, которые подставляются при создании сессии,
+        если не переданы в запросе
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Стандартные настройки
           content:
@@ -1949,7 +2508,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Обновить стандартные настройки сессии
-      description: Обновить стандартные настройки. Передаются только изменяемые поля.
+      description: Требуется staff access-токен редактора контента. Обновить стандартные
+        настройки. Передаются только изменяемые поля.
       requestBody:
         required: true
         content:
@@ -1972,6 +2532,10 @@ paths:
                 show_intermediate_results:
                   type: boolean
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Настройки обновлены
           content:
@@ -1998,8 +2562,13 @@ paths:
       tags:
       - Викторина - CMS
       summary: Стандартные настройки баллов
-      description: Получить стандартные настройки системы начисления баллов
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить стандартные настройки системы начисления баллов
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Стандартные настройки баллов
           content:
@@ -2037,8 +2606,8 @@ paths:
       tags:
       - Викторина - CMS
       summary: Обновить стандартные настройки баллов
-      description: Обновить стандартные настройки системы начисления баллов. Передаются
-        только изменяемые поля.
+      description: Требуется staff access-токен редактора контента. Обновить стандартные
+        настройки системы начисления баллов. Передаются только изменяемые поля.
       requestBody:
         required: true
         content:
@@ -2073,6 +2642,10 @@ paths:
                 penalty_coefficient:
                   type: number
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Настройки обновлены
           content:
@@ -2300,6 +2873,10 @@ paths:
                               type: number
                               default: 0.0
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '201':
           description: Сессия создана (статус waiting, ожидает старта оператора)
           content:
@@ -2362,6 +2939,10 @@ paths:
             - current_round
             - timer
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Активная сессия
           content:
@@ -2381,10 +2962,11 @@ paths:
       summary: Получить сессию
       description: 'Без параметра select возвращает только базовые поля сессии (QuizSession).
 
-        С параметром select возвращает QuizSessionFull с запрошенными связями. Если
-        `participant_id` принадлежит капитану и запрошен `current_question`, `answer_submissions`
-        содержит предварительные ответы команды. До раскрытия правильного ответа поля
-        `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
+        С параметром select возвращает QuizSessionFull с запрошенными связями. Пользователь
+        определяется по access-токену и должен быть участником сессии; device-токен
+        разрешён только для устройства этой сессии. `answer_submissions` сейчас содержит
+        счётчики ответов. До раскрытия правильного ответа поля `is_correct` у вариантов
+        и `answer_key` вопроса не возвращаются.
 
         '
       parameters:
@@ -2409,14 +2991,11 @@ paths:
             - current_question
             - current_round
             - timer
-      - name: participant_id
-        in: query
-        description: ID GameSessionParticipant; when it identifies the team captain,
-          current_question includes team-member submissions
-        schema:
-          type: integer
-          format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Сессия. Без select — только базовые поля. С select — запрошенные
             связи заполнены, остальные null.
@@ -2445,6 +3024,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Сессия завершена
           content:
@@ -2481,6 +3064,10 @@ paths:
                 name:
                   type: string
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Команда обновлена
           content:
@@ -2520,6 +3107,10 @@ paths:
                   type: integer
                   format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Капитан назначен
           content:
@@ -2559,6 +3150,10 @@ paths:
                   type: integer
                   format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Участник перемещён
           content:
@@ -2599,6 +3194,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Текущее состояние игры
           content:
@@ -2642,6 +3241,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Правильный ответ
           content:
@@ -2687,6 +3290,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Состояние таймера
           content:
@@ -2707,6 +3314,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Состояние таймера
           content:
@@ -2741,6 +3352,10 @@ paths:
                   minimum: 1
                   description: Сколько секунд добавить
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Обновлённое состояние таймера
           content:
@@ -2765,6 +3380,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Текущее состояние игры после остановки таймера
           content:
@@ -2789,6 +3408,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Текущее состояние игры после перехода
           content:
@@ -2818,6 +3441,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Текущее состояние сессии
           content:
@@ -2841,6 +3468,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Текущий результат
           content:
@@ -2852,7 +3483,8 @@ paths:
       tags:
       - Викторина - Игрок
       summary: Подключиться к сессии
-      description: Подключиться к сессии по QR-коду
+      description: Подключиться с user access-токеном после гостевого входа или OAuth.
+        Повторный запрос возвращает того же участника.
       parameters:
       - name: sessionId
         in: path
@@ -2861,6 +3493,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Подключён
           content:
@@ -2870,7 +3506,6 @@ paths:
                 required:
                 - participant_id
                 - session_id
-                - token
                 - mode
                 properties:
                   participant_id:
@@ -2880,9 +3515,6 @@ paths:
                   session_id:
                     type: integer
                     format: int64
-                  token:
-                    type: string
-                    description: User JWT гостевого пользователя
                   mode:
                     type: integer
                     enum:
@@ -2921,7 +3553,8 @@ paths:
       tags:
       - Викторина - Игрок
       summary: Выбрать команду
-      description: Присоединиться к команде (для mode=team)
+      description: Присоединиться к команде (для mode=team). Участник определяется
+        по текущему пользователю. Сначала вызовите /join; смена команды доступна оператору.
       parameters:
       - name: sessionId
         in: path
@@ -2935,19 +3568,11 @@ paths:
         schema:
           type: integer
           format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - participant_id
-              properties:
-                participant_id:
-                  type: integer
-                  format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Присоединился к команде
           content:
@@ -2971,7 +3596,10 @@ paths:
       tags:
       - Викторина - Игрок
       summary: Ответ на вопрос
-      description: 'Ответ на текущий вопрос. Поведение зависит от режима и роли:
+      description: 'User access-токен обязателен. Участник определяется по пользователю
+        и сессии.
+
+        Ответ на текущий вопрос. Поведение зависит от режима и роли:
 
         - Individual mode: ответ засчитывается
 
@@ -2995,13 +3623,9 @@ paths:
             schema:
               type: object
               required:
-              - participant_id
               - answer
+              additionalProperties: false
               properties:
-                participant_id:
-                  type: integer
-                  format: int64
-                  description: ID GameSessionParticipant, полученный при подключении
                 answer:
                   type: object
                   description: JSON-ответ согласно типу вопроса; форматы описаны в
@@ -3013,6 +3637,10 @@ paths:
                   description: true только для решающего ответа капитана команды;
                     false означает предварительный ответ участника
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный токен
+        '403':
+          description: Нет доступа к сессии или операция недоступна роли
         '200':
           description: Ответ принят
           content:
@@ -3060,8 +3688,10 @@ paths:
       tags:
       - LED-устройства
       summary: Зарегистрировать устройство
-      description: 'Зарегистрировать новое LED-устройство и выпустить для него device-токен
-        (JWT, привязан к `device_id`).
+      description: 'Требуется staff access-токен оператора.
+
+        Зарегистрировать новое LED-устройство и выпустить для него device-токен (JWT,
+        привязан к `device_id`).
 
         Токен возвращается только один раз, в ответе на регистрацию — сохраните его
         в конфигурации плеера.
@@ -3082,6 +3712,10 @@ paths:
                   type: string
                   nullable: true
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Устройство зарегистрировано
           content:
@@ -3092,8 +3726,13 @@ paths:
       tags:
       - LED-устройства
       summary: Список устройств
-      description: Получить список зарегистрированных LED-устройств
+      description: Требуется staff access-токен оператора. Получить список зарегистрированных
+        LED-устройств
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Список устройств
           content:
@@ -3107,6 +3746,7 @@ paths:
       tags:
       - LED-устройства
       summary: Получить устройство
+      description: Требуется staff access-токен оператора.
       parameters:
       - name: id
         in: path
@@ -3115,6 +3755,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Устройство
           content:
@@ -3127,8 +3771,8 @@ paths:
       tags:
       - LED-устройства
       summary: Отозвать устройство
-      description: Отзывает device-токен устройства (`is_active = false`). Существующий
-        токен перестаёт приниматься сервером.
+      description: Требуется staff access-токен оператора. Отзывает device-токен устройства
+        (`is_active = false`). Существующий токен перестаёт приниматься сервером.
       parameters:
       - name: id
         in: path
@@ -3137,6 +3781,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Устройство отозвано
         '404':
@@ -3146,7 +3794,8 @@ paths:
       tags:
       - LED-устройства
       summary: Обновить JWT устройства
-      description: Выпустить новый device JWT по идентификатору активного устройства.
+      description: Требуется staff access-токен оператора. Выпустить новый device
+        JWT по идентификатору активного устройства.
       parameters:
       - name: device_id
         in: path
@@ -3155,6 +3804,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Новый токен устройства
           content:
@@ -3170,7 +3823,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Список видеосценариев
-      description: Получить список видеосценариев с фильтрацией и пагинацией
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить список видеосценариев с фильтрацией и пагинацией
       parameters:
       - name: profession_id
         in: query
@@ -3189,6 +3843,10 @@ paths:
           type: integer
           default: 0
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Список видеосценариев
           content:
@@ -3206,7 +3864,9 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Создать видеосценарий
-      description: 'Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
+      description: 'Требуется staff access-токен редактора контента.
+
+        Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
 
         её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`)
         — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
@@ -3232,6 +3892,10 @@ paths:
                   format: int64
                   nullable: true
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Видеосценарий создан
           content:
@@ -3249,7 +3913,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Получить видеосценарий
-      description: Получить видеосценарий с деревом веток
+      description: Требуется staff access-токен редактора контента или оператора.
+        Получить видеосценарий с деревом веток
       parameters:
       - name: id
         in: path
@@ -3258,6 +3923,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Видеосценарий с деревом веток
           content:
@@ -3270,7 +3939,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Обновить видеосценарий
-      description: Обновить название, описание или профессию
+      description: Требуется staff access-токен редактора контента. Обновить название,
+        описание или профессию
       parameters:
       - name: id
         in: path
@@ -3294,6 +3964,10 @@ paths:
                   format: int64
                   nullable: true
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Видеосценарий обновлён
           content:
@@ -3306,8 +3980,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Удалить видеосценарий
-      description: Удалить видеосценарий (только если не использовался в активных
-        сессиях)
+      description: Требуется staff access-токен редактора контента. Удалить видеосценарий
+        (только если не использовался в активных сессиях)
       parameters:
       - name: id
         in: path
@@ -3316,6 +3990,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Видеосценарий удалён
         '409':
@@ -3325,7 +4003,9 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Добавить ветку
-      description: 'Добавить дочернюю ветку к указанному родителю.
+      description: 'Требуется staff access-токен редактора контента.
+
+        Добавить дочернюю ветку к указанному родителю.
 
         Если `parent_id` не указан — добавляется как вариант выбора для стартовой
         ветки.
@@ -3365,6 +4045,10 @@ paths:
                   type: string
                   description: Текст вопроса в точке выбора (для родительской ветки)
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '201':
           description: Ветка добавлена
           content:
@@ -3382,7 +4066,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Обновить ветку
-      description: Обновить текст вопроса, текст варианта или видеофайл
+      description: Требуется staff access-токен редактора контента. Обновить текст
+        вопроса, текст варианта или видеофайл
       parameters:
       - name: id
         in: path
@@ -3411,6 +4096,10 @@ paths:
                   type: integer
                   format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Ветка обновлена
           content:
@@ -3423,8 +4112,8 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Удалить ветку
-      description: Удалить ветку и все её дочерние ветки. Стартовую ветку удалить
-        нельзя.
+      description: Требуется staff access-токен редактора контента. Удалить ветку
+        и все её дочерние ветки. Стартовую ветку удалить нельзя.
       parameters:
       - name: id
         in: path
@@ -3439,6 +4128,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '204':
           description: Ветка удалена
         '400':
@@ -3450,7 +4143,8 @@ paths:
       tags:
       - Профессии в действии - Оператор
       summary: Запустить показ
-      description: 'Запустить показ видеосценариев на LED-экране.
+      description: 'Запустить показ видеосценариев на LED-экране. Требуется staff
+        access-токен оператора или администратора.
 
         В `settings` передаётся либо `scenario_ids` (ручной выбор), либо `profession_count`
         (случайный выбор N сценариев).
@@ -3502,6 +4196,10 @@ paths:
                       default: 5
                       description: Длительность показа результата в секундах
       responses:
+        '401':
+          description: Отсутствующий или недействительный staff access-токен
+        '403':
+          description: Требуется роль оператора или администратора
         '201':
           description: Показ запущен
           content:
@@ -3530,7 +4228,10 @@ paths:
       tags:
       - Профессии в действии
       summary: Получить активную сессию
-      description: 'Возвращает текущую активную сессию показа с полным состоянием.
+      description: 'Доступ для оператора/администратора со staff access-токеном или
+        LED с device-токеном. Для LED используется устройство из токена.
+
+        Возвращает текущую активную сессию показа с полным состоянием.
 
         Если указан `device_id` — возвращает сессию для этого устройства.
 
@@ -3552,6 +4253,10 @@ paths:
         description: Идентификатор LED-устройства (если не указан — возвращается любая
           активная сессия)
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Активная сессия с полным состоянием
           content:
@@ -3565,7 +4270,8 @@ paths:
       tags:
       - Профессии в действии - Оператор
       summary: Остановить показ
-      description: Остановить показ и вернуть LED-экран в режим ожидания
+      description: Остановить показ и вернуть LED-экран в режим ожидания. Требуется
+        staff access-токен оператора или администратора.
       parameters:
       - name: id
         in: path
@@ -3574,6 +4280,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий или недействительный staff access-токен
+        '403':
+          description: Требуется роль оператора или администратора
         '204':
           description: Показ остановлен
         '404':
@@ -3659,6 +4369,7 @@ paths:
       - Профессии в действии - Зритель
       summary: Получить информацию о голосовании
       description: 'Информация о текущей точке голосования для мобильного клиента.
+        Пользователь определяется по user access-токену.
 
         Включает варианты выбора, таймер, статус участника (проголосовал/не проголосовал),
         результат.
@@ -3671,14 +4382,9 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: participant_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: ID участника (получен при подключении через /join)
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный user access-токен
         '200':
           description: Информация о голосовании
           content:
@@ -3692,7 +4398,8 @@ paths:
       tags:
       - Профессии в действии - Зритель
       summary: Подключиться к показу
-      description: Подключиться к показу по QR-коду
+      description: Подключиться с user access-токеном после гостевого входа или OAuth.
+        Возвращает ID текущего пользователя. Повторный запрос возвращает тот же ID.
       parameters:
       - name: sessionId
         in: path
@@ -3701,6 +4408,8 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный user access-токен
         '200':
           description: Подключён
           content:
@@ -3723,7 +4432,8 @@ paths:
       tags:
       - Профессии в действии - Зритель
       summary: Проголосовать
-      description: 'Проголосовать за вариант продолжения в точке голосования.
+      description: 'Проголосовать за вариант продолжения в точке голосования. Пользователь
+        определяется по user access-токену.
 
         Один участник может проголосовать только один раз за каждую точку голосования.
 
@@ -3743,12 +4453,15 @@ paths:
               type: object
               required:
               - branch_id
+              additionalProperties: false
               properties:
                 branch_id:
                   type: integer
                   format: int64
                   description: ID выбранной ветки (варианта продолжения)
       responses:
+        '401':
+          description: Отсутствующий, истёкший или недействительный user access-токен
         '200':
           description: Голос принят
           content:
@@ -3892,61 +4605,489 @@ paths:
   /cms/surveys:
     get:
       tags:
-      - cms
-      summary: Анкеты
-      description: Получить список анкет (CMS)
+      - Обратная связь - CMS
+      summary: Список анкет
+      description: Требуется staff access-токен редактора контента или аналитика.
+        Получить список анкет обратной связи с пагинацией
+      parameters:
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+        description: Фильтр по статусу активности
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
           description: Список анкет
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CmsSurvey'
+                  total:
+                    type: integer
     post:
       tags:
-      - cms
+      - Обратная связь - CMS
       summary: Создать анкету
-      description: Добавить новую анкету
+      description: Требуется staff access-токен редактора контента. Создать новую
+        анкету (черновик)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyCreateRequest'
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '201':
+          description: Анкета создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+  /cms/surveys/{survey_id}:
+    get:
+      tags:
+      - Обратная связь - CMS
+      summary: Детали анкеты
+      description: Требуется staff access-токен редактора контента или аналитика.
+        Получить анкету с вопросами
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '200':
+          description: Анкета с вопросами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+    put:
+      tags:
+      - Обратная связь - CMS
+      summary: Обновить анкету
+      description: Требуется staff access-токен редактора контента. Обновить название
+        и описание анкеты. Нельзя редактировать активную анкету.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyUpdateRequest'
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '200':
+          description: Анкета обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Нельзя редактировать активную анкету
+    delete:
+      tags:
+      - Обратная связь - CMS
+      summary: Удалить анкету
+      description: Требуется staff access-токен редактора контента. Удалить анкету-черновик.
+        Нельзя удалить активную анкету или анкету с ответами.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '204':
+          description: Анкета удалена
+        '404':
+          description: Анкета не найдена
+        '409':
+          description: Нельзя удалить — есть связанные ответы
+        '422':
+          description: Нельзя удалить активную анкету
+  /cms/surveys/{survey_id}/copy:
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Создать новую версию анкеты
+      description: Требуется staff access-токен редактора контента. Скопировать анкету
+        и все её вопросы в новый черновик с тем же external_id
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '201':
+          description: Новая версия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+  /cms/surveys/{survey_id}/publish:
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Опубликовать анкету
+      description: Требуется staff access-токен редактора контента. Активировать анкету.
+        Предыдущая активная анкета с тем же external_id автоматически деактивируется.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '200':
+          description: Анкета опубликована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Анкета уже активна
+  /cms/surveys/{survey_id}/questions:
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Добавить вопрос
+      description: Требуется staff access-токен редактора контента. Добавить вопрос
+        в анкету-черновик
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyQuestionCreateRequest'
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '201':
+          description: Вопрос добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurveyQuestion'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Нельзя редактировать активную анкету
+  /cms/surveys/{survey_id}/questions/reorder:
+    put:
+      tags:
+      - Обратная связь - CMS
+      summary: Изменить порядок вопросов
+      description: Требуется staff access-токен редактора контента. Переупорядочить
+        вопросы анкеты
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+              - question_ids
+              properties:
+                question_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+                  description: ID вопросов в новом порядке
       responses:
-        '201':
-          description: Анкета создана
-  /feedback/surveys:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '200':
+          description: Порядок обновлён
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CmsSurveyQuestion'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: question_ids не совпадают с существующими вопросами
+  /cms/surveys/{survey_id}/questions/{question_id}:
+    put:
+      tags:
+      - Обратная связь - CMS
+      summary: Обновить вопрос
+      description: Требуется staff access-токен редактора контента. Обновить вопрос
+        анкеты-черновика
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyQuestionUpdateRequest'
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '200':
+          description: Вопрос обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurveyQuestion'
+        '404':
+          description: Вопрос не найден
+        '422':
+          description: Нельзя редактировать вопросы активной анкеты
+    delete:
+      tags:
+      - Обратная связь - CMS
+      summary: Удалить вопрос
+      description: Требуется staff access-токен редактора контента. Удалить вопрос
+        из анкеты-черновика
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
+        '204':
+          description: Вопрос удалён
+        '404':
+          description: Вопрос не найден
+        '422':
+          description: Нельзя редактировать вопросы активной анкеты
+  /cms/surveys/responses:
     get:
       tags:
-      - feedback
-      summary: Доступные анкеты
-      description: Получить список анкет обратной связи
-      security: []
+      - Обратная связь - CMS
+      summary: Список ответов
+      description: Требуется staff access-токен аналитика. Получить список ответов
+        пользователей на анкеты с фильтрами
+      parameters:
+      - name: survey_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Фильтр по ID анкеты
+      - name: external_id
+        in: query
+        schema:
+          type: string
+        description: Фильтр по external_id анкеты
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+        description: Фильтр по статусу активности анкеты
+      - name: user_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Фильтр по ID пользователя
+      - name: completed_from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Фильтр по дате начала (completed_at >=)
+      - name: completed_to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Фильтр по дате окончания (completed_at <=)
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
       responses:
+        '403':
+          description: Недостаточно прав
+        '401':
+          description: Недействительный или отсутствующий токен
         '200':
-          description: Список анкет
-  /feedback/surveys/{id}/respond:
-    post:
+          description: Список ответов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CmsSurveyResponse'
+                  total:
+                    type: integer
+  /feedback/surveys/{external_id}:
+    get:
       tags:
-      - feedback
-      summary: Ответить на анкету
-      description: Отправить ответы на анкету обратной связи
+      - Обратная связь - LED
+      summary: Активная анкета по external_id
+      description: Получить активную анкету по символьному идентификатору (используется
+        LED-плеером)
       security: []
       parameters:
-      - name: id
+      - name: external_id
         in: path
         required: true
         schema:
           type: string
+        description: Символьный идентификатор анкеты (например, videoresume_feedback)
+      responses:
+        '200':
+          description: Активная анкета с вопросами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSurvey'
+        '404':
+          description: Активная анкета не найдена
+  /feedback/surveys/{survey_id}/respond:
+    post:
+      tags:
+      - Обратная связь - Пользователь
+      summary: Ответить на анкету
+      description: Отправить ответы от текущего пользователя из user access-токена.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
         description: Идентификатор анкеты
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/FeedbackSubmitRequest'
       responses:
+        '401':
+          description: Недействительный или отсутствующий user access-токен
         '201':
           description: Ответы отправлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSubmitResponse'
         '404':
           description: Анкета не найдена
+        '422':
+          description: Анкета не активна
   /files/{file_uuid}:
     get:
       tags:
@@ -3990,15 +5131,8 @@ paths:
       tags:
       - Аватары пользователей
       summary: Список моих аватаров
-      description: Получить свои аватары (user_id позже будет из токена авторизации)
+      description: Получить свои аватары. Пользователь определяется по user access-токену.
       parameters:
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: Временный параметр, позже будет из токена
       - name: limit
         in: query
         schema:
@@ -4010,6 +5144,8 @@ paths:
           type: integer
           default: 0
       responses:
+        '401':
+          description: Недействительный или отсутствующий user access-токен
         '200':
           description: Список аватаров
           content:
@@ -4028,6 +5164,8 @@ paths:
       tags:
       - Аватары пользователей
       summary: Детали моего аватара
+      description: Проверка владельца по user access-токену; чужой аватар возвращает
+        404.
       parameters:
       - name: avatar_id
         in: path
@@ -4035,14 +5173,9 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: Временный параметр, позже будет из токена
       responses:
+        '401':
+          description: Недействительный или отсутствующий user access-токен
         '200':
           description: Аватар
           content:
@@ -4055,6 +5188,8 @@ paths:
       tags:
       - Аватары пользователей
       summary: Удалить мой аватар
+      description: Проверка владельца по user access-токену; чужой аватар возвращает
+        404.
       parameters:
       - name: avatar_id
         in: path
@@ -4062,14 +5197,9 @@ paths:
         schema:
           type: integer
           format: int64
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: integer
-          format: int64
-        description: Временный параметр, позже будет из токена
       responses:
+        '401':
+          description: Недействительный или отсутствующий user access-токен
         '204':
           description: Аватар удалён
         '404':
@@ -4137,7 +5267,32 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    staffRefresh:
+      type: apiKey
+      in: cookie
+      name: staff_refresh
+    userRefresh:
+      type: apiKey
+      in: cookie
+      name: user_refresh
   schemas:
+    AuthTokenResponse:
+      type: object
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      properties:
+        access_token:
+          type: string
+          description: JWT, максимум 30 минут; для гостя ограничен сроком гостя
+        token_type:
+          type: string
+          enum:
+          - bearer
+        expires_in:
+          type: integer
+          description: Оставшийся срок access в секундах
     Industry:
       description: Отрасль экономики
       type: object
@@ -5228,5 +6383,324 @@ components:
               format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
+    CmsSurvey:
+      description: Анкета обратной связи (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        external_id:
+          type: string
+          description: Символьный идентификатор (например, videoresume_feedback)
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+          description: Активна ли анкета
+        copied_from_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID анкеты, от которой эта была скопирована
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CmsSurveyQuestion'
+    CmsSurveyCreateRequest:
+      type: object
+      required:
+      - external_id
+      - name
+      properties:
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CmsSurveyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CmsSurveyQuestion:
+      description: Вопрос анкеты (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID родительского вопроса для условного показа
+        type:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          description: 'Тип вопроса:
+
+            - `1` — rating_scale (шкала оценки)
+
+            - `2` — single_choice (одиночный выбор)
+
+            - `3` — multiple_choice (множественный выбор)
+
+            - `4` — text (текстовый ответ)
+
+            - `5` — profession_choice (выбор профессии)
+
+            '
+        text:
+          type: string
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+        required:
+          type: boolean
+        order:
+          type: integer
+        condition:
+          type: object
+          nullable: true
+          description: 'Условие показа (например, {"operator": "lte", "value": 2})'
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+          description: Минимальное значение шкалы (по умолчанию 1)
+        scale_max:
+          type: integer
+          nullable: true
+          description: Максимальное значение шкалы (по умолчанию 5)
+    CmsSurveyQuestionCreateRequest:
+      type: object
+      required:
+      - type
+      - text
+      - order
+      properties:
+        type:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+        text:
+          type: string
+        order:
+          type: integer
+        required:
+          type: boolean
+          default: false
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+        condition:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+        scale_max:
+          type: integer
+          nullable: true
+    CmsSurveyQuestionUpdateRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        required:
+          type: boolean
+        condition:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+        scale_max:
+          type: integer
+          nullable: true
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+    CmsSurveyResponse:
+      description: Ответ пользователя на анкету (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        user_id:
+          type: integer
+          format: int64
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+        survey:
+          $ref: '#/components/schemas/CmsSurvey'
+          nullable: true
+          description: Анкета, на которую дан ответ
+    FeedbackSurvey:
+      description: Активная анкета для прохождения (клиент)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              parent_id:
+                type: integer
+                format: int64
+                nullable: true
+              type:
+                type: integer
+                enum:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+              text:
+                type: string
+              media_id:
+                type: integer
+                format: int64
+                nullable: true
+              required:
+                type: boolean
+              order:
+                type: integer
+              condition:
+                type: object
+                nullable: true
+                additionalProperties: true
+              scale_min:
+                type: integer
+                nullable: true
+              scale_max:
+                type: integer
+                nullable: true
+    FeedbackSubmitRequest:
+      description: Запрос на отправку ответов
+      type: object
+      required:
+      - source_id
+      - duration
+      - answers
+      additionalProperties: false
+      properties:
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID версии согласия, которое принял пользователь
+        answers:
+          type: array
+          items:
+            type: object
+            required:
+            - question_id
+            - value
+            properties:
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+                description: Значение ответа (число, текст, JSON для множественного
+                  выбора)
+    FeedbackSubmitResponse:
+      description: Результат отправки ответов
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        completed_at:
+          type: string
+          format: date-time
 security:
 - bearerAuth: []
