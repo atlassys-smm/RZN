@@ -96,7 +96,7 @@ Compose передаёт `.env` при создании контейнера; и
 
 ## Структура реализации
 
-OAuth-сценарии находятся в `app/services/oauth.py`, HTTP-обмен и преобразование профиля — в `app/services/oauth_providers.py`. Остальные бизнес-сценарии и транзакции находятся в `app/services/auth.py`: login_staff, register_staff, register_guest, refresh_session, logout_session. Маршруты выполняют вызовы сервисов и оформляют HTTP-ответы/cookie; ORM/SQL, commit/rollback и обработка конфликтов БД в них отсутствуют. Доменные ошибки сервисов переводятся в HTTP-коды общим `AuthRoute` в `app/api/auth/errors.py`. Проверка токенов устройств также находится в сервисе.
+OAuth-сценарии находятся в `app/services/auth/oauth.py`, HTTP-обмен и преобразование профиля — в `app/services/auth/providers.py`. Остальные бизнес-сценарии и транзакции находятся в `app/services/auth/service.py`: login_staff, register_staff, register_guest, refresh_session, logout_session. Маршруты выполняют вызовы сервисов и оформляют HTTP-ответы/cookie; ORM/SQL, commit/rollback и обработка конфликтов БД в них отсутствуют. Доменные ошибки сервисов переводятся в HTTP-коды общим `AuthRoute` в `app/api/auth/errors.py`. Проверка токенов устройств также находится в сервисе.
 
 ## Подключение к игре по QR
 
