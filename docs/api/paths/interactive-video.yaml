@@ -229,22 +229,24 @@ cms-branches-create:
 
 cms-branches-update:
   put:
-    tags: [Профессии в действии - CMS]
+    tags:
+    - Профессии в действии - CMS
     summary: Обновить ветку
-    description: Требуется staff access-токен редактора контента. Обновить текст вопроса, текст варианта или видеофайл
+    description: Требуется staff access-токен редактора контента. Обновить текст вопроса,
+      текст варианта или видеофайл
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: branchId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    - name: branchId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     requestBody:
       required: true
       content:
@@ -272,38 +274,6 @@ cms-branches-update:
               $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
       '404':
         description: Ветка не найдена
-  delete:
-    tags: [Профессии в действии - CMS]
-    summary: Удалить ветку
-    description: Требуется staff access-токен редактора контента. Удалить ветку и все её дочерние ветки. Стартовую ветку удалить нельзя.
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: branchId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-    responses:
-      '403':
-        description: Недостаточно прав
-      '401':
-        description: Недействительный или отсутствующий токен
-      '204':
-        description: Ветка удалена
-      '400':
-        description: Нельзя удалить стартовую ветку
-      '404':
-        description: Ветка не найдена
-
-# ═══════════════════════════════════════════════════════════════
-# Показ — создание и управление (оператор)
-# ═══════════════════════════════════════════════════════════════
 
 session-create:
   post:
@@ -440,19 +410,18 @@ session-stop:
 
 session-state:
   get:
-    tags: [Профессии в действии - LED]
+    tags:
+    - Профессии в действии - LED
     summary: Получить состояние показа
-    description: |
-      Текущее состояние показа для LED-экрана.
-      Включает информацию о текущем видео, точке голосования, результатах.
-      LED-экран опрашивает этот эндпоинт для синхронизации.
+    description: 'Доступен с device-токеном устройства этой сессии либо staff access-токеном
+      оператора. Возвращает состояние показа: текущее видео, голосование и результаты.'
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     responses:
       '200':
         description: Состояние показа
@@ -464,26 +433,43 @@ session-state:
         description: Сессия принадлежит другому устройству
       '404':
         description: Сессия не найдена
+      '401':
+        description: Недействительный или отсутствующий токен
+    security:
+    - bearerAuth: []
 
 session-advance:
   post:
-    tags: [Профессии в действии - LED]
+    tags:
+    - Профессии в действии - LED
     summary: Сигнал окончания видео
-    description: |
-      Вызывается LED-плеером, когда воспроизведение текущего видеофрагмента (`current_branch`) завершилось.
-      Сервер не хранит длительность видео — момент перехода к точке голосования (или к следующему сценарию/завершению показа)
+    description: 'Вызывается LED-плеером, когда воспроизведение текущего видеофрагмента
+      (`current_branch`) завершилось.
+
+      Сервер не хранит длительность видео — момент перехода к точке голосования (или
+      к следующему сценарию/завершению показа)
+
       определяется именно этим сигналом, а не таймером.
-      Требует device-токен (`Authorization: Bearer <device token>`), полученный при регистрации устройства.
-      - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `voting` (голосование).
-      - Если дочерних веток нет и в очереди остались сценарии — переход к следующему сценарию (`scenario_finished`).
+
+      Требует device-токен (`Authorization: Bearer <device token>`), полученный при
+      регистрации устройства.
+
+      - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `voting`
+      (голосование).
+
+      - Если дочерних веток нет и в очереди остались сценарии — переход к следующему
+      сценарию (`scenario_finished`).
+
       - Если дочерних веток нет и сценариев больше нет — показ завершается (`session_finished`).
+
+      '
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     responses:
       '200':
         description: Обновлённое состояние показа
@@ -497,6 +483,10 @@ session-advance:
         description: Сессия принадлежит другому устройству
       '404':
         description: Сессия не найдена
+      '401':
+        description: Недействительный или отсутствующий токен
+    security:
+    - bearerAuth: []
 
 session-voting:
   get:

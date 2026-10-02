@@ -453,7 +453,7 @@ paths:
           description: Некорректные параметры, согласие не принято или версия не существует
         '403':
           description: Недопустимый Origin/Referer
-  /auth/user/info:
+  /user/info:
     get:
       tags:
       - Пользователь
@@ -492,29 +492,6 @@ paths:
                     description: URL аватара (только для авторизованных)
         '401':
           description: Недействительный токен
-  /users/me:
-    get:
-      tags:
-      - Пользователь
-      summary: Текущий пользователь
-      description: Получить профиль текущего аутентифицированного пользователя
-      responses:
-        '200':
-          description: Профиль пользователя
-    patch:
-      tags:
-      - Пользователь
-      summary: Обновить профиль
-      description: Частичное обновление профиля текущего пользователя
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Профиль обновлён
   /professions:
     get:
       tags:
@@ -4108,36 +4085,6 @@ paths:
                 $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
         '404':
           description: Ветка не найдена
-    delete:
-      tags:
-      - Профессии в действии - CMS
-      summary: Удалить ветку
-      description: Требуется staff access-токен редактора контента. Удалить ветку
-        и все её дочерние ветки. Стартовую ветку удалить нельзя.
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: branchId
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
-        '204':
-          description: Ветка удалена
-        '400':
-          description: Нельзя удалить стартовую ветку
-        '404':
-          description: Ветка не найдена
   /interactive-video/sessions:
     post:
       tags:
@@ -4293,13 +4240,8 @@ paths:
       tags:
       - Профессии в действии - LED
       summary: Получить состояние показа
-      description: 'Текущее состояние показа для LED-экрана.
-
-        Включает информацию о текущем видео, точке голосования, результатах.
-
-        LED-экран опрашивает этот эндпоинт для синхронизации.
-
-        '
+      description: 'Доступен с device-токеном устройства этой сессии либо staff access-токеном
+        оператора. Возвращает состояние показа: текущее видео, голосование и результаты.'
       parameters:
       - name: id
         in: path
@@ -4318,6 +4260,10 @@ paths:
           description: Сессия принадлежит другому устройству
         '404':
           description: Сессия не найдена
+        '401':
+          description: Недействительный или отсутствующий токен
+      security:
+      - bearerAuth: []
   /interactive-video/sessions/{id}/advance:
     post:
       tags:
@@ -4363,6 +4309,10 @@ paths:
           description: Сессия принадлежит другому устройству
         '404':
           description: Сессия не найдена
+        '401':
+          description: Недействительный или отсутствующий токен
+      security:
+      - bearerAuth: []
   /interactive-video/sessions/{id}/voting:
     get:
       tags:
@@ -5036,9 +4986,10 @@ paths:
       tags:
       - Обратная связь - LED
       summary: Активная анкета по external_id
-      description: Получить активную анкету по символьному идентификатору (используется
-        LED-плеером)
-      security: []
+      description: Получить активную анкету по символьному идентификатору. Требуется
+        device-токен активного LED-устройства.
+      security:
+      - bearerAuth: []
       parameters:
       - name: external_id
         in: path
@@ -5053,6 +5004,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FeedbackSurvey'
+        '401':
+          description: Недействительный или отсутствующий device-токен
         '404':
           description: Активная анкета не найдена
   /feedback/surveys/{survey_id}/respond:

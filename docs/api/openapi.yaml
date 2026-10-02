@@ -92,12 +92,8 @@ paths:
     $ref: './paths/user-auth.yaml#/user-logout'
   /auth/user/oauth/{provider}:
     $ref: './paths/user-auth.yaml#/user-oauth'
-  /auth/user/info:
+  /user/info:
     $ref: './paths/user-auth.yaml#/user-info'
-
-  # ── Пользователи ─────────────────────────────────
-  /users/me:
-    $ref: './paths/users.yaml#/me'
 
   # ── Профессии ────────────────────────────────────
   /professions:

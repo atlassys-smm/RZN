@@ -6,8 +6,9 @@ survey-by-external-id:
   get:
     tags: [Обратная связь - LED]
     summary: Активная анкета по external_id
-    description: Получить активную анкету по символьному идентификатору (используется LED-плеером)
-    security: []
+    description: Получить активную анкету по символьному идентификатору. Требуется device-токен активного LED-устройства.
+    security:
+      - bearerAuth: []
     parameters:
       - name: external_id
         in: path
@@ -22,6 +23,8 @@ survey-by-external-id:
           application/json:
             schema:
               $ref: '#/components/schemas/FeedbackSurvey'
+      '401':
+        description: Недействительный или отсутствующий device-токен
       '404':
         description: Активная анкета не найдена
 
