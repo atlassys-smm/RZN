@@ -1,34 +1,58 @@
-surveys:
-  get:
-    tags: [feedback]
-    summary: Доступные анкеты
-    description: Получить список анкет обратной связи
-    security: []
-    responses:
-      '200':
-        description: Список анкет
+# ═══════════════════════════════════════════════════════════════
+# Обратная связь — Пользователь
+# ═══════════════════════════════════════════════════════════════
 
-respond:
-  post:
-    tags: [feedback]
-    summary: Ответить на анкету
-    description: Отправить ответы на анкету обратной связи
+survey-by-external-id:
+  get:
+    tags: [Обратная связь - LED]
+    summary: Активная анкета по external_id
+    description: Получить активную анкету по символьному идентификатору (используется LED-плеером)
     security: []
     parameters:
-      - name: id
+      - name: external_id
         in: path
         required: true
         schema:
           type: string
+        description: Символьный идентификатор анкеты (например, videoresume_feedback)
+    responses:
+      '200':
+        description: Активная анкета с вопросами
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSurvey'
+      '404':
+        description: Активная анкета не найдена
+
+respond:
+  post:
+    tags: [Обратная связь - Пользователь]
+    summary: Ответить на анкету
+    description: Отправить ответы на анкету обратной связи
+    security: []
+    parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
         description: Идентификатор анкеты
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
+            $ref: '#/components/schemas/FeedbackSubmitRequest'
     responses:
       '201':
         description: Ответы отправлены
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSubmitResponse'
       '404':
         description: Анкета не найдена
+      '422':
+        description: Анкета не активна

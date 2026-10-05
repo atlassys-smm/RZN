@@ -1815,7 +1815,7 @@ player-answer:
 #
 # ## Подключение
 #
-# ws://host/api/v1/quiz/sessions/{sessionId}/ws
+# ws://host/api/quiz/sessions/{sessionId}/ws
 #
 # ## События от сервера
 #

@@ -13,7 +13,7 @@ WebSocket-эндпоинты для получения уведомлений о
 ### Подключение
 
 ```
-ws://host/api/v1/quiz/sessions/{sessionId}/ws
+ws://host/api/quiz/sessions/{sessionId}/ws
 ```
 
 ### События от сервера
@@ -42,7 +42,7 @@ ws://host/api/v1/quiz/sessions/{sessionId}/ws
 ### Подключение
 
 ```
-ws://host/api/v1/interactive-video/sessions/{sessionId}/ws
+ws://host/api/interactive-video/sessions/{sessionId}/ws
 ```
 
 ### События от сервера

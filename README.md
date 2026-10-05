@@ -114,20 +114,20 @@ npm run mock
 Базовый URL для фронтенда:
 
 ```
-http://127.0.0.1:4010/api/v1
+http://127.0.0.1:4010/api
 ```
 
 Примеры запросов:
 
 ```bash
 # Список профессий
-curl http://127.0.0.1:4010/api/v1/professions
+curl http://127.0.0.1:4010/api/professions
 
 # Вопросы викторины
-curl http://127.0.0.1:4010/api/v1/cms/quiz/questions
+curl http://127.0.0.1:4010/api/cms/quiz/questions
 
 # Запустить показ «Профессии в действии»
-curl -X POST http://127.0.0.1:4010/api/v1/interactive-video/sessions \
+curl -X POST http://127.0.0.1:4010/api/interactive-video/sessions \
   -H "Content-Type: application/json" \
   -d '{"device_id": "led-001"}'
 ```
@@ -167,7 +167,7 @@ npm install
 # 3. Запустить mock-сервер
 npm run mock
 
-# 4. Настроить фронтенд-проект на baseUrl: http://127.0.0.1:4010/api/v1
+# 4. Настроить фронтенд-проект на baseUrl: http://127.0.0.1:4010/api
 
 # 5. (Опционально) Собрать документацию для просмотра
 pip install mkdocs mkdocs-material

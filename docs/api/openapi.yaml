@@ -61,6 +61,12 @@ tags:
     description: CMS — управление контентом
   - name: feedback
     description: Обратная связь и анкеты
+  - name: Обратная связь - CMS
+    description: Управление анкетами и вопросами обратной связи
+  - name: Обратная связь - LED
+    description: Получение анкет для LED-плееров
+  - name: Обратная связь - Пользователь
+    description: Прохождение анкет обратной связи
   - name: files
     description: Загрузка и управление файлами
 
@@ -275,29 +281,34 @@ paths:
   # ── CMS ──────────────────────────────────────────
   /cms/references:
     $ref: './paths/cms.yaml#/references'
-  /cms/surveys:
-    $ref: ./paths/surveys.yaml#/cms-surveys
-  /cms/surveys/responses:
-    $ref: ./paths/surveys.yaml#/cms-survey-responses
-  /cms/surveys/{survey_id}:
-    $ref: ./paths/surveys.yaml#/cms-survey-detail
-  /cms/surveys/{survey_id}/copy:
-    $ref: ./paths/surveys.yaml#/cms-survey-copy
-  /cms/surveys/{survey_id}/publish:
-    $ref: ./paths/surveys.yaml#/cms-survey-publish
-  /cms/surveys/{survey_id}/questions:
-    $ref: ./paths/surveys.yaml#/cms-survey-questions
-  /cms/surveys/{survey_id}/questions/reorder:
-    $ref: ./paths/surveys.yaml#/cms-survey-questions-reorder
-  /cms/surveys/{survey_id}/questions/{question_id}:
-    $ref: ./paths/surveys.yaml#/cms-survey-question-detail
-  /feedback/surveys/{external_id}:
-    $ref: ./paths/surveys.yaml#/feedback-survey
 
-  # ── Обратная связь ───────────────────────────────
-  /feedback/surveys:
-    $ref: './paths/feedback.yaml#/surveys'
-  /feedback/surveys/{id}/respond:
+  # ── Обратная связь — CMS ─────────────────────────
+  /cms/surveys:
+    $ref: './paths/surveys.yaml#/cms-surveys'
+  /cms/surveys/responses:
+    $ref: './paths/surveys.yaml#/cms-survey-responses'
+  /cms/surveys/{survey_id}:
+    $ref: './paths/surveys.yaml#/cms-surveys-detail'
+  /cms/surveys/{survey_id}/copy:
+    $ref: './paths/surveys.yaml#/cms-surveys-copy'
+  /cms/surveys/{survey_id}/publish:
+    $ref: './paths/cms.yaml#/surveys-publish'
+  /cms/surveys/{survey_id}/questions:
+    $ref: './paths/cms.yaml#/surveys-questions-create'
+  /cms/surveys/{survey_id}/questions/reorder:
+    $ref: './paths/cms.yaml#/surveys-questions-reorder'
+  /cms/surveys/{survey_id}/questions/{question_id}:
+    put:
+      $ref: './paths/cms.yaml#/surveys-questions-update/put'
+    delete:
+      $ref: './paths/cms.yaml#/surveys-questions-delete/delete'
+  /cms/surveys/responses:
+    $ref: './paths/cms.yaml#/responses'
+
+  # ── Обратная связь — Пользователь ────────────────
+  /feedback/surveys/{external_id}:
+    $ref: './paths/feedback.yaml#/survey-by-external-id'
+  /feedback/surveys/{survey_id}/respond:
     $ref: './paths/feedback.yaml#/respond'
 
   # ── Файлы ────────────────────────────────────────
@@ -2055,6 +2066,310 @@ components:
               format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
+
+    # ═══════════════════════════════════════════════════════
+    # Обратная связь — Схемы
+    # ═══════════════════════════════════════════════════════
+
+    CmsSurvey:
+      description: Анкета обратной связи (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        external_id:
+          type: string
+          description: Символьный идентификатор (например, videoresume_feedback)
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+          description: Активна ли анкета
+        copied_from_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID анкеты, от которой эта была скопирована
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CmsSurveyQuestion'
+
+    CmsSurveyCreateRequest:
+      type: object
+      required: [external_id, name]
+      properties:
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    CmsSurveyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    CmsSurveyQuestion:
+      description: Вопрос анкеты (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID родительского вопроса для условного показа
+        type:
+          type: integer
+          enum: [1, 2, 3, 4, 5]
+          description: |
+            Тип вопроса:
+            - `1` — rating_scale (шкала оценки)
+            - `2` — single_choice (одиночный выбор)
+            - `3` — multiple_choice (множественный выбор)
+            - `4` — text (текстовый ответ)
+            - `5` — profession_choice (выбор профессии)
+        text:
+          type: string
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+        required:
+          type: boolean
+        order:
+          type: integer
+        condition:
+          type: object
+          nullable: true
+          description: 'Условие показа (например, {"operator": "lte", "value": 2})'
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+          description: Минимальное значение шкалы (по умолчанию 1)
+        scale_max:
+          type: integer
+          nullable: true
+          description: Максимальное значение шкалы (по умолчанию 5)
+
+    CmsSurveyQuestionCreateRequest:
+      type: object
+      required: [type, text, order]
+      properties:
+        type:
+          type: integer
+          enum: [1, 2, 3, 4, 5]
+        text:
+          type: string
+        order:
+          type: integer
+        required:
+          type: boolean
+          default: false
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+        condition:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+        scale_max:
+          type: integer
+          nullable: true
+
+    CmsSurveyQuestionUpdateRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        required:
+          type: boolean
+        condition:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+        scale_max:
+          type: integer
+          nullable: true
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+
+    CmsSurveyResponse:
+      description: Ответ пользователя на анкету (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        user_id:
+          type: integer
+          format: int64
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+        survey:
+          $ref: '#/components/schemas/CmsSurvey'
+          nullable: true
+          description: Анкета, на которую дан ответ
+
+    FeedbackSurvey:
+      description: Активная анкета для прохождения (клиент)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              parent_id:
+                type: integer
+                format: int64
+                nullable: true
+              type:
+                type: integer
+                enum: [1, 2, 3, 4, 5]
+              text:
+                type: string
+              media_id:
+                type: integer
+                format: int64
+                nullable: true
+              required:
+                type: boolean
+              order:
+                type: integer
+              condition:
+                type: object
+                nullable: true
+                additionalProperties: true
+              scale_min:
+                type: integer
+                nullable: true
+              scale_max:
+                type: integer
+                nullable: true
+
+    FeedbackSubmitRequest:
+      description: Запрос на отправку ответов
+      type: object
+      required: [source_id, user_id, duration, answers]
+      properties:
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        user_id:
+          type: integer
+          format: int64
+          description: ID пользователя
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID версии согласия, которое принял пользователь
+        answers:
+          type: array
+          items:
+            type: object
+            required: [question_id, value]
+            properties:
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+                description: Значение ответа (число, текст, JSON для множественного выбора)
+
+    FeedbackSubmitResponse:
+      description: Результат отправки ответов
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        completed_at:
+          type: string
+          format: date-time
 
 security:
   - bearerAuth: []
