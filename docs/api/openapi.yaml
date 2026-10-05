@@ -247,6 +247,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/session-stop'
   /interactive-video/sessions/{id}/state:
     $ref: './paths/interactive-video.yaml#/session-state'
+  /interactive-video/sessions/{id}/scenarios:
+    $ref: './paths/interactive-video.yaml#/session-scenarios'
   /interactive-video/sessions/{id}/advance:
     $ref: './paths/interactive-video.yaml#/session-advance'
   /interactive-video/sessions/{id}/voting:
@@ -706,6 +708,11 @@ components:
         url:
           type: string
           title: Url
+        preview_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Preview Url
         mime_type:
           type: string
           title: Mime Type
@@ -1798,6 +1805,71 @@ components:
           description: Дочерние ветки (варианты выбора после этого видео)
           items:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+
+    InteractiveVideoSessionScenario:
+      properties:
+        id:
+          title: Id
+          type: integer
+        title:
+          title: Title
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        first_branch:
+          anyOf:
+          - $ref: '#/components/schemas/InteractiveVideoSessionFirstBranch'
+          - type: 'null'
+      required:
+      - id
+      - title
+      - description
+      - profession_id
+      - first_branch
+      type: object
+    InteractiveVideoSessionFirstBranch:
+      properties:
+        id:
+          title: Id
+          type: integer
+        scenario_id:
+          title: Scenario Id
+          type: integer
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prompt
+      required:
+      - id
+      - scenario_id
+      - parent_id
+      - file
+      - text
+      - prompt
+      type: object
 
     InteractiveVideoSession:
       description: Сессия показа «Профессии в действии»

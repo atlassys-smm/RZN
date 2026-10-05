@@ -181,14 +181,26 @@ cms-branches-create:
                 type: string
                 contentMediaType: application/octet-stream
                 title: File
+              file_preview:
+                anyOf:
+                - type: string
+                  contentMediaType: application/octet-stream
+                - type: 'null'
+                title: File Preview
               prompt:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Prompt
               file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: File Title
               file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: File Description
             type: object
             required:
@@ -234,20 +246,36 @@ cms-branches-update:
           schema:
             properties:
               text:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Text
               prompt:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Prompt
               file:
-                type: [string, 'null']
-                contentMediaType: application/octet-stream
+                anyOf:
+                - type: string
+                  contentMediaType: application/octet-stream
+                - type: 'null'
                 title: File
+              file_preview:
+                anyOf:
+                - type: string
+                  contentMediaType: application/octet-stream
+                - type: 'null'
+                title: File Preview
               file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: File Title
               file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: File Description
             type: object
             title: Body_update_branch_api_cms_video_scenarios__scenario_id__branches__branch_id__put
@@ -408,6 +436,35 @@ session-stop:
 # ═══════════════════════════════════════════════════════════════
 # Состояние показа (LED-экран)
 # ═══════════════════════════════════════════════════════════════
+
+session-scenarios:
+  get:
+    tags: [Профессии в действии - LED]
+    summary: Сценарии сессии с первой веткой и файлом
+    description: |
+      Возвращает массив сценариев в порядке settings.scenario_ids для карточек LED.
+      first_branch — стартовая ветка (parent_id = null), без дочерних веток.
+      first_branch.file содержит url, preview_url, mime_type, title и description.
+      Если стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.
+      Доступно для активных и завершённых сессий; не меняет состояние показа.
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Сценарии сессии; пустой массив, если доступных сценариев нет
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/InteractiveVideoSessionScenario'
+      '404':
+        description: Сессия не найдена
 
 session-state:
   get:

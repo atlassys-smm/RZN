@@ -110,12 +110,19 @@ cms-questions:
                 default: null
                 title: Tags
               answer_key:
-                anyOf:
-                - additionalProperties: true
-                  type: object
-                - type: 'null'
-                default: null
+                type:
+                - string
+                - 'null'
                 title: Answer Key
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Answer Key
               file_title:
                 anyOf:
                 - type: string
@@ -129,51 +136,64 @@ cms-questions:
                 default: null
                 title: File Description
               answer_options:
-                items:
-                  additionalProperties: false
-                  properties:
-                    text:
-                      title: Text
-                      type: string
-                    is_correct:
-                      default: false
-                      title: Is Correct
-                      type: boolean
-                    file_title:
-                      anyOf:
-                      - type: string
-                      - type: 'null'
-                      default: null
-                      title: File Title
-                    file_description:
-                      anyOf:
-                      - type: string
-                      - type: 'null'
-                      default: null
-                      title: File Description
-                    order:
-                      default: 0
-                      title: Order
-                      type: integer
-                    side:
-                      anyOf:
-                      - type: integer
-                      - type: 'null'
-                      default: null
-                      title: Side
-                  required:
-                  - text
-                  title: AnswerOptionCreate
-                  type: object
+                type: string
                 title: Answer Options
-                type: array
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        title: Text
+                        type: string
+                      is_correct:
+                        default: false
+                        title: Is Correct
+                        type: boolean
+                      file_title:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Title
+                      file_description:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Description
+                      order:
+                        default: 0
+                        title: Order
+                        type: integer
+                      side:
+                        anyOf:
+                        - type: integer
+                        - type: 'null'
+                        default: null
+                        title: Side
+                    required:
+                    - text
+                    title: AnswerOptionCreate
+                    type: object
+                  title: Answer Options
+                  type: array
               file:
                 type: string
                 format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
               answer_option_files[0]:
                 type: string
                 format: binary
                 description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+              answer_option_file_previews[0]:
+                type: string
+                format: binary
+                description: Превью файла варианта с индексом 0.
             required:
             - text
             - question_type
@@ -187,11 +207,14 @@ cms-questions:
               ^answer_option_files\[(0|[1-9]\d*)\]$:
                 type: string
                 format: binary
+              ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
           encoding:
-            answer_options:
-              contentType: application/json
             answer_key:
-              contentType: application/json
+              contentType: text/plain
+            answer_options:
+              contentType: text/plain
             tags:
               style: form
               explode: true
@@ -301,12 +324,19 @@ cms-questions-update:
                 default: null
                 title: Tags
               answer_key:
-                anyOf:
-                - additionalProperties: true
-                  type: object
-                - type: 'null'
-                default: null
+                type:
+                - string
+                - 'null'
                 title: Answer Key
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Answer Key
               file_title:
                 anyOf:
                 - type: string
@@ -322,19 +352,30 @@ cms-questions-update:
               file:
                 type: string
                 format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
               answer_option_files[0]:
                 type: string
                 format: binary
                 description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+              answer_option_file_previews[0]:
+                type: string
+                format: binary
+                description: Превью файла варианта с индексом 0.
             title: QuestionUpdateRequest
             type: object
             patternProperties:
               ^answer_option_files\[(0|[1-9]\d*)\]$:
                 type: string
                 format: binary
+              ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
           encoding:
             answer_key:
-              contentType: application/json
+              contentType: text/plain
             tags:
               style: form
               explode: true

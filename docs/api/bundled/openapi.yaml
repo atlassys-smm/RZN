@@ -1222,24 +1222,24 @@ paths:
                   contentMediaType: application/octet-stream
                   title: Female Photo
                 male_file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Male File Title
                 male_file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Male File Description
                 female_file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Female File Title
                 female_file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Female File Description
               type: object
               required:
@@ -1297,36 +1297,36 @@ paths:
             schema:
               properties:
                 male_photo:
-                  type:
-                  - string
-                  - 'null'
-                  contentMediaType: application/octet-stream
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
                   title: Male Photo
                 female_photo:
-                  type:
-                  - string
-                  - 'null'
-                  contentMediaType: application/octet-stream
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
                   title: Female Photo
                 male_file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Male File Title
                 male_file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Male File Description
                 female_file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Female File Title
                 female_file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Female File Description
               type: object
               title: Body_update_avatar_api_avatars__profession_id__put
@@ -1496,12 +1496,19 @@ paths:
                   default: null
                   title: Tags
                 answer_key:
-                  anyOf:
-                  - additionalProperties: true
-                    type: object
-                  - type: 'null'
-                  default: null
+                  type:
+                  - string
+                  - 'null'
                   title: Answer Key
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - additionalProperties: true
+                      type: object
+                    - type: 'null'
+                    default: null
+                    title: Answer Key
                 file_title:
                   anyOf:
                   - type: string
@@ -1515,51 +1522,64 @@ paths:
                   default: null
                   title: File Description
                 answer_options:
-                  items:
-                    additionalProperties: false
-                    properties:
-                      text:
-                        title: Text
-                        type: string
-                      is_correct:
-                        default: false
-                        title: Is Correct
-                        type: boolean
-                      file_title:
-                        anyOf:
-                        - type: string
-                        - type: 'null'
-                        default: null
-                        title: File Title
-                      file_description:
-                        anyOf:
-                        - type: string
-                        - type: 'null'
-                        default: null
-                        title: File Description
-                      order:
-                        default: 0
-                        title: Order
-                        type: integer
-                      side:
-                        anyOf:
-                        - type: integer
-                        - type: 'null'
-                        default: null
-                        title: Side
-                    required:
-                    - text
-                    title: AnswerOptionCreate
-                    type: object
+                  type: string
                   title: Answer Options
-                  type: array
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    items:
+                      additionalProperties: false
+                      properties:
+                        text:
+                          title: Text
+                          type: string
+                        is_correct:
+                          default: false
+                          title: Is Correct
+                          type: boolean
+                        file_title:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: File Title
+                        file_description:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: File Description
+                        order:
+                          default: 0
+                          title: Order
+                          type: integer
+                        side:
+                          anyOf:
+                          - type: integer
+                          - type: 'null'
+                          default: null
+                          title: Side
+                      required:
+                      - text
+                      title: AnswerOptionCreate
+                      type: object
+                    title: Answer Options
+                    type: array
                 file:
                   type: string
                   format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
                 answer_option_files[0]:
                   type: string
                   format: binary
                   description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+                answer_option_file_previews[0]:
+                  type: string
+                  format: binary
+                  description: Превью файла варианта с индексом 0.
               required:
               - text
               - question_type
@@ -1573,11 +1593,14 @@ paths:
                 ^answer_option_files\[(0|[1-9]\d*)\]$:
                   type: string
                   format: binary
+                ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                  type: string
+                  format: binary
             encoding:
-              answer_options:
-                contentType: application/json
               answer_key:
-                contentType: application/json
+                contentType: text/plain
+              answer_options:
+                contentType: text/plain
               tags:
                 style: form
                 explode: true
@@ -1687,12 +1710,19 @@ paths:
                   default: null
                   title: Tags
                 answer_key:
-                  anyOf:
-                  - additionalProperties: true
-                    type: object
-                  - type: 'null'
-                  default: null
+                  type:
+                  - string
+                  - 'null'
                   title: Answer Key
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - additionalProperties: true
+                      type: object
+                    - type: 'null'
+                    default: null
+                    title: Answer Key
                 file_title:
                   anyOf:
                   - type: string
@@ -1708,19 +1738,30 @@ paths:
                 file:
                   type: string
                   format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
                 answer_option_files[0]:
                   type: string
                   format: binary
                   description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+                answer_option_file_previews[0]:
+                  type: string
+                  format: binary
+                  description: Превью файла варианта с индексом 0.
               title: QuestionUpdateRequest
               type: object
               patternProperties:
                 ^answer_option_files\[(0|[1-9]\d*)\]$:
                   type: string
                   format: binary
+                ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                  type: string
+                  format: binary
             encoding:
               answer_key:
-                contentType: application/json
+                contentType: text/plain
               tags:
                 style: form
                 explode: true
@@ -3530,20 +3571,26 @@ paths:
                   type: string
                   contentMediaType: application/octet-stream
                   title: File
+                file_preview:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: File Preview
                 prompt:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Prompt
                 file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: File Title
                 file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: File Description
               type: object
               required:
@@ -3589,30 +3636,36 @@ paths:
             schema:
               properties:
                 text:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Text
                 prompt:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: Prompt
                 file:
-                  type:
-                  - string
-                  - 'null'
-                  contentMediaType: application/octet-stream
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
                   title: File
+                file_preview:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: File Preview
                 file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: File Title
                 file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: File Description
               type: object
               title: Body_update_branch_api_cms_video_scenarios__scenario_id__branches__branch_id__put
@@ -3812,6 +3865,41 @@ paths:
                 $ref: '#/components/schemas/InteractiveVideoState'
         '403':
           description: Сессия принадлежит другому устройству
+        '404':
+          description: Сессия не найдена
+  /interactive-video/sessions/{id}/scenarios:
+    get:
+      tags:
+      - Профессии в действии - LED
+      summary: Сценарии сессии с первой веткой и файлом
+      description: 'Возвращает массив сценариев в порядке settings.scenario_ids для
+        карточек LED.
+
+        first_branch — стартовая ветка (parent_id = null), без дочерних веток.
+
+        first_branch.file содержит url, preview_url, mime_type, title и description.
+
+        Если стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.
+
+        Доступно для активных и завершённых сессий; не меняет состояние показа.
+
+        '
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Сценарии сессии; пустой массив, если доступных сценариев нет
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InteractiveVideoSessionScenario'
         '404':
           description: Сессия не найдена
   /interactive-video/sessions/{id}/advance:
@@ -4451,12 +4539,19 @@ paths:
                   default: null
                   title: File Description
                 condition:
-                  anyOf:
-                  - additionalProperties: true
-                    type: object
-                  - type: 'null'
-                  default: null
+                  type:
+                  - string
+                  - 'null'
                   title: Condition
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - additionalProperties: true
+                      type: object
+                    - type: 'null'
+                    default: null
+                    title: Condition
                 scale_min:
                   anyOf:
                   - type: integer
@@ -4472,6 +4567,10 @@ paths:
                 file:
                   type: string
                   format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
               required:
               - type
               - text
@@ -4480,7 +4579,7 @@ paths:
               type: object
             encoding:
               condition:
-                contentType: application/json
+                contentType: text/plain
       responses:
         '201':
           description: Создано
@@ -4576,12 +4675,19 @@ paths:
                   default: null
                   title: Required
                 condition:
-                  anyOf:
-                  - additionalProperties: true
-                    type: object
-                  - type: 'null'
-                  default: null
+                  type:
+                  - string
+                  - 'null'
                   title: Condition
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - additionalProperties: true
+                      type: object
+                    - type: 'null'
+                    default: null
+                    title: Condition
                 scale_min:
                   anyOf:
                   - type: integer
@@ -4609,11 +4715,15 @@ paths:
                 file:
                   type: string
                   format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
               title: SurveyQuestionUpdateRequest
               type: object
             encoding:
               condition:
-                contentType: application/json
+                contentType: text/plain
       responses:
         '200':
           description: Успешный ответ
@@ -4729,14 +4839,14 @@ paths:
       tags:
       - Файлы
       summary: Скачать файл
-      description: Скачать файл по UUID с проверкой подписи
+      description: Скачать основной файл или превью по подписанной ссылке. Идентификатор
+        превью — UUID основного файла с суффиксом _preview.
       parameters:
       - name: file_uuid
         in: path
         required: true
         schema:
           type: string
-          format: uuid
       - name: expires
         in: query
         required: true
@@ -4881,14 +4991,14 @@ paths:
                   contentMediaType: application/octet-stream
                   title: Photo
                 file_title:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: File Title
                 file_description:
-                  type:
-                  - string
-                  - 'null'
+                  anyOf:
+                  - type: string
+                  - type: 'null'
                   title: File Description
               type: object
               required:
@@ -5316,6 +5426,11 @@ components:
         url:
           type: string
           title: Url
+        preview_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Preview Url
         mime_type:
           type: string
           title: Mime Type
@@ -6513,6 +6628,70 @@ components:
           description: Дочерние ветки (варианты выбора после этого видео)
           items:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+    InteractiveVideoSessionScenario:
+      properties:
+        id:
+          title: Id
+          type: integer
+        title:
+          title: Title
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        first_branch:
+          anyOf:
+          - $ref: '#/components/schemas/InteractiveVideoSessionFirstBranch'
+          - type: 'null'
+      required:
+      - id
+      - title
+      - description
+      - profession_id
+      - first_branch
+      type: object
+    InteractiveVideoSessionFirstBranch:
+      properties:
+        id:
+          title: Id
+          type: integer
+        scenario_id:
+          title: Scenario Id
+          type: integer
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prompt
+      required:
+      - id
+      - scenario_id
+      - parent_id
+      - file
+      - text
+      - prompt
+      type: object
     InteractiveVideoSession:
       description: Сессия показа «Профессии в действии»
       type: object

@@ -31,10 +31,14 @@ user-avatars-create:
                 contentMediaType: application/octet-stream
                 title: Photo
               file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: File Title
               file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: File Description
             type: object
             required:

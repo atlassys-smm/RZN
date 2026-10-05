@@ -354,12 +354,19 @@ cms-survey-questions:
                 default: null
                 title: File Description
               condition:
-                anyOf:
-                - additionalProperties: true
-                  type: object
-                - type: 'null'
-                default: null
+                type:
+                - string
+                - 'null'
                 title: Condition
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Condition
               scale_min:
                 anyOf:
                 - type: integer
@@ -375,6 +382,10 @@ cms-survey-questions:
               file:
                 type: string
                 format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
             required:
             - type
             - text
@@ -383,7 +394,7 @@ cms-survey-questions:
             type: object
           encoding:
             condition:
-              contentType: application/json
+              contentType: text/plain
     responses:
       '201':
         description: Создано
@@ -479,12 +490,19 @@ cms-survey-question-detail:
                 default: null
                 title: Required
               condition:
-                anyOf:
-                - additionalProperties: true
-                  type: object
-                - type: 'null'
-                default: null
+                type:
+                - string
+                - 'null'
                 title: Condition
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Condition
               scale_min:
                 anyOf:
                 - type: integer
@@ -512,11 +530,15 @@ cms-survey-question-detail:
               file:
                 type: string
                 format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
             title: SurveyQuestionUpdateRequest
             type: object
           encoding:
             condition:
-              contentType: application/json
+              contentType: text/plain
     responses:
       '200':
         description: Успешный ответ

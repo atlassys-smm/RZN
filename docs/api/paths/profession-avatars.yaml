@@ -54,16 +54,24 @@ avatars:
                 contentMediaType: application/octet-stream
                 title: Female Photo
               male_file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Male File Title
               male_file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Male File Description
               female_file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Female File Title
               female_file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Female File Description
             type: object
             required:
@@ -120,24 +128,36 @@ avatars-detail:
           schema:
             properties:
               male_photo:
-                type: [string, 'null']
-                contentMediaType: application/octet-stream
+                anyOf:
+                - type: string
+                  contentMediaType: application/octet-stream
+                - type: 'null'
                 title: Male Photo
               female_photo:
-                type: [string, 'null']
-                contentMediaType: application/octet-stream
+                anyOf:
+                - type: string
+                  contentMediaType: application/octet-stream
+                - type: 'null'
                 title: Female Photo
               male_file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Male File Title
               male_file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Male File Description
               female_file_title:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Female File Title
               female_file_description:
-                type: [string, 'null']
+                anyOf:
+                - type: string
+                - type: 'null'
                 title: Female File Description
             type: object
             title: Body_update_avatar_api_avatars__profession_id__put
