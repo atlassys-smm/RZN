@@ -284,30 +284,26 @@ paths:
 
   # ── Обратная связь — CMS ─────────────────────────
   /cms/surveys:
-    $ref: './paths/surveys.yaml#/cms-surveys'
+    $ref: ./paths/surveys.yaml#/cms-surveys
   /cms/surveys/responses:
-    $ref: './paths/surveys.yaml#/cms-survey-responses'
+    $ref: ./paths/surveys.yaml#/cms-survey-responses
   /cms/surveys/{survey_id}:
-    $ref: './paths/surveys.yaml#/cms-surveys-detail'
+    $ref: ./paths/surveys.yaml#/cms-survey-detail
   /cms/surveys/{survey_id}/copy:
-    $ref: './paths/surveys.yaml#/cms-surveys-copy'
+    $ref: ./paths/surveys.yaml#/cms-survey-copy
   /cms/surveys/{survey_id}/publish:
-    $ref: './paths/cms.yaml#/surveys-publish'
+    $ref: ./paths/surveys.yaml#/cms-survey-publish
   /cms/surveys/{survey_id}/questions:
-    $ref: './paths/cms.yaml#/surveys-questions-create'
+    $ref: ./paths/surveys.yaml#/cms-survey-questions
   /cms/surveys/{survey_id}/questions/reorder:
-    $ref: './paths/cms.yaml#/surveys-questions-reorder'
+    $ref: ./paths/surveys.yaml#/cms-survey-questions-reorder
   /cms/surveys/{survey_id}/questions/{question_id}:
-    put:
-      $ref: './paths/cms.yaml#/surveys-questions-update/put'
-    delete:
-      $ref: './paths/cms.yaml#/surveys-questions-delete/delete'
-  /cms/surveys/responses:
-    $ref: './paths/cms.yaml#/responses'
+    $ref: ./paths/surveys.yaml#/cms-survey-question-detail
+  # ── Обратная связь — LED ────────────────────────
+  /feedback/surveys/{external_id}:
+    $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь — Пользователь ────────────────
-  /feedback/surveys/{external_id}:
-    $ref: './paths/feedback.yaml#/survey-by-external-id'
   /feedback/surveys/{survey_id}/respond:
     $ref: './paths/feedback.yaml#/respond'
 
