@@ -2,14 +2,13 @@ detail:
   get:
     tags: [Файлы]
     summary: Скачать файл
-    description: Скачать файл по UUID с проверкой подписи
+    description: Скачать основной файл или превью по подписанной ссылке. Идентификатор превью — UUID основного файла с суффиксом _preview.
     parameters:
       - name: file_uuid
         in: path
         required: true
         schema:
           type: string
-          format: uuid
       - name: expires
         in: query
         required: true

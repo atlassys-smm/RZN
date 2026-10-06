@@ -64,63 +64,160 @@ cms-questions:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            type: object
-            required: [text, question_type, difficulty, time_limit, points, answer_options]
+            additionalProperties: false
             properties:
               text:
+                title: Text
                 type: string
               question_type:
+                title: Question Type
                 type: integer
-                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
               difficulty:
-                type: integer
-                enum: [1, 2, 3]
-              age_group:
+                title: Difficulty
                 type: integer
               time_limit:
+                title: Time Limit
                 type: integer
-                minimum: 1
-                description: Обязательное время на ответ в секундах
               points:
+                title: Points
                 type: integer
+              age_group:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Age Group
               explanation:
-                type: string
-                description: Пояснение правильного ответа
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Explanation
               round_type:
-                type: integer
-                enum: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Round Type
               tags:
-                type: array
-                items:
-                  type: string
+                anyOf:
+                - items:
+                    type: string
+                  type: array
+                - type: 'null'
+                default: null
+                title: Tags
               answer_key:
-                type: object
-                description: Эталонный ответ для структурированных типов
-                additionalProperties: true
-              media_id:
-                type: integer
-                format: int64
+                type:
+                - string
+                - 'null'
+                title: Answer Key
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Answer Key
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
               answer_options:
-                type: array
-                items:
-                  type: object
-                  required: [text, is_correct]
-                  properties:
-                    text:
-                      type: string
-                    is_correct:
-                      type: boolean
-                    media_id:
-                      type: integer
-                      format: int64
-                    order:
-                      type: integer
-                    side:
-                      type: integer
-                      enum: [1, 2]
-                      description: Сторона элемента для вопроса matching
+                type: string
+                title: Answer Options
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        title: Text
+                        type: string
+                      is_correct:
+                        default: false
+                        title: Is Correct
+                        type: boolean
+                      file_title:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Title
+                      file_description:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Description
+                      order:
+                        default: 0
+                        title: Order
+                        type: integer
+                      side:
+                        anyOf:
+                        - type: integer
+                        - type: 'null'
+                        default: null
+                        title: Side
+                    required:
+                    - text
+                    title: AnswerOptionCreate
+                    type: object
+                  title: Answer Options
+                  type: array
+              file:
+                type: string
+                format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
+              answer_option_files[0]:
+                type: string
+                format: binary
+                description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+              answer_option_file_previews[0]:
+                type: string
+                format: binary
+                description: Превью файла варианта с индексом 0.
+            required:
+            - text
+            - question_type
+            - difficulty
+            - time_limit
+            - points
+            - answer_options
+            title: QuestionCreateRequest
+            type: object
+            patternProperties:
+              ^answer_option_files\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
+              ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
+          encoding:
+            answer_key:
+              contentType: text/plain
+            answer_options:
+              contentType: text/plain
+            tags:
+              style: form
+              explode: true
     responses:
       '201':
         description: Вопрос создан
@@ -164,11 +261,124 @@ cms-questions-update:
           type: integer
           format: int64
     requestBody:
-      required: true
+      required: false
       content:
-        application/json:
+        multipart/form-data:
           schema:
+            additionalProperties: false
+            properties:
+              text:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Text
+              question_type:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Question Type
+              difficulty:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Difficulty
+              time_limit:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Time Limit
+              points:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Points
+              age_group:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Age Group
+              explanation:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Explanation
+              round_type:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Round Type
+              tags:
+                anyOf:
+                - items:
+                    type: string
+                  type: array
+                - type: 'null'
+                default: null
+                title: Tags
+              answer_key:
+                type:
+                - string
+                - 'null'
+                title: Answer Key
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  default: null
+                  title: Answer Key
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              file:
+                type: string
+                format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
+              answer_option_files[0]:
+                type: string
+                format: binary
+                description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+              answer_option_file_previews[0]:
+                type: string
+                format: binary
+                description: Превью файла варианта с индексом 0.
+            title: QuestionUpdateRequest
             type: object
+            patternProperties:
+              ^answer_option_files\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
+              ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                type: string
+                format: binary
+          encoding:
+            answer_key:
+              contentType: text/plain
+            tags:
+              style: form
+              explode: true
     responses:
       '200':
         description: Вопрос обновлён
@@ -917,6 +1127,8 @@ session-active:
     description: |
       Возвращает текущую незавершённую сессию (status=1, waiting или status=2, active) для указанного LED-устройства.
       Оператор использует запрос для отображения сессии, уже запущенной на этом устройстве.
+      Всегда возвращает `round_count` — общее количество раундов и `current_round_question_count` — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов относится к первому раунду.
+      Во время active также возвращает текущий раунд, вопрос и таймер. `select=teams` и `select=participants` добавляют состав команд и участников; несколько значений select передаются повторяющимися параметрами запроса.
       Если активной сессии нет — возвращает 404.
     parameters:
       - name: device_id
@@ -929,7 +1141,7 @@ session-active:
         in: query
         description: Связанные данные для включения
         style: form
-        explode: false
+        explode: true
         schema:
           type: array
           items:
@@ -959,8 +1171,8 @@ session-detail:
     tags: [Викторина]
     summary: Получить сессию
     description: |
-      Без параметра select возвращает только базовые поля сессии (QuizSession).
-      С параметром select возвращает QuizSessionFull с запрошенными связями. Если `participant_id` принадлежит капитану и запрошен `current_question`, `answer_submissions` содержит предварительные ответы команды. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
+      Возвращает базовые поля сессии и счётчики round_count/current_round_question_count; во время active также текущий раунд, вопрос и таймер.
+      `select=teams` и `select=participants` добавляют состав команд и участников. Несколько значений select передаются повторяющимися параметрами запроса. Если `participant_id` принадлежит капитану, `answer_submissions` текущего вопроса содержит ответы его команды. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
     parameters:
       - name: id
         in: path
@@ -972,7 +1184,7 @@ session-detail:
         in: query
         description: Связанные данные для включения
         style: form
-        explode: false
+        explode: true
         schema:
           type: array
           items:
@@ -991,7 +1203,7 @@ session-detail:
           format: int64
     responses:
       '200':
-        description: Сессия. Без select — только базовые поля. С select — запрошенные связи заполнены, остальные null.
+        description: Состояние сессии; select добавляет запрошенные списки команд и участников.
         content:
           application/json:
             schema:
@@ -1599,93 +1811,28 @@ player-answer:
 # ═══════════════════════════════════════════════════════════════
 # WebSocket — обновления в реальном времени
 # ═══════════════════════════════════════════════════════════════
+# URL: ws://host/api/quiz/sessions/{sessionId}/ws
+# Формат: {"type": "event_name", "data": {...}}; data опускается у уведомлений без данных.
+# Схема: components/schemas/QuizWebSocketEvent в openapi.yaml.
+# Канал: x-websocket-channels.quiz-session в openapi.yaml.
+# Полное описание и примеры: ../websocket.md, раздел «Викторина».
 #
-# WebSocket-эндпоинты для получения обновлений в реальном времени.
-# OpenAPI 3.1 не поддерживает WebSocket, поэтому описание приведено ниже.
-#
-# ## Подключение
-#
-# ws://host/api/quiz/sessions/{sessionId}/ws
-#
-# ## События от сервера
-#
-# ### session_state
-# Обновление состояния сессии (для оператора и LED).
-#
-# {
-#   "type": "session_state",
-#   "data": {
-#     "status": 2,
-#     "current_round": { "index": 0, "round_type": 1 },
-#     "current_question": { ... },
-#     "timer": { "ends_at": 1780000000000, "remaining_at_pause": null, "running": true },
-#     "scores": [...]
-#   }
-# }
-#
-# ### question_started
-# Начался приём ответов на вопрос.
-#
-# {
-#   "type": "question_started",
-#   "data": {
-#     "question_index": 0,
-#     "time_limit": 30
-#   }
-# }
-#
-# ### answers_update
-# Новый предварительный ответ участника или решающий ответ капитана. Капитан обновляет состояние запросом GET /quiz/sessions/{id}?select=current_question&participant_id={captainParticipantId}.
-#
-# {
-#   "type": "answers_update",
-#   "data": {
-#     "submitted_count": 8,
-#     "eligible_count": 12
-#   }
-# }
-#
-# ### question_revealed
-# Правильный ответ показан.
-#
-# {
-#   "type": "question_revealed",
-#   "data": {
-#     "correct_answer": {
-#       "answer": { ... },
-#       "explanation": "Пояснение"
-#     }
-#   }
-# }
-#
-# ### round_finished
-# Раунд завершён, показ результатов.
-#
-# {
-#   "type": "round_finished",
-#   "data": {
-#     "round_index": 0,
-#     "scores": [...]
-#   }
-# }
-#
-# ### session_finished
-# Сессия завершена.
-#
-# {
-#   "type": "session_finished",
-#   "data": {}
-# }
-#
-# ## События от клиента
-#
-# ### subscribe
-# Подписка на определённые типы событий.
-#
-# {
-#   "type": "subscribe",
-#   "events": ["answers_update", "question_revealed"]
-# }
-#
-# Если не отправлено — клиент получает все события.
-
+# Все события имеют формат {"type": "event_name"}, без data.
+# session_state — уведомление после смены вопроса, раскрытия ответа,
+# изменения таймера и завершения сессии; снимок состояния не передаётся.
+# При подключении/переподключении сервер не отправляет начальный session_state.
+# После подключения и каждого события клиент запрашивает
+# GET /quiz/sessions/active?device_id=...&select=teams&select=participants.
+# Состояние содержит round_count и current_round_question_count.
+# События: participant_joined, participant_team_changed, captain_changed,
+# team_renamed, answers_update, question_started, question_revealed,
+# timer_paused, timer_resumed, timer_updated, timer_stopped, timer_expired,
+# round_finished (включая последний раунд), session_finished, session_state.
+# После завершения active возвращает 404; состояние и результаты доступны по ID.
+# Ответы команды доступны капитану через
+# GET /quiz/sessions/{id}?participant_id={captainParticipantId}.
+# Истечение таймера проверяет POST /quiz/sessions/{id}/led/next, фоновой рассылки нет.
+# Подключение получает все события сессии; subscribe-фильтрация не поддерживается.
+# Перед регистрацией сокета проверяется существование сессии запросом только её id.
+# Соединение с БД освобождается до ожидания сообщений.
+# Несуществующая сессия отклоняется до принятия WebSocket: close 1008 в ASGI, HTTP 403 при handshake.

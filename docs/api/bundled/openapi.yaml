@@ -13,6 +13,55 @@ info:
 servers:
 - url: http://localhost:8000/api
   description: Локальная разработка
+x-websocket-channels:
+  quiz-session:
+    url: /api/quiz/sessions/{sessionId}/ws
+    description: 'Канал оператора, LED и игрока. После подключения и переподключения
+      клиент сам
+
+      запрашивает актуальное состояние через GET /quiz/sessions/active с device_id.
+
+      Все сообщения содержат только type, без data. После каждого события клиент запрашивает
+
+      GET /quiz/sessions/active?device_id=...; состав доступен с select=teams&select=participants.
+
+      session_state уведомляет о смене вопроса, раскрытии ответа, изменении таймера
+      и завершении сессии.
+
+      Ответы команды доступны капитану через REST с participant_id, не в общей рассылке.
+
+      Подключение к сокету не вызывает отправку session_state. Перед регистрацией
+
+      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+
+      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI,
+      HTTP 403 при handshake).
+
+      Истечение таймера проверяется вызовом POST /quiz/sessions/{id}/led/next.
+
+      '
+    message:
+      $ref: '#/components/schemas/QuizWebSocketEvent'
+  interactive-video-session:
+    url: /api/interactive-video/sessions/{sessionId}/ws
+    description: 'Канал LED, оператора и мобильного клиента видеосценариев. Перед
+      регистрацией
+
+      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+
+      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI,
+      HTTP 403 при handshake).
+
+      После подключения и переподключения клиент сам запрашивает состояние через
+
+      GET /interactive-video/sessions/{id}/state или /voting?participant_id=... .
+
+      Начальное состояние сервер не отправляет. Все уведомления относятся к sessionId
+      из URL.
+
+      '
+    message:
+      $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
 tags:
 - name: auth
   description: Авторизация и аутентификация
@@ -1217,25 +1266,46 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
-              required:
-              - profession_id
-              - male_photo_file_id
-              - female_photo_file_id
               properties:
                 profession_id:
                   type: integer
-                  format: int64
-                male_photo_file_id:
-                  type: integer
-                  format: int64
-                  description: ID файла — фото мужчины
-                female_photo_file_id:
-                  type: integer
-                  format: int64
-                  description: ID файла — фото женщины
+                  title: Profession Id
+                male_photo:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  title: Male Photo
+                female_photo:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  title: Female Photo
+                male_file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Male File Title
+                male_file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Male File Description
+                female_file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Female File Title
+                female_file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Female File Description
+              type: object
+              required:
+              - profession_id
+              - male_photo
+              - female_photo
+              title: Body_create_avatar_api_avatars_post
       responses:
         '201':
           description: Аватар создан
@@ -1281,18 +1351,44 @@ paths:
           type: integer
           format: int64
       requestBody:
-        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
               properties:
-                male_photo_file_id:
-                  type: integer
-                  format: int64
-                female_photo_file_id:
-                  type: integer
-                  format: int64
+                male_photo:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: Male Photo
+                female_photo:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: Female Photo
+                male_file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Male File Title
+                male_file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Male File Description
+                female_file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Female File Title
+                female_file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Female File Description
+              type: object
+              title: Body_update_avatar_api_avatars__profession_id__put
       responses:
         '200':
           description: Аватар обновлён
@@ -1413,9 +1509,136 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
+              additionalProperties: false
+              properties:
+                text:
+                  title: Text
+                  type: string
+                question_type:
+                  title: Question Type
+                  type: integer
+                difficulty:
+                  title: Difficulty
+                  type: integer
+                time_limit:
+                  title: Time Limit
+                  type: integer
+                points:
+                  title: Points
+                  type: integer
+                age_group:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Age Group
+                explanation:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Explanation
+                round_type:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Round Type
+                tags:
+                  anyOf:
+                  - items:
+                      type: string
+                    type: array
+                  - type: 'null'
+                  default: null
+                  title: Tags
+                answer_key:
+                  type:
+                  - string
+                  - 'null'
+                  title: Answer Key
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - additionalProperties: true
+                      type: object
+                    - type: 'null'
+                    default: null
+                    title: Answer Key
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                answer_options:
+                  type: string
+                  title: Answer Options
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    items:
+                      additionalProperties: false
+                      properties:
+                        text:
+                          title: Text
+                          type: string
+                        is_correct:
+                          default: false
+                          title: Is Correct
+                          type: boolean
+                        file_title:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: File Title
+                        file_description:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: File Description
+                        order:
+                          default: 0
+                          title: Order
+                          type: integer
+                        side:
+                          anyOf:
+                          - type: integer
+                          - type: 'null'
+                          default: null
+                          title: Side
+                      required:
+                      - text
+                      title: AnswerOptionCreate
+                      type: object
+                    title: Answer Options
+                    type: array
+                file:
+                  type: string
+                  format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
+                answer_option_files[0]:
+                  type: string
+                  format: binary
+                  description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+                answer_option_file_previews[0]:
+                  type: string
+                  format: binary
+                  description: Превью файла варианта с индексом 0.
               required:
               - text
               - question_type
@@ -1423,93 +1646,23 @@ paths:
               - time_limit
               - points
               - answer_options
-              properties:
-                text:
+              title: QuestionCreateRequest
+              type: object
+              patternProperties:
+                ^answer_option_files\[(0|[1-9]\d*)\]$:
                   type: string
-                question_type:
-                  type: integer
-                  enum:
-                  - 1
-                  - 2
-                  - 3
-                  - 4
-                  - 5
-                  - 6
-                  - 7
-                  - 8
-                  - 9
-                  - 10
-                  - 11
-                  - 12
-                  - 13
-                  - 14
-                  - 15
-                  - 16
-                  - 17
-                  - 18
-                difficulty:
-                  type: integer
-                  enum:
-                  - 1
-                  - 2
-                  - 3
-                age_group:
-                  type: integer
-                time_limit:
-                  type: integer
-                  minimum: 1
-                  description: Обязательное время на ответ в секундах
-                points:
-                  type: integer
-                explanation:
+                  format: binary
+                ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
                   type: string
-                  description: Пояснение правильного ответа
-                round_type:
-                  type: integer
-                  enum:
-                  - 1
-                  - 2
-                  - 3
-                  - 4
-                  - 5
-                  - 6
-                  - 7
-                  - 8
-                  - 9
-                tags:
-                  type: array
-                  items:
-                    type: string
-                answer_key:
-                  type: object
-                  description: Эталонный ответ для структурированных типов
-                  additionalProperties: true
-                media_id:
-                  type: integer
-                  format: int64
-                answer_options:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                    - text
-                    - is_correct
-                    properties:
-                      text:
-                        type: string
-                      is_correct:
-                        type: boolean
-                      media_id:
-                        type: integer
-                        format: int64
-                      order:
-                        type: integer
-                      side:
-                        type: integer
-                        enum:
-                        - 1
-                        - 2
-                        description: Сторона элемента для вопроса matching
+                  format: binary
+            encoding:
+              answer_key:
+                contentType: text/plain
+              answer_options:
+                contentType: text/plain
+              tags:
+                style: form
+                explode: true
       responses:
         '201':
           description: Вопрос создан
@@ -1553,11 +1706,124 @@ paths:
           type: integer
           format: int64
       requestBody:
-        required: true
+        required: false
         content:
-          application/json:
+          multipart/form-data:
             schema:
+              additionalProperties: false
+              properties:
+                text:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Text
+                question_type:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Question Type
+                difficulty:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Difficulty
+                time_limit:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Time Limit
+                points:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Points
+                age_group:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Age Group
+                explanation:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Explanation
+                round_type:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Round Type
+                tags:
+                  anyOf:
+                  - items:
+                      type: string
+                    type: array
+                  - type: 'null'
+                  default: null
+                  title: Tags
+                answer_key:
+                  type:
+                  - string
+                  - 'null'
+                  title: Answer Key
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - additionalProperties: true
+                      type: object
+                    - type: 'null'
+                    default: null
+                    title: Answer Key
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                file:
+                  type: string
+                  format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
+                answer_option_files[0]:
+                  type: string
+                  format: binary
+                  description: Файл варианта 0; для других индексов используйте answer_option_files[n].
+                answer_option_file_previews[0]:
+                  type: string
+                  format: binary
+                  description: Превью файла варианта с индексом 0.
+              title: QuestionUpdateRequest
               type: object
+              patternProperties:
+                ^answer_option_files\[(0|[1-9]\d*)\]$:
+                  type: string
+                  format: binary
+                ^answer_option_file_previews\[(0|[1-9]\d*)\]$:
+                  type: string
+                  format: binary
+            encoding:
+              answer_key:
+                contentType: text/plain
+              tags:
+                style: form
+                explode: true
       responses:
         '200':
           description: Вопрос обновлён
@@ -2346,6 +2612,14 @@ paths:
         Оператор использует запрос для отображения сессии, уже запущенной на этом
         устройстве.
 
+        Всегда возвращает `round_count` — общее количество раундов и `current_round_question_count`
+        — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов
+        относится к первому раунду.
+
+        Во время active также возвращает текущий раунд, вопрос и таймер. `select=teams`
+        и `select=participants` добавляют состав команд и участников; несколько значений
+        select передаются повторяющимися параметрами запроса.
+
         Если активной сессии нет — возвращает 404.
 
         '
@@ -2360,7 +2634,7 @@ paths:
         in: query
         description: Связанные данные для включения
         style: form
-        explode: false
+        explode: true
         schema:
           type: array
           items:
@@ -2389,12 +2663,14 @@ paths:
       tags:
       - Викторина
       summary: Получить сессию
-      description: 'Без параметра select возвращает только базовые поля сессии (QuizSession).
+      description: 'Возвращает базовые поля сессии и счётчики round_count/current_round_question_count;
+        во время active также текущий раунд, вопрос и таймер.
 
-        С параметром select возвращает QuizSessionFull с запрошенными связями. Если
-        `participant_id` принадлежит капитану и запрошен `current_question`, `answer_submissions`
-        содержит предварительные ответы команды. До раскрытия правильного ответа поля
-        `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
+        `select=teams` и `select=participants` добавляют состав команд и участников.
+        Несколько значений select передаются повторяющимися параметрами запроса. Если
+        `participant_id` принадлежит капитану, `answer_submissions` текущего вопроса
+        содержит ответы его команды. До раскрытия правильного ответа поля `is_correct`
+        у вариантов и `answer_key` вопроса не возвращаются.
 
         '
       parameters:
@@ -2408,7 +2684,7 @@ paths:
         in: query
         description: Связанные данные для включения
         style: form
-        explode: false
+        explode: true
         schema:
           type: array
           items:
@@ -2428,8 +2704,8 @@ paths:
           format: int64
       responses:
         '200':
-          description: Сессия. Без select — только базовые поля. С select — запрошенные
-            связи заполнены, остальные null.
+          description: Состояние сессии; select добавляет запрошенные списки команд
+            и участников.
           content:
             application/json:
               schema:
@@ -3218,7 +3494,7 @@ paths:
       summary: Создать видеосценарий
       description: 'Создать новый видеосценарий. Стартовая ветка создаётся автоматически,
 
-        её `media_id` заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`)
+        её видео заполняется системным видео-заглушкой (`DEFAULT_SCENARIO_VIDEO_ID`)
         — замените его на реальное видео через `PUT /cms/video-scenarios/{id}/branches/{branchId}`.
 
         Для добавления дочерних веток используйте `POST /cms/video-scenarios/{id}/branches`.
@@ -3337,8 +3613,7 @@ paths:
       summary: Добавить ветку
       description: 'Добавить дочернюю ветку к указанному родителю.
 
-        Если `parent_id` не указан — добавляется как вариант выбора для стартовой
-        ветки.
+        `parent_id` обязателен. Файл передаётся в поле `file` multipart/form-data.
 
         '
       parameters:
@@ -3352,28 +3627,46 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
+              properties:
+                parent_id:
+                  type: integer
+                  title: Parent Id
+                text:
+                  type: string
+                  title: Text
+                file:
+                  type: string
+                  contentMediaType: application/octet-stream
+                  title: File
+                file_preview:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: File Preview
+                prompt:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Prompt
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: File Description
               type: object
               required:
               - parent_id
               - text
-              - media_id
-              properties:
-                parent_id:
-                  type: integer
-                  format: int64
-                  description: ID родительской ветки
-                text:
-                  type: string
-                  description: Текст варианта выбора
-                media_id:
-                  type: integer
-                  format: int64
-                  description: ID видеофайла
-                prompt:
-                  type: string
-                  description: Текст вопроса в точке выбора (для родительской ветки)
+              - file
+              title: Body_create_branch_api_cms_video_scenarios__scenario_id__branches_post
       responses:
         '201':
           description: Ветка добавлена
@@ -3407,19 +3700,44 @@ paths:
           type: integer
           format: int64
       requestBody:
-        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              type: object
               properties:
                 text:
-                  type: string
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Text
                 prompt:
-                  type: string
-                media_id:
-                  type: integer
-                  format: int64
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: Prompt
+                file:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: File
+                file_preview:
+                  anyOf:
+                  - type: string
+                    contentMediaType: application/octet-stream
+                  - type: 'null'
+                  title: File Preview
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: File Description
+              type: object
+              title: Body_update_branch_api_cms_video_scenarios__scenario_id__branches__branch_id__put
       responses:
         '200':
           description: Ветка обновлена
@@ -3616,6 +3934,41 @@ paths:
                 $ref: '#/components/schemas/InteractiveVideoState'
         '403':
           description: Сессия принадлежит другому устройству
+        '404':
+          description: Сессия не найдена
+  /interactive-video/sessions/{id}/scenarios:
+    get:
+      tags:
+      - Профессии в действии - LED
+      summary: Сценарии сессии с первой веткой и файлом
+      description: 'Возвращает массив сценариев в порядке settings.scenario_ids для
+        карточек LED.
+
+        first_branch — стартовая ветка (parent_id = null), без дочерних веток.
+
+        first_branch.file содержит url, preview_url, mime_type, title и description.
+
+        Если стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.
+
+        Доступно для активных и завершённых сессий; не меняет состояние показа.
+
+        '
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Сценарии сессии; пустой массив, если доступных сценариев нет
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InteractiveVideoSessionScenario'
         '404':
           description: Сессия не найдена
   /interactive-video/sessions/{id}/advance:
@@ -6139,400 +6492,37 @@ paths:
   /cms/surveys:
     get:
       tags:
-      - Обратная связь - CMS
-      summary: Список анкет
-      description: Получить список анкет обратной связи с пагинацией
-      parameters:
-      - name: is_active
-        in: query
-        schema:
-          type: boolean
-        description: Фильтр по статусу активности
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          default: 50
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          default: 0
+      - cms
+      summary: Анкеты
+      description: Получить список анкет (CMS)
       responses:
         '200':
           description: Список анкет
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CmsSurvey'
-                  total:
-                    type: integer
     post:
       tags:
-      - Обратная связь - CMS
+      - cms
       summary: Создать анкету
-      description: Создать новую анкету (черновик)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CmsSurveyCreateRequest'
-      responses:
-        '201':
-          description: Анкета создана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurvey'
-  /cms/surveys/{survey_id}:
-    get:
-      tags:
-      - Обратная связь - CMS
-      summary: Детали анкеты
-      description: Получить анкету с вопросами
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        '200':
-          description: Анкета с вопросами
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurvey'
-        '404':
-          description: Анкета не найдена
-    put:
-      tags:
-      - Обратная связь - CMS
-      summary: Обновить анкету
-      description: Обновить название и описание анкеты. Нельзя редактировать активную
-        анкету.
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CmsSurveyUpdateRequest'
-      responses:
-        '200':
-          description: Анкета обновлена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurvey'
-        '404':
-          description: Анкета не найдена
-        '422':
-          description: Нельзя редактировать активную анкету
-    delete:
-      tags:
-      - Обратная связь - CMS
-      summary: Удалить анкету
-      description: Удалить анкету-черновик. Нельзя удалить активную анкету или анкету
-        с ответами.
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        '204':
-          description: Анкета удалена
-        '404':
-          description: Анкета не найдена
-        '409':
-          description: Нельзя удалить — есть связанные ответы
-        '422':
-          description: Нельзя удалить активную анкету
-  /cms/surveys/{survey_id}/copy:
-    post:
-      tags:
-      - Обратная связь - CMS
-      summary: Создать новую версию анкеты
-      description: Скопировать анкету и все её вопросы в новый черновик с тем же external_id
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        '201':
-          description: Новая версия создана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurvey'
-        '404':
-          description: Анкета не найдена
-  /cms/surveys/{survey_id}/publish:
-    post:
-      tags:
-      - Обратная связь - CMS
-      summary: Опубликовать анкету
-      description: Активировать анкету. Предыдущая активная анкета с тем же external_id
-        автоматически деактивируется.
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        '200':
-          description: Анкета опубликована
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurvey'
-        '404':
-          description: Анкета не найдена
-        '422':
-          description: Анкета уже активна
-  /cms/surveys/{survey_id}/questions:
-    post:
-      tags:
-      - Обратная связь - CMS
-      summary: Добавить вопрос
-      description: Добавить вопрос в анкету-черновик
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CmsSurveyQuestionCreateRequest'
-      responses:
-        '201':
-          description: Вопрос добавлен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurveyQuestion'
-        '404':
-          description: Анкета не найдена
-        '422':
-          description: Нельзя редактировать активную анкету
-  /cms/surveys/{survey_id}/questions/reorder:
-    put:
-      tags:
-      - Обратная связь - CMS
-      summary: Изменить порядок вопросов
-      description: Переупорядочить вопросы анкеты
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      description: Добавить новую анкету
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-              - question_ids
-              properties:
-                question_ids:
-                  type: array
-                  items:
-                    type: integer
-                    format: int64
-                  description: ID вопросов в новом порядке
       responses:
-        '200':
-          description: Порядок обновлён
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CmsSurveyQuestion'
-        '404':
-          description: Анкета не найдена
-        '422':
-          description: question_ids не совпадают с существующими вопросами
-  /cms/surveys/{survey_id}/questions/{question_id}:
-    put:
-      tags:
-      - Обратная связь - CMS
-      summary: Обновить вопрос
-      description: Обновить вопрос анкеты-черновика
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: question_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CmsSurveyQuestionUpdateRequest'
-      responses:
-        '200':
-          description: Вопрос обновлён
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CmsSurveyQuestion'
-        '404':
-          description: Вопрос не найден
-        '422':
-          description: Нельзя редактировать вопросы активной анкеты
-    delete:
-      tags:
-      - Обратная связь - CMS
-      summary: Удалить вопрос
-      description: Удалить вопрос из анкеты-черновика
-      parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: question_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        '204':
-          description: Вопрос удалён
-        '404':
-          description: Вопрос не найден
-        '422':
-          description: Нельзя редактировать вопросы активной анкеты
-  /cms/surveys/responses:
+        '201':
+          description: Анкета создана
+  /feedback/surveys:
     get:
       tags:
-      - Обратная связь - CMS
-      summary: Список ответов
-      description: Получить список ответов пользователей на анкеты с фильтрами
-      parameters:
-      - name: survey_id
-        in: query
-        schema:
-          type: integer
-          format: int64
-        description: Фильтр по ID анкеты
-      - name: external_id
-        in: query
-        schema:
-          type: string
-        description: Фильтр по external_id анкеты
-      - name: is_active
-        in: query
-        schema:
-          type: boolean
-        description: Фильтр по статусу активности анкеты
-      - name: user_id
-        in: query
-        schema:
-          type: integer
-          format: int64
-        description: Фильтр по ID пользователя
-      - name: completed_from
-        in: query
-        schema:
-          type: string
-          format: date-time
-        description: Фильтр по дате начала (completed_at >=)
-      - name: completed_to
-        in: query
-        schema:
-          type: string
-          format: date-time
-        description: Фильтр по дате окончания (completed_at <=)
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          default: 50
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          default: 0
-      responses:
-        '200':
-          description: Список ответов
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CmsSurveyResponse'
-                  total:
-                    type: integer
-  /feedback/surveys/{external_id}:
-    get:
-      tags:
-      - Обратная связь - LED
-      summary: Активная анкета по external_id
-      description: Получить активную анкету по символьному идентификатору (используется
-        LED-плеером)
+      - feedback
+      summary: Доступные анкеты
+      description: Получить список анкет обратной связи
       security: []
-      parameters:
-      - name: external_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Символьный идентификатор анкеты (например, videoresume_feedback)
       responses:
         '200':
-          description: Активная анкета с вопросами
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackSurvey'
-        '404':
-          description: Активная анкета не найдена
-  /feedback/surveys/{survey_id}/respond:
+          description: Список анкет
+  /feedback/surveys/{id}/respond:
     post:
       tags:
       - Обратная связь - Пользователь
@@ -6569,14 +6559,14 @@ paths:
       tags:
       - Файлы
       summary: Скачать файл
-      description: Скачать файл по UUID с проверкой подписи
+      description: Скачать основной файл или превью по подписанной ссылке. Идентификатор
+        превью — UUID основного файла с суффиксом _preview.
       parameters:
       - name: file_uuid
         in: path
         required: true
         schema:
           type: string
-          format: uuid
       - name: expires
         in: query
         required: true
@@ -6715,11 +6705,25 @@ paths:
         content:
           multipart/form-data:
             schema:
-              type: object
               properties:
                 photo:
                   type: string
-                  format: binary
+                  contentMediaType: application/octet-stream
+                  title: Photo
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  title: File Description
+              type: object
+              required:
+              - photo
+              title: Body_create_user_avatar_api_users__user_id__avatars_post
       responses:
         '201':
           description: Аватар сохранён
@@ -6755,6 +6759,703 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    QuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        question_type:
+          title: Question Type
+          type: integer
+        difficulty:
+          title: Difficulty
+          type: integer
+        time_limit:
+          title: Time Limit
+          type: integer
+        points:
+          title: Points
+          type: integer
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        answer_options:
+          items:
+            $ref: '#/components/schemas/AnswerOptionCreate'
+          title: Answer Options
+          type: array
+      required:
+      - text
+      - question_type
+      - difficulty
+      - time_limit
+      - points
+      - answer_options
+      title: QuestionCreateRequest
+      type: object
+    QuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        question_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Question Type
+        difficulty:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Difficulty
+        time_limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Time Limit
+        points:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Points
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: QuestionUpdateRequest
+      type: object
+    AnswerOptionCreate:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        is_correct:
+          default: false
+          title: Is Correct
+          type: boolean
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        order:
+          default: 0
+          title: Order
+          type: integer
+        side:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Side
+      required:
+      - text
+      title: AnswerOptionCreate
+      type: object
+    SurveyQuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          title: Text
+          type: string
+        order:
+          title: Order
+          type: integer
+        required:
+          default: false
+          title: Required
+          type: boolean
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Parent Id
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+      required:
+      - type
+      - text
+      - order
+      title: SurveyQuestionCreateRequest
+      type: object
+    SurveyQuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        required:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Required
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: SurveyQuestionUpdateRequest
+      type: object
+    FeedbackQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: FeedbackQuestionResponse
+    FeedbackSurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        questions:
+          items:
+            $ref: '#/components/schemas/FeedbackQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      title: FeedbackSurveyResponse
+    FileResponse:
+      properties:
+        url:
+          type: string
+          title: Url
+        preview_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Preview Url
+        mime_type:
+          type: string
+          title: Mime Type
+        title:
+          type: string
+          title: Title
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - url
+      - mime_type
+      - title
+      - description
+      title: FileResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PaginatedResponse_SurveyResponseItem_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponseItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponseItem]
+    PaginatedResponse_SurveyResponse_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponse'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponse]
+    ReorderRequest:
+      properties:
+        question_ids:
+          items:
+            type: integer
+          type: array
+          title: Question Ids
+      type: object
+      required:
+      - question_ids
+      title: ReorderRequest
+    SurveyAnswerResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        question_id:
+          type: integer
+          title: Question Id
+        value:
+          type: string
+          title: Value
+      type: object
+      required:
+      - id
+      - question_id
+      - value
+      title: SurveyAnswerResponse
+    SurveyCreateRequest:
+      properties:
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - external_id
+      - name
+      title: SurveyCreateRequest
+    SurveyQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - survey_id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: SurveyQuestionResponse
+    SurveyQuestionType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      title: SurveyQuestionType
+    SurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        is_active:
+          type: boolean
+          title: Is Active
+        copied_from_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Copied From Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        questions:
+          items:
+            $ref: '#/components/schemas/SurveyQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      - is_active
+      - copied_from_id
+      - created_at
+      - updated_at
+      title: SurveyResponse
+    SurveyResponseItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        source_id:
+          type: string
+          title: Source Id
+        user_id:
+          type: integer
+          title: User Id
+        consent_version_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Consent Version Id
+        completed_at:
+          type: string
+          format: date-time
+          title: Completed At
+        duration:
+          type: integer
+          title: Duration
+        answers:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerResponse'
+          type: array
+          title: Answers
+          default: []
+        survey:
+          anyOf:
+          - $ref: '#/components/schemas/SurveyResponse'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - survey_id
+      - source_id
+      - user_id
+      - consent_version_id
+      - completed_at
+      - duration
+      title: SurveyResponseItem
+    SurveyUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      title: SurveyUpdateRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     Industry:
       description: Отрасль экономики
       type: object
@@ -6941,14 +7642,14 @@ components:
         profession_id:
           type: integer
           format: int64
-        male_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото мужчины
-        female_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото женщины
+        male_file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        female_file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         created_at:
           type: string
           format: date-time
@@ -6968,9 +7669,10 @@ components:
         profession_id:
           type: integer
           format: int64
-        image_url:
-          type: string
-          description: Подписанный URL для скачивания (TTL 24ч)
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         qr_token:
           type: string
           description: Токен для доступа по QR-коду
@@ -7089,9 +7791,10 @@ components:
           type: array
           items:
             type: string
-        media_url:
-          type: string
-          nullable: true
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         answer_options:
           type: array
           items:
@@ -7105,9 +7808,10 @@ components:
               is_correct:
                 type: boolean
                 description: Не передаётся игроку до reveal
-              media_url:
-                type: string
-                nullable: true
+              file:
+                anyOf:
+                - $ref: '#/components/schemas/FileResponse'
+                - type: 'null'
               order:
                 type: integer
               side:
@@ -7211,10 +7915,22 @@ components:
       description: Сессия викторины со связями. Поля заполняются в зависимости от
         параметра select.
       type: object
+      required:
+      - round_count
+      - current_round_question_count
       allOf:
       - $ref: '#/components/schemas/QuizSession'
       - type: object
         properties:
+          round_count:
+            type: integer
+            minimum: 0
+            description: Общее количество раундов в сессии.
+          current_round_question_count:
+            type: integer
+            minimum: 0
+            description: Количество вопросов в текущем раунде; до старта — в первом
+              раунде, 0 при отсутствии раунда.
           current_round:
             type: object
             nullable: true
@@ -7338,8 +8054,11 @@ components:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
     QuizSessionState:
-      description: Текущее состояние игры викторины (для next, reveal)
+      description: Текущее состояние игры викторины для REST-запросов. По WebSocket
+        передаются только уведомления.
       type: object
+      allOf:
+      - $ref: '#/components/schemas/QuizSessionFull'
       properties:
         status:
           type: integer
@@ -7401,9 +8120,10 @@ components:
                   - 16
                   - 17
                   - 18
-                media_url:
-                  type: string
-                  nullable: true
+                file:
+                  anyOf:
+                  - $ref: '#/components/schemas/FileResponse'
+                  - type: 'null'
                 time_limit:
                   type: integer
                 answer_options:
@@ -7416,9 +8136,10 @@ components:
                         format: int64
                       text:
                         type: string
-                      media_url:
-                        type: string
-                        nullable: true
+                      file:
+                        anyOf:
+                        - $ref: '#/components/schemas/FileResponse'
+                        - type: 'null'
             correct_answer:
               type: object
               nullable: true
@@ -7496,10 +8217,56 @@ components:
         remaining_at_pause:
           type: integer
           nullable: true
-          description: Секунд осталось на момент паузы. Заполняется если running=false.
+          description: Секунд осталось на момент паузы. Null при работающем или закрытом
+            таймере.
         running:
           type: boolean
-          description: true — таймер идёт, false — на паузе
+          description: true — таймер идёт, false — на паузе или приём ответов закрыт
+    QuizWebSocketEvent:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      description: 'Уведомление канала викторины, содержащее только тип события.
+
+        Сессия определяется URL подключения. После события клиент запрашивает
+
+        GET /quiz/sessions/active?device_id=...; состояние игры в сокете не передаётся.
+
+        '
+      properties:
+        type:
+          type: string
+          enum:
+          - session_state
+          - participant_joined
+          - participant_team_changed
+          - captain_changed
+          - team_renamed
+          - answers_update
+          - question_started
+          - question_revealed
+          - timer_paused
+          - timer_resumed
+          - timer_updated
+          - timer_stopped
+          - timer_expired
+          - round_finished
+          - session_finished
+      example:
+        type: answers_update
+    InteractiveVideoWebSocketEvent:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - phase_changed
+          - votes_updated
+          - scenario_finished
+          - session_finished
     QuizScoredEntry:
       description: Запись с баллами. id — team_id для mode=2 (team), participant_id
         для mode=1 (individual).
@@ -7625,15 +8392,10 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID видеофайла
-        media_url:
-          type: string
-          nullable: true
-          description: URL видеофайла
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         text:
           type: string
           nullable: true
@@ -7647,6 +8409,70 @@ components:
           description: Дочерние ветки (варианты выбора после этого видео)
           items:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+    InteractiveVideoSessionScenario:
+      properties:
+        id:
+          title: Id
+          type: integer
+        title:
+          title: Title
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        first_branch:
+          anyOf:
+          - $ref: '#/components/schemas/InteractiveVideoSessionFirstBranch'
+          - type: 'null'
+      required:
+      - id
+      - title
+      - description
+      - profession_id
+      - first_branch
+      type: object
+    InteractiveVideoSessionFirstBranch:
+      properties:
+        id:
+          title: Id
+          type: integer
+        scenario_id:
+          title: Scenario Id
+          type: integer
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prompt
+      required:
+      - id
+      - scenario_id
+      - parent_id
+      - file
+      - text
+      - prompt
+      type: object
     InteractiveVideoSession:
       description: Сессия показа «Профессии в действии»
       type: object
@@ -7744,9 +8570,10 @@ components:
             id:
               type: integer
               format: int64
-            media_url:
-              type: string
-              nullable: true
+            file:
+              anyOf:
+              - $ref: '#/components/schemas/FileResponse'
+              - type: 'null'
             prompt:
               type: string
               nullable: true
@@ -7845,2591 +8672,5 @@ components:
               format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
-    CmsSurvey:
-      description: Анкета обратной связи (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        external_id:
-          type: string
-          description: Символьный идентификатор (например, videoresume_feedback)
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        is_active:
-          type: boolean
-          description: Активна ли анкета
-        copied_from_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID анкеты, от которой эта была скопирована
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        questions:
-          type: array
-          items:
-            $ref: '#/components/schemas/CmsSurveyQuestion'
-    CmsSurveyCreateRequest:
-      type: object
-      required:
-      - external_id
-      - name
-      properties:
-        external_id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-    CmsSurveyUpdateRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-    CmsSurveyQuestion:
-      description: Вопрос анкеты (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        survey_id:
-          type: integer
-          format: int64
-        parent_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID родительского вопроса для условного показа
-        type:
-          type: integer
-          enum:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-          description: 'Тип вопроса:
-
-            - `1` — rating_scale (шкала оценки)
-
-            - `2` — single_choice (одиночный выбор)
-
-            - `3` — multiple_choice (множественный выбор)
-
-            - `4` — text (текстовый ответ)
-
-            - `5` — profession_choice (выбор профессии)
-
-            '
-        text:
-          type: string
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-        required:
-          type: boolean
-        order:
-          type: integer
-        condition:
-          type: object
-          nullable: true
-          description: 'Условие показа (например, {"operator": "lte", "value": 2})'
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-          description: Минимальное значение шкалы (по умолчанию 1)
-        scale_max:
-          type: integer
-          nullable: true
-          description: Максимальное значение шкалы (по умолчанию 5)
-    CmsSurveyQuestionCreateRequest:
-      type: object
-      required:
-      - type
-      - text
-      - order
-      properties:
-        type:
-          type: integer
-          enum:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-        text:
-          type: string
-        order:
-          type: integer
-        required:
-          type: boolean
-          default: false
-        parent_id:
-          type: integer
-          format: int64
-          nullable: true
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-        condition:
-          type: object
-          nullable: true
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-        scale_max:
-          type: integer
-          nullable: true
-    CmsSurveyQuestionUpdateRequest:
-      type: object
-      properties:
-        text:
-          type: string
-        required:
-          type: boolean
-        condition:
-          type: object
-          nullable: true
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-        scale_max:
-          type: integer
-          nullable: true
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-    CmsSurveyResponse:
-      description: Ответ пользователя на анкету (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        survey_id:
-          type: integer
-          format: int64
-        source_id:
-          type: string
-          description: XML_ID устройства (ПАК, веб)
-        user_id:
-          type: integer
-          format: int64
-        consent_version_id:
-          type: integer
-          format: int64
-          nullable: true
-        completed_at:
-          type: string
-          format: date-time
-        duration:
-          type: integer
-          description: Время прохождения в секундах
-        answers:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                format: int64
-              question_id:
-                type: integer
-                format: int64
-              value:
-                type: string
-        survey:
-          $ref: '#/components/schemas/CmsSurvey'
-          nullable: true
-          description: Анкета, на которую дан ответ
-    FeedbackSurvey:
-      description: Активная анкета для прохождения (клиент)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        external_id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        questions:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                format: int64
-              parent_id:
-                type: integer
-                format: int64
-                nullable: true
-              type:
-                type: integer
-                enum:
-                - 1
-                - 2
-                - 3
-                - 4
-                - 5
-              text:
-                type: string
-              media_id:
-                type: integer
-                format: int64
-                nullable: true
-              required:
-                type: boolean
-              order:
-                type: integer
-              condition:
-                type: object
-                nullable: true
-                additionalProperties: true
-              scale_min:
-                type: integer
-                nullable: true
-              scale_max:
-                type: integer
-                nullable: true
-    FeedbackSubmitRequest:
-      description: Запрос на отправку ответов
-      type: object
-      required:
-      - source_id
-      - user_id
-      - duration
-      - answers
-      properties:
-        source_id:
-          type: string
-          description: XML_ID устройства (ПАК, веб)
-        user_id:
-          type: integer
-          format: int64
-          description: ID пользователя
-        duration:
-          type: integer
-          description: Время прохождения в секундах
-        consent_version_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID версии согласия, которое принял пользователь
-        answers:
-          type: array
-          items:
-            type: object
-            required:
-            - question_id
-            - value
-            properties:
-              question_id:
-                type: integer
-                format: int64
-              value:
-                type: string
-                description: Значение ответа (число, текст, JSON для множественного
-                  выбора)
-    FeedbackSubmitResponse:
-      description: Результат отправки ответов
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        survey_id:
-          type: integer
-          format: int64
-        completed_at:
-          type: string
-          format: date-time
-    ProfStartError:
-      type: object
-      additionalProperties: false
-      required:
-      - code
-      - message
-      - details
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        details:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - code
-            - entity
-            - entity_id
-            - field
-            - message
-            properties:
-              code:
-                type: string
-              entity:
-                type: string
-              entity_id:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                minimum: 1
-              field:
-                type:
-                - string
-                - 'null'
-              message:
-                type: string
-    ProfStartTestType:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - code
-      - name
-      - description
-      - created_at
-      - updated_at
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        code:
-          type: string
-          pattern: ^[a-z][a-z0-9_]*$
-          minLength: 1
-          maxLength: 64
-          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland,
-            dellinger; CMS может добавлять другие.'
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    ProfStartTestCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - test_type_id
-      - name
-      properties:
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-        instructions:
-          type: string
-          default: ''
-        age_group_ids:
-          type: array
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-          uniqueItems: true
-          default: []
-    ProfStartTestPatch:
-      type: object
-      additionalProperties: false
-      required: []
-      properties:
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-        instructions:
-          type: string
-          default: ''
-        age_group_ids:
-          type: array
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-          uniqueItems: true
-          default: []
-      minProperties: 1
-    ProfStartTest:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_type_id
-      - test_code_type
-      - version
-      - name
-      - description
-      - instructions
-      - age_group_ids
-      - question_count
-      - group_count
-      - published_at
-      - created_at
-      - updated_at
-      - status
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        version:
-          type: integer
-          minimum: 1
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-        instructions:
-          type: string
-          default: ''
-        age_group_ids:
-          type: array
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-          uniqueItems: true
-          default: []
-        question_count:
-          type: integer
-          minimum: 0
-          description: 'В draft количество может быть неполным. Для публикации: solomin
-            — 42, holland — 15, dellinger — 1. Для нового типа число задаётся CMS.'
-        group_count:
-          type: integer
-          minimum: 0
-        published_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Дата первой активации; null у draft, заполнена у active и archived.
-            Статус определяется полем status.
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        test_code_type:
-          type: string
-          pattern: ^[a-z][a-z0-9_]*$
-          minLength: 1
-          maxLength: 64
-          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland,
-            dellinger; CMS может добавлять другие.'
-        status:
-          type: string
-          enum:
-          - draft
-          - active
-          - archived
-          description: Только тест имеет жизненный цикл. На один test_type_id допускается
-            не более одного active.
-      allOf:
-      - if:
-          properties:
-            status:
-              const: draft
-          required:
-          - status
-        then:
-          properties:
-            published_at:
-              type: 'null'
-      - if:
-          properties:
-            status:
-              enum:
-              - active
-              - archived
-          required:
-          - status
-        then:
-          properties:
-            published_at:
-              type: string
-      - if:
-          properties:
-            status:
-              enum:
-              - active
-              - archived
-            test_code_type:
-              const: solomin
-          required:
-          - status
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 42
-            group_count:
-              const: 7
-      - if:
-          properties:
-            status:
-              enum:
-              - active
-              - archived
-            test_code_type:
-              const: holland
-          required:
-          - status
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 15
-            group_count:
-              const: 6
-      - if:
-          properties:
-            status:
-              enum:
-              - active
-              - archived
-            test_code_type:
-              const: dellinger
-          required:
-          - status
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 1
-            group_count:
-              const: 5
-    ProfStartPublicTest:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_type_id
-      - test_code_type
-      - version
-      - name
-      - description
-      - instructions
-      - age_group_ids
-      - question_count
-      - status
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        version:
-          type: integer
-          minimum: 1
-        name:
-          type: string
-        description:
-          type: string
-        instructions:
-          type: string
-        age_group_ids:
-          type: array
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-          uniqueItems: true
-        question_count:
-          type: integer
-          minimum: 1
-          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
-            2), holland — 15, dellinger — 1.'
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-        status:
-          type: string
-          enum:
-          - active
-          - archived
-          description: Архивная карточка доступна только владельцу существующей сессии;
-            новый старт разрешён только active.
-      allOf:
-      - if:
-          properties:
-            test_code_type:
-              const: solomin
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 42
-      - if:
-          properties:
-            test_code_type:
-              const: holland
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 15
-      - if:
-          properties:
-            test_code_type:
-              const: dellinger
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 1
-    ProfStartGroupCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - code
-      - name
-      - category
-      - order
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Уникальный внутри версии. Предзаданные коды фиксируются методикой;
-            для новых типов код группы задаётся CMS.
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-        category:
-          type: string
-          enum:
-          - subject
-          - labor
-          - riasec
-          - geometry
-        order:
-          type: integer
-          minimum: 1
-    ProfStartGroupPatch:
-      type: object
-      additionalProperties: false
-      required: []
-      properties:
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Уникальный внутри версии. Предзаданные коды фиксируются методикой;
-            для новых типов код группы задаётся CMS.
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-        category:
-          type: string
-          enum:
-          - subject
-          - labor
-          - riasec
-          - geometry
-        order:
-          type: integer
-          minimum: 1
-      minProperties: 1
-    ProfStartGroup:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_id
-      - code
-      - name
-      - description
-      - category
-      - order
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Уникальный внутри версии. Предзаданные коды фиксируются методикой;
-            для новых типов код группы задаётся CMS.
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-        category:
-          type: string
-          enum:
-          - subject
-          - labor
-          - riasec
-          - geometry
-        order:
-          type: integer
-          minimum: 1
-    ProfStartOptionCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - text
-      - order
-      - group_id
-      - weight
-      properties:
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        value:
-          type:
-          - integer
-          - 'null'
-          minimum: 0
-          maximum: 3
-        order:
-          type: integer
-          minimum: 1
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        weight:
-          type: number
-          minimum: 0
-          maximum: 3
-          description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется
-            из вопроса.'
-    ProfStartOptionPatch:
-      type: object
-      additionalProperties: false
-      required: []
-      properties:
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        value:
-          type:
-          - integer
-          - 'null'
-          minimum: 0
-          maximum: 3
-        order:
-          type: integer
-          minimum: 1
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        weight:
-          type: number
-          minimum: 0
-          maximum: 3
-          description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется
-            из вопроса.'
-      minProperties: 1
-    ProfStartOption:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - question_id
-      - text
-      - media_id
-      - value
-      - order
-      - group_id
-      - weight
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        question_id:
-          type: integer
-          format: int64
-          minimum: 1
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        value:
-          type:
-          - integer
-          - 'null'
-          minimum: 0
-          maximum: 3
-        order:
-          type: integer
-          minimum: 1
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        weight:
-          type: number
-          minimum: 0
-          maximum: 3
-          description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется
-            из вопроса.'
-    ProfStartPublicOption:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - text
-      - media_id
-      - value
-      - order
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        text:
-          type: string
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        value:
-          type:
-          - integer
-          - 'null'
-          minimum: 0
-          maximum: 3
-        order:
-          type: integer
-          minimum: 1
-    ProfStartQuestionCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - type
-      - axis
-      - text
-      - order
-      properties:
-        type:
-          type: string
-          enum:
-          - single_choice
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        order:
-          type: integer
-          minimum: 1
-    ProfStartQuestionPatch:
-      type: object
-      additionalProperties: false
-      required: []
-      properties:
-        type:
-          type: string
-          enum:
-          - single_choice
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        order:
-          type: integer
-          minimum: 1
-      minProperties: 1
-    ProfStartQuestion:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_id
-      - type
-      - axis
-      - text
-      - media_id
-      - order
-      - options
-      - created_at
-      - updated_at
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        type:
-          type: string
-          enum:
-          - single_choice
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        order:
-          type: integer
-          minimum: 1
-        options:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartOption'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    ProfStartPublicQuestion:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_id
-      - type
-      - axis
-      - text
-      - media_id
-      - order
-      - options
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        type:
-          type: string
-          enum:
-          - single_choice
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
-        text:
-          type: string
-          minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        order:
-          type: integer
-          minimum: 1
-        options:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartPublicOption'
-          minItems: 4
-          maxItems: 6
-          description: 'Полный набор опубликованного вопроса: 4 варианта Соломина,
-            6 Голланда, 5 Деллингер; точный состав проверяет сервер.'
-    ProfStartGroupProfessionCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - profession_id
-      properties:
-        profession_id:
-          type: integer
-          format: int64
-          minimum: 1
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-          default: 1
-    ProfStartGroupProfessionPatch:
-      type: object
-      additionalProperties: false
-      required: []
-      properties:
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-          default: 1
-      minProperties: 1
-    ProfStartGroupProfession:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - group_id
-      - profession_id
-      - profession_name
-      - coefficient
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        profession_id:
-          type: integer
-          format: int64
-          minimum: 1
-        profession_name:
-          type: string
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-          default: 1
-    ProfStartValidation:
-      type: object
-      additionalProperties: false
-      required:
-      - valid
-      - errors
-      - question_count
-      - group_count
-      - scale_maxima
-      properties:
-        valid:
-          type: boolean
-        errors:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - code
-            - entity
-            - entity_id
-            - field
-            - message
-            properties:
-              code:
-                type: string
-              entity:
-                type: string
-              entity_id:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                minimum: 1
-              field:
-                type:
-                - string
-                - 'null'
-              message:
-                type: string
-        question_count:
-          type: integer
-          minimum: 0
-        group_count:
-          type: integer
-          minimum: 0
-        scale_maxima:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - group_id
-            - axis
-            - max_score
-            properties:
-              group_id:
-                type: integer
-                format: int64
-                minimum: 1
-              axis:
-                type: string
-                enum:
-                - want
-                - can
-                - general
-              max_score:
-                type: number
-                minimum: 0
-      description: 'Общая проверка целостности для любого типа. Для solomin: 42 вопроса,
-        по 3 на каждую из 7 групп и осей want/can, максимум 9. Для holland: ровно
-        15 вопросов, 6 вариантов с весом 1, максимум 15. Для dellinger: 1 вопрос и
-        5 изображений. Для новых типов scale_maxima=[]: алгоритм итогового расчёта
-        пока отсутствует; общая проверка и активация в CMS допустимы.'
-    ProfStartSessionCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - test_id
-      properties:
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-    ProfStartAnswerWrite:
-      type: object
-      additionalProperties: false
-      required:
-      - question_id
-      - answer_option_id
-      - time_spent_ms
-      properties:
-        question_id:
-          type: integer
-          format: int64
-          minimum: 1
-        answer_option_id:
-          type: integer
-          format: int64
-          minimum: 1
-        time_spent_ms:
-          type: integer
-          minimum: 0
-    ProfStartSavedAnswer:
-      type: object
-      additionalProperties: false
-      required:
-      - question_id
-      - answer_option_id
-      - time_spent_ms
-      - answered_at
-      properties:
-        question_id:
-          type: integer
-          format: int64
-          minimum: 1
-        answer_option_id:
-          type: integer
-          format: int64
-          minimum: 1
-        time_spent_ms:
-          type: integer
-          minimum: 0
-        answered_at:
-          type: string
-          format: date-time
-    ProfStartSession:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_id
-      - test_type_id
-      - test_code_type
-      - test_version
-      - user_id
-      - age_group_id
-      - status
-      - question_count
-      - answered_count
-      - next_question_id
-      - started_at
-      - completed_at
-      - result_id
-      - answers
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_version:
-          type: integer
-          minimum: 1
-        user_id:
-          type: integer
-          format: int64
-          minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        status:
-          type: string
-          enum:
-          - in_progress
-          - completed
-          - abandoned
-        question_count:
-          type: integer
-          minimum: 1
-          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
-            2), holland — 15, dellinger — 1.'
-        answered_count:
-          type: integer
-          minimum: 0
-        next_question_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        started_at:
-          type: string
-          format: date-time
-        completed_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        result_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        answers:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartSavedAnswer'
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-      allOf:
-      - if:
-          properties:
-            test_code_type:
-              const: solomin
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 42
-            answered_count:
-              maximum: 42
-            answers:
-              maxItems: 42
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 42
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answers:
-                  minItems: 42
-          - if:
-              properties:
-                answered_count:
-                  const: 42
-              required:
-              - answered_count
-            then:
-              properties:
-                next_question_id:
-                  type: 'null'
-      - if:
-          properties:
-            test_code_type:
-              const: holland
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 15
-            answered_count:
-              maximum: 15
-            answers:
-              maxItems: 15
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 15
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answers:
-                  minItems: 15
-          - if:
-              properties:
-                answered_count:
-                  const: 15
-              required:
-              - answered_count
-            then:
-              properties:
-                next_question_id:
-                  type: 'null'
-      - if:
-          properties:
-            test_code_type:
-              const: dellinger
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 1
-            answered_count:
-              maximum: 1
-            answers:
-              maxItems: 1
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 1
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answers:
-                  minItems: 1
-          - if:
-              properties:
-                answered_count:
-                  const: 1
-              required:
-              - answered_count
-            then:
-              properties:
-                next_question_id:
-                  type: 'null'
-      - if:
-          properties:
-            status:
-              const: abandoned
-          required:
-          - status
-        then:
-          properties:
-            next_question_id:
-              type: 'null'
-      - if:
-          properties:
-            status:
-              const: completed
-          required:
-          - status
-        then:
-          properties:
-            completed_at:
-              type: string
-            result_id:
-              type: integer
-            next_question_id:
-              type: 'null'
-      - if:
-          properties:
-            status:
-              enum:
-              - in_progress
-              - abandoned
-          required:
-          - status
-        then:
-          properties:
-            completed_at:
-              type: 'null'
-            result_id:
-              type: 'null'
-      description: Связь количества ответов с массивом answers, порядок ответов, уникальность
-        question_id и соответствие next_question_id проверяются сервером. completed
-        всегда имеет полный набор, completed_at и result_id; прочие статусы не имеют
-        результата.
-    ProfStartAnswerReceipt:
-      type: object
-      additionalProperties: false
-      required:
-      - session_id
-      - answer
-      - answered_count
-      - question_count
-      - next_question_id
-      - ready_to_complete
-      properties:
-        session_id:
-          type: integer
-          format: int64
-          minimum: 1
-        answer:
-          $ref: '#/components/schemas/ProfStartSavedAnswer'
-        answered_count:
-          type: integer
-          minimum: 1
-        question_count:
-          type: integer
-          minimum: 1
-          enum:
-          - 1
-          - 15
-          - 42
-        next_question_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        ready_to_complete:
-          type: boolean
-          description: true только для in_progress после всех ответов. При повторе
-            ответа в completed/abandoned false.
-      allOf:
-      - if:
-          properties:
-            question_count:
-              const: 1
-          required:
-          - question_count
-        then:
-          properties:
-            answered_count:
-              maximum: 1
-          allOf:
-          - if:
-              properties:
-                ready_to_complete:
-                  const: true
-              required:
-              - ready_to_complete
-            then:
-              properties:
-                answered_count:
-                  const: 1
-                next_question_id:
-                  type: 'null'
-      - if:
-          properties:
-            question_count:
-              const: 15
-          required:
-          - question_count
-        then:
-          properties:
-            answered_count:
-              maximum: 15
-          allOf:
-          - if:
-              properties:
-                ready_to_complete:
-                  const: true
-              required:
-              - ready_to_complete
-            then:
-              properties:
-                answered_count:
-                  const: 15
-                next_question_id:
-                  type: 'null'
-      - if:
-          properties:
-            question_count:
-              const: 42
-          required:
-          - question_count
-        then:
-          properties:
-            answered_count:
-              maximum: 42
-          allOf:
-          - if:
-              properties:
-                ready_to_complete:
-                  const: true
-              required:
-              - ready_to_complete
-            then:
-              properties:
-                answered_count:
-                  const: 42
-                next_question_id:
-                  type: 'null'
-    ProfStartScore:
-      type: object
-      additionalProperties: false
-      required:
-      - group_id
-      - group_code
-      - group_name
-      - category
-      - axis
-      - raw_score
-      - max_score
-      - normalized_score
-      - rank
-      - is_leading
-      properties:
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        group_code:
-          type: string
-        group_name:
-          type: string
-        category:
-          type: string
-          enum:
-          - subject
-          - labor
-          - riasec
-          - geometry
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
-        raw_score:
-          type: number
-          minimum: 0
-        max_score:
-          type: number
-          exclusiveMinimum: 0
-          description: solomin — 9 на каждую группу/ось, holland — 15 на тип, dellinger
-            — 1 на фигуру.
-        normalized_score:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: ' Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
-            JSON number.'
-        rank:
-          type: integer
-          minimum: 1
-        is_leading:
-          type: boolean
-    ProfStartReason:
-      type: object
-      additionalProperties: false
-      required:
-      - group_id
-      - group_code
-      - group_name
-      - axis
-      - normalized_score
-      - coefficient
-      - contribution
-      properties:
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        group_code:
-          type: string
-        group_name:
-          type: string
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
-        normalized_score:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: ' Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
-            JSON number.'
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-        contribution:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: round_half_up(normalized_score * coefficient, 2). Для Соломина
-            вклад до усреднения двух категорий; reasons содержит одну максимальную
-            subject- и одну labor-группу want. Для Голланда/Деллингер одну группу
-            общего максимального вклада. При равенстве вкладов выбирается наименьший
-            group_id. Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
-            JSON number.
-    ProfStartRecommendation:
-      type: object
-      additionalProperties: false
-      required:
-      - profession_id
-      - profession_name
-      - score
-      - position
-      - reasons
-      properties:
-        profession_id:
-          type: integer
-          format: int64
-          minimum: 1
-        profession_name:
-          type: string
-        score:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: ' Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
-            JSON number.'
-        position:
-          type: integer
-          minimum: 1
-        reasons:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartReason'
-          minItems: 1
-    ProfStartResult:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - session_id
-      - test_id
-      - test_type_id
-      - user_id
-      - test_code_type
-      - test_version
-      - age_group_id
-      - answered_count
-      - question_count
-      - created_at
-      - scores
-      - professions
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        session_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        user_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_version:
-          type: integer
-          minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        answered_count:
-          type: integer
-          minimum: 1
-        question_count:
-          type: integer
-          minimum: 1
-          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
-            2), holland — 15, dellinger — 1.'
-        created_at:
-          type: string
-          format: date-time
-        scores:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartScore'
-        professions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartRecommendation'
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-      allOf:
-      - if:
-          properties:
-            test_code_type:
-              const: solomin
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 42
-            answered_count:
-              const: 42
-            scores:
-              minItems: 14
-              maxItems: 14
-              items:
-                properties:
-                  group_code:
-                    enum:
-                    - human_human
-                    - human_technology
-                    - human_sign
-                    - human_art
-                    - human_nature
-                    - executive
-                    - creative
-                  axis:
-                    enum:
-                    - want
-                    - can
-                  category:
-                    enum:
-                    - subject
-                    - labor
-                  raw_score:
-                    maximum: 9
-                    multipleOf: 1
-                  max_score:
-                    const: 9
-            professions:
-              items:
-                properties:
-                  reasons:
-                    minItems: 2
-                    maxItems: 2
-                    items:
-                      properties:
-                        axis:
-                          const: want
-      - if:
-          properties:
-            test_code_type:
-              const: holland
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 15
-            answered_count:
-              const: 15
-            scores:
-              minItems: 6
-              maxItems: 6
-              items:
-                properties:
-                  group_code:
-                    enum:
-                    - R
-                    - I
-                    - S
-                    - E
-                    - C
-                    - A
-                  axis:
-                    enum:
-                    - general
-                  category:
-                    enum:
-                    - riasec
-                  raw_score:
-                    maximum: 15
-                    multipleOf: 1
-                  max_score:
-                    const: 15
-            professions:
-              items:
-                properties:
-                  reasons:
-                    minItems: 1
-                    maxItems: 1
-                    items:
-                      properties:
-                        axis:
-                          const: general
-      - if:
-          properties:
-            test_code_type:
-              const: dellinger
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 1
-            answered_count:
-              const: 1
-            scores:
-              minItems: 5
-              maxItems: 5
-              items:
-                properties:
-                  group_code:
-                    enum:
-                    - square
-                    - triangle
-                    - circle
-                    - zigzag
-                    - rectangle
-                  axis:
-                    enum:
-                    - general
-                  category:
-                    enum:
-                    - geometry
-                  raw_score:
-                    maximum: 1
-                    multipleOf: 1
-                  max_score:
-                    const: 1
-            professions:
-              items:
-                properties:
-                  reasons:
-                    minItems: 1
-                    maxItems: 1
-                    items:
-                      properties:
-                        axis:
-                          const: general
-      description: 'Один итог завершённой сессии. Сервер проверяет полный набор уникальных
-        (group_id, axis): solomin 14, holland 6, dellinger 5; соответствие group_code,
-        category и test_id; уникальность profession_id и порядок рекомендаций.'
-    ProfStartAnalyticsSession:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_id
-      - test_type_id
-      - test_code_type
-      - test_version
-      - user_id
-      - age_group_id
-      - status
-      - question_count
-      - answered_count
-      - started_at
-      - completed_at
-      - result_id
-      - duration_ms
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_version:
-          type: integer
-          minimum: 1
-        user_id:
-          type: integer
-          format: int64
-          minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        status:
-          type: string
-          enum:
-          - in_progress
-          - completed
-          - abandoned
-        question_count:
-          type: integer
-          minimum: 1
-          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
-            2), holland — 15, dellinger — 1.'
-        answered_count:
-          type: integer
-          minimum: 0
-        started_at:
-          type: string
-          format: date-time
-        completed_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        result_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        duration_ms:
-          type:
-          - integer
-          - 'null'
-          minimum: 0
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-      allOf:
-      - if:
-          properties:
-            test_code_type:
-              const: solomin
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 42
-            answered_count:
-              maximum: 42
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 42
-      - if:
-          properties:
-            test_code_type:
-              const: holland
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 15
-            answered_count:
-              maximum: 15
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 15
-      - if:
-          properties:
-            test_code_type:
-              const: dellinger
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 1
-            answered_count:
-              maximum: 1
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 1
-      - if:
-          properties:
-            status:
-              const: completed
-          required:
-          - status
-        then:
-          properties:
-            completed_at:
-              type: string
-            result_id:
-              type: integer
-            duration_ms:
-              type: integer
-      - if:
-          properties:
-            status:
-              enum:
-              - in_progress
-              - abandoned
-          required:
-          - status
-        then:
-          properties:
-            completed_at:
-              type: 'null'
-            result_id:
-              type: 'null'
-            duration_ms:
-              type: 'null'
-      description: Связь количества ответов с массивом answers, порядок ответов, уникальность
-        question_id и соответствие next_question_id проверяются сервером. completed
-        всегда имеет полный набор, completed_at и result_id; прочие статусы не имеют
-        результата.
-    ProfStartTestPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartTest'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartGroupPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartGroup'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartQuestionPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartQuestion'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartOptionPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartOption'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartGroupProfessionPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartGroupProfession'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartResultPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartResult'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartAnalyticsSessionPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartAnalyticsSession'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartSummary:
-      type: object
-      additionalProperties: false
-      required:
-      - test_type_id
-      - test_id
-      - date_from
-      - date_to
-      - started_count
-      - in_progress_count
-      - completed_count
-      - abandoned_count
-      - unique_user_count
-      - completion_rate
-      - mean_completed_duration_ms
-      - result_count
-      - groups
-      - professions
-      properties:
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        date_from:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        date_to:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        started_count:
-          type: integer
-          minimum: 0
-        in_progress_count:
-          type: integer
-          minimum: 0
-        completed_count:
-          type: integer
-          minimum: 0
-        abandoned_count:
-          type: integer
-          minimum: 0
-        unique_user_count:
-          type: integer
-          minimum: 0
-        completion_rate:
-          type:
-          - number
-          - 'null'
-          minimum: 0
-          maximum: 100
-        mean_completed_duration_ms:
-          type:
-          - number
-          - 'null'
-          minimum: 0
-        result_count:
-          type: integer
-          minimum: 0
-        groups:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - group_id
-            - group_code
-            - group_name
-            - category
-            - axis
-            - result_count
-            - mean_raw_score
-            - mean_normalized_score
-            - leading_count
-            - leading_percent
-            properties:
-              group_id:
-                type: integer
-                format: int64
-                minimum: 1
-              group_code:
-                type: string
-              group_name:
-                type: string
-              category:
-                type: string
-                enum:
-                - subject
-                - labor
-                - riasec
-                - geometry
-              axis:
-                type: string
-                enum:
-                - want
-                - can
-                - general
-              result_count:
-                type: integer
-                minimum: 0
-              mean_raw_score:
-                type:
-                - number
-                - 'null'
-                minimum: 0
-              mean_normalized_score:
-                type:
-                - number
-                - 'null'
-                minimum: 0
-                maximum: 100
-              leading_count:
-                type: integer
-                minimum: 0
-              leading_percent:
-                type:
-                - number
-                - 'null'
-                minimum: 0
-                maximum: 100
-        professions:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - profession_id
-            - profession_name
-            - recommended_count
-            - recommended_percent
-            - mean_score
-            properties:
-              profession_id:
-                type: integer
-                format: int64
-                minimum: 1
-              profession_name:
-                type: string
-                description: Текущее название из справочника Profession; историческое
-                  название конкретной рекомендации хранится в результате.
-              recommended_count:
-                type: integer
-                minimum: 1
-              recommended_percent:
-                type: number
-                minimum: 0
-                maximum: 100
-                description: recommended_count / result_count * 100; знаменатель —
-                  все результаты выбранной когорты.
-              mean_score:
-                type: number
-                minimum: 0
-                maximum: 100
-    ProfStartTestTypeCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - code
-      - name
-      properties:
-        code:
-          type: string
-          pattern: ^[a-z][a-z0-9_]*$
-          minLength: 1
-          maxLength: 64
-          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland,
-            dellinger; CMS может добавлять другие.'
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-          default: ''
-    ProfStartTestTypePatch:
-      type: object
-      additionalProperties: false
-      minProperties: 1
-      properties:
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: string
-  responses:
-    ProfStartError401:
-      description: Требуется действительный пользовательский/административный контекст
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError403:
-      description: Нет требуемого права
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError404:
-      description: Ресурс не найден или недоступен владельцу
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError409:
-      description: Конфликт состояния, дубликат или несовместимое изменение
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError422:
-      description: Некорректные параметры, ссылки или неполная версия
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
 security:
 - bearerAuth: []
