@@ -1,56 +1,1999 @@
-sessions:
+# Целевой контракт ПрофСтарт; backend не реализован.
+cms-types:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Каталог трёх типов
+    operationId: profstart_cms_types_get
+    description: Проектируемый контракт; backend ещё не реализован. Системные коды неизменяемы; дополнительные типы
+      не создаются.
+    x-implementation-status: planned
+    parameters: []
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfStartTestType'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-tests:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Версии тестов
+    operationId: profstart_cms_tests_get
+    description: Проектируемый контракт; backend ещё не реализован. Порядок created_at DESC, id DESC. is_draft фильтрует
+      по published_at, отдельного status нет.
+    x-implementation-status: planned
+    parameters:
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    - name: test_type_id
+      in: query
+      required: false
+      description: Фильтр типа
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: is_draft
+      in: query
+      required: false
+      description: 'true: published_at=null, false: дата публикации заполнена'
+      schema:
+        type: boolean
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
   post:
-    tags: [profstart]
-    summary: Начать тестирование
-    description: Создать новую сессию тестирования ПрофСтарт
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
+    tags:
+    - ПрофСтарт - CMS
+    summary: Создать черновик версии
+    operationId: profstart_cms_tests_post
+    description: Проектируемый контракт; backend ещё не реализован. Сервер назначает номер версии; published_at=null.
+      Черновик существует только у теста.
+    x-implementation-status: planned
+    parameters: []
     responses:
       '201':
-        description: Сессия создана
-
-answer:
-  post:
-    tags: [profstart]
-    summary: Ответ на вопрос теста
-    description: Отправить ответ на вопрос теста ПрофСтарт
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartTestCreate'
+cms-test:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Карточка версии
+    operationId: profstart_cms_test_get
+    description: Проектируемый контракт; backend ещё не реализован. Карточка теста; состояние черновика определяется
+      published_at.
+    x-implementation-status: planned
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Идентификатор сессии
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  patch:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Изменить черновик
+    operationId: profstart_cms_test_patch
+    description: Проектируемый контракт; backend ещё не реализован. Тип и номер версии неизменяемы; опубликованная
+      версия возвращает 409.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartTestPatch'
+  delete:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Удалить черновик
+    operationId: profstart_cms_test_delete
+    description: Проектируемый контракт; backend ещё не реализован. Только неопубликованный тест без сессий. Его
+      вопросы, варианты, группы и связи удаляются вместе с тестом.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '204':
+        description: Удалено
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-copy:
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Копировать в новую версию
+    operationId: profstart_cms_copy_post
+    description: Проектируемый контракт; backend ещё не реализован. Новый тест-черновик с published_at=null и собственными
+      ID вложенных записей; группам и вопросам отдельные черновики не создаются.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-validate:
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Проверить готовность публикации
+    operationId: profstart_cms_validate_post
+    description: Проектируемый контракт; backend ещё не реализован. Проверка не меняет статус. Ошибки банка возвращаются
+      с valid=false и errors в ответе 200.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartValidation'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-publish:
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Опубликовать версию
+    operationId: profstart_cms_publish_post
+    description: Проектируемый контракт; backend ещё не реализован. Проверяет целиком тест и атомарно устанавливает
+      published_at. Ошибки банка — 422. Повтор опубликованного возвращает ту же запись. Для новых стартов выбирается
+      опубликованная версия с наибольшим version внутри типа; прежние остаются в истории.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-groups:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Группы версии
+    operationId: profstart_cms_groups_get
+    description: Проектируемый контракт; backend ещё не реализован. Обычные группы теста без собственных статусов,
+      сортировка order ASC, id ASC.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Создать группу
+    operationId: profstart_cms_groups_post
+    description: Проектируемый контракт; backend ещё не реализован. Создать группу в составе неопубликованного теста,
+      без отдельного черновика группы. Точный набор 7/6/5 проверяется при публикации теста.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroup'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartGroupCreate'
+cms-group:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Группа результата
+    operationId: profstart_cms_group_get
+    description: Проектируемый контракт; backend ещё не реализован. Группа теста без статуса и без отдельной публикации.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroup'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  patch:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Изменить группу
+    operationId: profstart_cms_group_patch
+    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание неопубликованного теста.
+      Код и категория проверяются по методике.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroup'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartGroupPatch'
+  delete:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Удалить несвязанную группу
+    operationId: profstart_cms_group_delete
+    description: Проектируемый контракт; backend ещё не реализован. Удалить группу неопубликованного теста. Существующие
+      варианты с group_id или связи профессий блокируют удаление 409.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '204':
+        description: Удалено
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-professions:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Профессии группы
+    operationId: profstart_cms_professions_get
+    description: Проектируемый контракт; backend ещё не реализован. Профессии группы, порядок profession_id ASC.
+      Существующие Profession не изменяются.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupProfessionPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Привязать профессию
+    operationId: profstart_cms_professions_post
+    description: Проектируемый контракт; backend ещё не реализован. Связь группы неопубликованного теста с существующей
+      профессией; дубликат — 409.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupProfession'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartGroupProfessionCreate'
+cms-profession:
+  patch:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Изменить коэффициент связи
+    operationId: profstart_cms_profession_patch
+    description: Проектируемый контракт; backend ещё не реализован. Изменить coefficient связи в неопубликованном
+      тесте.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: profession_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupProfession'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartGroupProfessionPatch'
+  delete:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Отвязать профессию
+    operationId: profstart_cms_profession_delete
+    description: Проектируемый контракт; backend ещё не реализован. Удалить связь неопубликованного теста, не Profession.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: profession_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '204':
+        description: Удалено
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-questions:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Вопросы с вариантами и их весами
+    operationId: profstart_cms_questions_get
+    description: Проектируемый контракт; backend ещё не реализован. Вопросы теста с вариантами, group_id и weight.
+      Отдельных черновиков вопросов нет. Сортировка order ASC, id ASC.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartQuestionPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Создать вопрос
+    operationId: profstart_cms_questions_post
+    description: Проектируемый контракт; backend ещё не реализован. Создать вопрос в неопубликованном тесте. type
+      только single_choice; axis проверяется по методике.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartQuestion'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartQuestionCreate'
+cms-question:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Вопрос с ключом
+    operationId: profstart_cms_question_get
+    description: Проектируемый контракт; backend ещё не реализован. Вопрос и варианты с непосредственно сохранёнными
+      весами.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartQuestion'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  patch:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Изменить вопрос
+    operationId: profstart_cms_question_patch
+    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание неопубликованного теста,
+      без отдельного статуса вопроса. При смене оси проверяется ключ.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartQuestion'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartQuestionPatch'
+  delete:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Удалить вопрос с вариантами
+    operationId: profstart_cms_question_delete
+    description: Проектируемый контракт; backend ещё не реализован. Удалить вопрос неопубликованного теста вместе
+      с вариантами. Отдельной таблицы весов нет.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '204':
+        description: Удалено
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-order:
+  put:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Задать порядок всех вопросов
+    operationId: profstart_cms_order_put
+    description: Проектируемый контракт; backend ещё не реализован. Полный список question_ids неопубликованного
+      теста без повторов, order назначается 1..N атомарно. Неполный или чужой список — 422.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfStartQuestion'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
     requestBody:
       required: true
       content:
         application/json:
           schema:
             type: object
+            additionalProperties: false
+            required:
+            - question_ids
+            properties:
+              question_ids:
+                type: array
+                items:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                uniqueItems: true
+cms-options:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Варианты вопроса с весами
+    operationId: profstart_cms_options_get
+    description: Проектируемый контракт; backend ещё не реализован. Варианты вопроса, каждый содержит group_id и
+      weight. Сортировка order ASC, id ASC.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
     responses:
       '200':
-        description: Ответ принят
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartOptionPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
       '404':
-        description: Сессия не найдена
-
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Создать вариант с группой и весом
+    operationId: profstart_cms_options_post
+    description: Проектируемый контракт; backend ещё не реализован. Создать вариант с непосредственными group_id
+      и weight. Группа той же версии; ось берётся из вопроса. Неполный банк допускается до публикации теста.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartOption'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartOptionCreate'
+cms-option:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Вариант и ключ
+    operationId: profstart_cms_option_get
+    description: Проектируемый контракт; backend ещё не реализован. Вариант с group_id и weight.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: option_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartOption'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  patch:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Изменить вариант, группу и вес
+    operationId: profstart_cms_option_patch
+    description: Проектируемый контракт; backend ещё не реализован. Изменить подпись, параметры, группу и вес через
+      один PATCH варианта. Группа той же версии; отдельного /weights нет.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: option_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartOption'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartOptionPatch'
+  delete:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Удалить вариант и его вес
+    operationId: profstart_cms_option_delete
+    description: Проектируемый контракт; backend ещё не реализован. Удалить вариант неопубликованного теста. Вес
+      является его полем.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: question_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: option_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '204':
+        description: Удалено
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+tests:
+  get:
+    tags:
+    - profstart
+    summary: Доступные опубликованные тесты
+    operationId: profstart_tests_get
+    description: Проектируемый контракт; backend ещё не реализован. Для каждого типа только последняя по version
+      опубликованная версия, без ключа; пустой список допустим.
+    x-implementation-status: planned
+    parameters:
+    - name: age_group_id
+      in: query
+      required: false
+      description: Возрастная доступность
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: test_type_id
+      in: query
+      required: false
+      description: Тип теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfStartPublicTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+test:
+  get:
+    tags:
+    - profstart
+    summary: Инструкция опубликованного теста
+    operationId: profstart_test_get
+    description: Проектируемый контракт; backend ещё не реализован. Инструкция последней опубликованной версии типа.
+      Старые версии для новых стартов недоступны, вопросы начатой сессии доступны через её /questions.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartPublicTest'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+sessions:
+  post:
+    tags:
+    - profstart
+    summary: Начать отдельное прохождение
+    operationId: profstart_sessions_post
+    description: Проектируемый контракт; backend ещё не реализован. user_id определяется контекстом, включая гостя.
+      Старт только последней опубликованной версии типа. При непустом age_group_ids обязателен подходящий age_group_id.
+      Каждый успешный старт создаёт новую сессию.
+    x-implementation-status: planned
+    parameters: []
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartSession'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartSessionCreate'
+session:
+  get:
+    tags:
+    - profstart
+    summary: Состояние своего прохождения
+    operationId: profstart_session_get
+    description: Проектируемый контракт; backend ещё не реализован. Прогресс, принятые ответы и первый неотвеченный
+      вопрос; для восстановления после обрыва.
+    x-implementation-status: planned
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartSession'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+questions:
+  get:
+    tags:
+    - profstart
+    summary: Фиксированные вопросы сессии без ключа
+    operationId: profstart_questions_get
+    description: Проектируемый контракт; backend ещё не реализован. Фиксированный набор версии сессии; владелец
+      проверяется. В пользовательских вариантах нет group_id и weight.
+    x-implementation-status: planned
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfStartPublicQuestion'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+answer:
+  post:
+    tags:
+    - profstart
+    summary: Сохранить один ответ
+    operationId: profstart_answer_post
+    description: Проектируемый контракт; backend ещё не реализован. Только следующий неотвеченный вопрос. Повтор
+      ранее принятого того же варианта возвращает сохранённый ответ и текущий прогресс без начисления, даже после
+      закрытия сессии. Изменение принятого варианта, новая запись в закрытую сессию или нарушение порядка — 409;
+      чужой вариант — 422.
+    x-implementation-status: planned
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartAnswerReceipt'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartAnswerWrite'
+          example:
+            question_id: 101
+            answer_option_id: 404
+            time_spent_ms: 5200
+complete:
+  post:
+    tags:
+    - profstart
+    summary: Завершить и рассчитать результат
+    operationId: profstart_complete_post
+    description: Проектируемый контракт; backend ещё не реализован. Проверяет все вопросы. Неполная/abandoned-сессия
+      — 409. Атомарно создаёт результат и рекомендации. Повтор completed возвращает тот же результат.
+    x-implementation-status: planned
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartResult'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+abandon:
+  post:
+    tags:
+    - profstart
+    summary: Прервать без результата
+    operationId: profstart_abandon_post
+    description: Проектируемый контракт; backend ещё не реализован. in_progress → abandoned; повтор abandoned возвращает
+      прежнюю запись; completed — 409.
+    x-implementation-status: planned
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartSession'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
 result:
   get:
-    tags: [profstart]
-    summary: Результат тестирования
-    description: Получить результат пройденного тестирования ПрофСтарт
+    tags:
+    - profstart
+    summary: Сохранённый результат своей сессии
+    operationId: profstart_result_get
+    description: Проектируемый контракт; backend ещё не реализован. До завершения или после abandoned — 409. Изменение
+      CMS не пересчитывает результат.
+    x-implementation-status: planned
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Идентификатор сессии
+    - name: id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
     responses:
       '200':
-        description: Результат тестирования
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartResult'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
       '404':
-        description: Сессия не найдена
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+me-results:
+  get:
+    tags:
+    - profstart
+    summary: История своих результатов
+    operationId: profstart_me_results_get
+    description: Проектируемый контракт; backend ещё не реализован. Владелец определяется контекстом; user_id не
+      принимается. Порядок created_at DESC, id DESC; период по времени результата.
+    x-implementation-status: planned
+    parameters:
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    - name: test_type_id
+      in: query
+      required: false
+      description: Тип теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: test_id
+      in: query
+      required: false
+      description: Версия теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: date_from
+      in: query
+      required: false
+      description: Начало периода включительно
+      schema:
+        type: string
+        format: date-time
+    - name: date_to
+      in: query
+      required: false
+      description: Конец периода исключительно
+      schema:
+        type: string
+        format: date-time
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartResultPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+analytics-sessions:
+  get:
+    tags:
+    - ПрофСтарт - Аналитика
+    summary: Прохождения для аналитики
+    operationId: profstart_analytics_sessions_get
+    description: Проектируемый контракт; backend ещё не реализован. Право аналитики; без исходных ответов и контактов.
+      Период по started_at. Фильтры источника и интерфейса отсутствуют; порядок started_at DESC, id DESC.
+    x-implementation-status: planned
+    parameters:
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    - name: test_type_id
+      in: query
+      required: false
+      description: Тип теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: test_id
+      in: query
+      required: false
+      description: Версия теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: user_id
+      in: query
+      required: false
+      description: ID владельца результата
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: age_group_id
+      in: query
+      required: false
+      description: Возрастная группа
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: date_from
+      in: query
+      required: false
+      description: Начало периода включительно
+      schema:
+        type: string
+        format: date-time
+    - name: date_to
+      in: query
+      required: false
+      description: Конец периода исключительно
+      schema:
+        type: string
+        format: date-time
+    - name: status
+      in: query
+      required: false
+      description: Статус
+      schema:
+        type: string
+        enum:
+        - in_progress
+        - completed
+        - abandoned
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartAnalyticsSessionPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+analytics-results:
+  get:
+    tags:
+    - ПрофСтарт - Аналитика
+    summary: Результаты пользователей для аналитики
+    operationId: profstart_analytics_results_get
+    description: Проектируемый контракт; backend ещё не реализован. Право аналитики; только финальные результаты.
+      Период по created_at, порядок created_at DESC, id DESC. Нет фильтров источника/интерфейса и флагов качества.
+    x-implementation-status: planned
+    parameters:
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    - name: test_type_id
+      in: query
+      required: false
+      description: Тип теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: test_id
+      in: query
+      required: false
+      description: Версия теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: user_id
+      in: query
+      required: false
+      description: ID владельца результата
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: age_group_id
+      in: query
+      required: false
+      description: Возрастная группа
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: date_from
+      in: query
+      required: false
+      description: Начало периода включительно
+      schema:
+        type: string
+        format: date-time
+    - name: date_to
+      in: query
+      required: false
+      description: Конец периода исключительно
+      schema:
+        type: string
+        format: date-time
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartResultPage'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+analytics-result:
+  get:
+    tags:
+    - ПрофСтарт - Аналитика
+    summary: Детальный результат пользователя
+    operationId: profstart_analytics_result_get
+    description: Проектируемый контракт; backend ещё не реализован. Право аналитики; показатели и сохранённые профессии.
+    x-implementation-status: planned
+    parameters:
+    - name: result_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartResult'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+analytics-summary:
+  get:
+    tags:
+    - ПрофСтарт - Аналитика
+    summary: Агрегаты одного типа и версии
+    operationId: profstart_analytics_summary_get
+    description: Проектируемый контракт; backend ещё не реализован. Обязательны соответствующие test_type_id и test_id.
+      Период по started_at когорты; результаты completed этой когорты. Нулевой знаменатель даёт null. Средние групп
+      включают нули, все равные ведущие учитываются. Средний score профессии только по содержащим её результатам.
+      groups содержит все шкалы, professions=[] при отсутствии результатов.
+    x-implementation-status: planned
+    parameters:
+    - name: test_type_id
+      in: query
+      required: true
+      description: Тип теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: test_id
+      in: query
+      required: true
+      description: Версия теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: age_group_id
+      in: query
+      required: false
+      description: Возрастная группа
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    - name: date_from
+      in: query
+      required: false
+      description: Начало периода включительно
+      schema:
+        type: string
+        format: date-time
+    - name: date_to
+      in: query
+      required: false
+      description: Конец периода исключительно
+      schema:
+        type: string
+        format: date-time
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartSummary'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'

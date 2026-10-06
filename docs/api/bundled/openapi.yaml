@@ -57,12 +57,22 @@ tags:
   description: Мобильный клиент — подключение и голосование
 - name: profstart
   description: ПрофСтарт — тестирование
+- name: ПрофСтарт - CMS
+  description: Проектируемое управление версиями, вопросами, весами и связями профессий
+- name: ПрофСтарт - Аналитика
+  description: Проектируемые результаты и агрегаты ПрофСтарт
 - name: analytics
   description: Аналитика и события
 - name: cms
   description: CMS — управление контентом
 - name: feedback
   description: Обратная связь и анкеты
+- name: Обратная связь - CMS
+  description: Управление анкетами и вопросами обратной связи
+- name: Обратная связь - LED
+  description: Получение анкет для LED-плееров
+- name: Обратная связь - Пользователь
+  description: Прохождение анкет обратной связи
 - name: files
   description: Загрузка и управление файлами
 paths:
@@ -3784,63 +3794,2028 @@ paths:
                     message: Выбранная ветка не является допустимым вариантом
         '404':
           description: Сессия или точка голосования не найдена
+  /cms/profstart/test-types:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Каталог трёх типов
+      operationId: profstart_cms_types_get
+      description: Проектируемый контракт; backend ещё не реализован. Системные коды
+        неизменяемы; дополнительные типы не создаются.
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfStartTestType'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Версии тестов
+      operationId: profstart_cms_tests_get
+      description: Проектируемый контракт; backend ещё не реализован. Порядок created_at
+        DESC, id DESC. is_draft фильтрует по published_at, отдельного status нет.
+      x-implementation-status: planned
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: test_type_id
+        in: query
+        required: false
+        description: Фильтр типа
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: is_draft
+        in: query
+        required: false
+        description: 'true: published_at=null, false: дата публикации заполнена'
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTestPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Создать черновик версии
+      operationId: profstart_cms_tests_post
+      description: Проектируемый контракт; backend ещё не реализован. Сервер назначает
+        номер версии; published_at=null. Черновик существует только у теста.
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestCreate'
+  /cms/profstart/tests/{test_id}:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Карточка версии
+      operationId: profstart_cms_test_get
+      description: Проектируемый контракт; backend ещё не реализован. Карточка теста;
+        состояние черновика определяется published_at.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    patch:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Изменить черновик
+      operationId: profstart_cms_test_patch
+      description: Проектируемый контракт; backend ещё не реализован. Тип и номер
+        версии неизменяемы; опубликованная версия возвращает 409.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestPatch'
+    delete:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Удалить черновик
+      operationId: profstart_cms_test_delete
+      description: Проектируемый контракт; backend ещё не реализован. Только неопубликованный
+        тест без сессий. Его вопросы, варианты, группы и связи удаляются вместе с
+        тестом.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/copy:
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Копировать в новую версию
+      operationId: profstart_cms_copy_post
+      description: Проектируемый контракт; backend ещё не реализован. Новый тест-черновик
+        с published_at=null и собственными ID вложенных записей; группам и вопросам
+        отдельные черновики не создаются.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/validate:
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Проверить готовность публикации
+      operationId: profstart_cms_validate_post
+      description: Проектируемый контракт; backend ещё не реализован. Проверка не
+        меняет статус. Ошибки банка возвращаются с valid=false и errors в ответе 200.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartValidation'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/publish:
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Опубликовать версию
+      operationId: profstart_cms_publish_post
+      description: Проектируемый контракт; backend ещё не реализован. Проверяет целиком
+        тест и атомарно устанавливает published_at. Ошибки банка — 422. Повтор опубликованного
+        возвращает ту же запись. Для новых стартов выбирается опубликованная версия
+        с наибольшим version внутри типа; прежние остаются в истории.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/groups:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Группы версии
+      operationId: profstart_cms_groups_get
+      description: Проектируемый контракт; backend ещё не реализован. Обычные группы
+        теста без собственных статусов, сортировка order ASC, id ASC.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroupPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Создать группу
+      operationId: profstart_cms_groups_post
+      description: Проектируемый контракт; backend ещё не реализован. Создать группу
+        в составе неопубликованного теста, без отдельного черновика группы. Точный
+        набор 7/6/5 проверяется при публикации теста.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroup'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupCreate'
+  /cms/profstart/tests/{test_id}/groups/{group_id}:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Группа результата
+      operationId: profstart_cms_group_get
+      description: Проектируемый контракт; backend ещё не реализован. Группа теста
+        без статуса и без отдельной публикации.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroup'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    patch:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Изменить группу
+      operationId: profstart_cms_group_patch
+      description: Проектируемый контракт; backend ещё не реализован. Изменить содержание
+        неопубликованного теста. Код и категория проверяются по методике.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroup'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupPatch'
+    delete:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Удалить несвязанную группу
+      operationId: profstart_cms_group_delete
+      description: Проектируемый контракт; backend ещё не реализован. Удалить группу
+        неопубликованного теста. Существующие варианты с group_id или связи профессий
+        блокируют удаление 409.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/groups/{group_id}/professions:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Профессии группы
+      operationId: profstart_cms_professions_get
+      description: Проектируемый контракт; backend ещё не реализован. Профессии группы,
+        порядок profession_id ASC. Существующие Profession не изменяются.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroupProfessionPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Привязать профессию
+      operationId: profstart_cms_professions_post
+      description: Проектируемый контракт; backend ещё не реализован. Связь группы
+        неопубликованного теста с существующей профессией; дубликат — 409.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroupProfession'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupProfessionCreate'
+  /cms/profstart/tests/{test_id}/groups/{group_id}/professions/{profession_id}:
+    patch:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Изменить коэффициент связи
+      operationId: profstart_cms_profession_patch
+      description: Проектируемый контракт; backend ещё не реализован. Изменить coefficient
+        связи в неопубликованном тесте.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: profession_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroupProfession'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupProfessionPatch'
+    delete:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Отвязать профессию
+      operationId: profstart_cms_profession_delete
+      description: Проектируемый контракт; backend ещё не реализован. Удалить связь
+        неопубликованного теста, не Profession.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: profession_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/questions:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Вопросы с вариантами и их весами
+      operationId: profstart_cms_questions_get
+      description: Проектируемый контракт; backend ещё не реализован. Вопросы теста
+        с вариантами, group_id и weight. Отдельных черновиков вопросов нет. Сортировка
+        order ASC, id ASC.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartQuestionPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Создать вопрос
+      operationId: profstart_cms_questions_post
+      description: Проектируемый контракт; backend ещё не реализован. Создать вопрос
+        в неопубликованном тесте. type только single_choice; axis проверяется по методике.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartQuestion'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartQuestionCreate'
+  /cms/profstart/tests/{test_id}/questions/{question_id}:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Вопрос с ключом
+      operationId: profstart_cms_question_get
+      description: Проектируемый контракт; backend ещё не реализован. Вопрос и варианты
+        с непосредственно сохранёнными весами.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartQuestion'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    patch:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Изменить вопрос
+      operationId: profstart_cms_question_patch
+      description: Проектируемый контракт; backend ещё не реализован. Изменить содержание
+        неопубликованного теста, без отдельного статуса вопроса. При смене оси проверяется
+        ключ.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartQuestion'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartQuestionPatch'
+    delete:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Удалить вопрос с вариантами
+      operationId: profstart_cms_question_delete
+      description: Проектируемый контракт; backend ещё не реализован. Удалить вопрос
+        неопубликованного теста вместе с вариантами. Отдельной таблицы весов нет.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/questions/order:
+    put:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Задать порядок всех вопросов
+      operationId: profstart_cms_order_put
+      description: Проектируемый контракт; backend ещё не реализован. Полный список
+        question_ids неопубликованного теста без повторов, order назначается 1..N
+        атомарно. Неполный или чужой список — 422.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfStartQuestion'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - question_ids
+              properties:
+                question_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+                    minimum: 1
+                  uniqueItems: true
+  /cms/profstart/tests/{test_id}/questions/{question_id}/options:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Варианты вопроса с весами
+      operationId: profstart_cms_options_get
+      description: Проектируемый контракт; backend ещё не реализован. Варианты вопроса,
+        каждый содержит group_id и weight. Сортировка order ASC, id ASC.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartOptionPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Создать вариант с группой и весом
+      operationId: profstart_cms_options_post
+      description: Проектируемый контракт; backend ещё не реализован. Создать вариант
+        с непосредственными group_id и weight. Группа той же версии; ось берётся из
+        вопроса. Неполный банк допускается до публикации теста.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartOption'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartOptionCreate'
+  /cms/profstart/tests/{test_id}/questions/{question_id}/options/{option_id}:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Вариант и ключ
+      operationId: profstart_cms_option_get
+      description: Проектируемый контракт; backend ещё не реализован. Вариант с group_id
+        и weight.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: option_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartOption'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    patch:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Изменить вариант, группу и вес
+      operationId: profstart_cms_option_patch
+      description: Проектируемый контракт; backend ещё не реализован. Изменить подпись,
+        параметры, группу и вес через один PATCH варианта. Группа той же версии; отдельного
+        /weights нет.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: option_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartOption'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartOptionPatch'
+    delete:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Удалить вариант и его вес
+      operationId: profstart_cms_option_delete
+      description: Проектируемый контракт; backend ещё не реализован. Удалить вариант
+        неопубликованного теста. Вес является его полем.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: question_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: option_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /profstart/tests:
+    get:
+      tags:
+      - profstart
+      summary: Доступные опубликованные тесты
+      operationId: profstart_tests_get
+      description: Проектируемый контракт; backend ещё не реализован. Для каждого
+        типа только последняя по version опубликованная версия, без ключа; пустой
+        список допустим.
+      x-implementation-status: planned
+      parameters:
+      - name: age_group_id
+        in: query
+        required: false
+        description: Возрастная доступность
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: test_type_id
+        in: query
+        required: false
+        description: Тип теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfStartPublicTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /profstart/tests/{test_id}:
+    get:
+      tags:
+      - profstart
+      summary: Инструкция опубликованного теста
+      operationId: profstart_test_get
+      description: Проектируемый контракт; backend ещё не реализован. Инструкция последней
+        опубликованной версии типа. Старые версии для новых стартов недоступны, вопросы
+        начатой сессии доступны через её /questions.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartPublicTest'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
   /profstart/sessions:
     post:
       tags:
       - profstart
-      summary: Начать тестирование
-      description: Создать новую сессию тестирования ПрофСтарт
+      summary: Начать отдельное прохождение
+      operationId: profstart_sessions_post
+      description: Проектируемый контракт; backend ещё не реализован. user_id определяется
+        контекстом, включая гостя. Старт только последней опубликованной версии типа.
+        При непустом age_group_ids обязателен подходящий age_group_id. Каждый успешный
+        старт создаёт новую сессию.
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartSession'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/ProfStartSessionCreate'
+  /profstart/sessions/{id}:
+    get:
+      tags:
+      - profstart
+      summary: Состояние своего прохождения
+      operationId: profstart_session_get
+      description: Проектируемый контракт; backend ещё не реализован. Прогресс, принятые
+        ответы и первый неотвеченный вопрос; для восстановления после обрыва.
+      x-implementation-status: planned
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
       responses:
-        '201':
-          description: Сессия создана
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartSession'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /profstart/sessions/{id}/questions:
+    get:
+      tags:
+      - profstart
+      summary: Фиксированные вопросы сессии без ключа
+      operationId: profstart_questions_get
+      description: Проектируемый контракт; backend ещё не реализован. Фиксированный
+        набор версии сессии; владелец проверяется. В пользовательских вариантах нет
+        group_id и weight.
+      x-implementation-status: planned
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfStartPublicQuestion'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
   /profstart/sessions/{id}/answer:
     post:
       tags:
       - profstart
-      summary: Ответ на вопрос теста
-      description: Отправить ответ на вопрос теста ПрофСтарт
+      summary: Сохранить один ответ
+      operationId: profstart_answer_post
+      description: Проектируемый контракт; backend ещё не реализован. Только следующий
+        неотвеченный вопрос. Повтор ранее принятого того же варианта возвращает сохранённый
+        ответ и текущий прогресс без начисления, даже после закрытия сессии. Изменение
+        принятого варианта, новая запись в закрытую сессию или нарушение порядка —
+        409; чужой вариант — 422.
+      x-implementation-status: planned
       parameters:
       - name: id
         in: path
         required: true
+        description: Числовой идентификатор ресурса
         schema:
-          type: string
-        description: Идентификатор сессии
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartAnswerReceipt'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-      responses:
-        '200':
-          description: Ответ принят
-        '404':
-          description: Сессия не найдена
-  /profstart/sessions/{id}/result:
-    get:
+              $ref: '#/components/schemas/ProfStartAnswerWrite'
+            example:
+              question_id: 101
+              answer_option_id: 404
+              time_spent_ms: 5200
+  /profstart/sessions/{id}/complete:
+    post:
       tags:
       - profstart
-      summary: Результат тестирования
-      description: Получить результат пройденного тестирования ПрофСтарт
+      summary: Завершить и рассчитать результат
+      operationId: profstart_complete_post
+      description: Проектируемый контракт; backend ещё не реализован. Проверяет все
+        вопросы. Неполная/abandoned-сессия — 409. Атомарно создаёт результат и рекомендации.
+        Повтор completed возвращает тот же результат.
+      x-implementation-status: planned
       parameters:
       - name: id
         in: path
         required: true
+        description: Числовой идентификатор ресурса
         schema:
-          type: string
-        description: Идентификатор сессии
+          type: integer
+          format: int64
+          minimum: 1
       responses:
         '200':
-          description: Результат тестирования
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartResult'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
         '404':
-          description: Сессия не найдена
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /profstart/sessions/{id}/abandon:
+    post:
+      tags:
+      - profstart
+      summary: Прервать без результата
+      operationId: profstart_abandon_post
+      description: Проектируемый контракт; backend ещё не реализован. in_progress
+        → abandoned; повтор abandoned возвращает прежнюю запись; completed — 409.
+      x-implementation-status: planned
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartSession'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /profstart/sessions/{id}/result:
+    get:
+      tags:
+      - profstart
+      summary: Сохранённый результат своей сессии
+      operationId: profstart_result_get
+      description: Проектируемый контракт; backend ещё не реализован. До завершения
+        или после abandoned — 409. Изменение CMS не пересчитывает результат.
+      x-implementation-status: planned
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartResult'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /profstart/me/results:
+    get:
+      tags:
+      - profstart
+      summary: История своих результатов
+      operationId: profstart_me_results_get
+      description: Проектируемый контракт; backend ещё не реализован. Владелец определяется
+        контекстом; user_id не принимается. Порядок created_at DESC, id DESC; период
+        по времени результата.
+      x-implementation-status: planned
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: test_type_id
+        in: query
+        required: false
+        description: Тип теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: test_id
+        in: query
+        required: false
+        description: Версия теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: date_from
+        in: query
+        required: false
+        description: Начало периода включительно
+        schema:
+          type: string
+          format: date-time
+      - name: date_to
+        in: query
+        required: false
+        description: Конец периода исключительно
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartResultPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /analytics/profstart/sessions:
+    get:
+      tags:
+      - ПрофСтарт - Аналитика
+      summary: Прохождения для аналитики
+      operationId: profstart_analytics_sessions_get
+      description: Проектируемый контракт; backend ещё не реализован. Право аналитики;
+        без исходных ответов и контактов. Период по started_at. Фильтры источника
+        и интерфейса отсутствуют; порядок started_at DESC, id DESC.
+      x-implementation-status: planned
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: test_type_id
+        in: query
+        required: false
+        description: Тип теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: test_id
+        in: query
+        required: false
+        description: Версия теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: user_id
+        in: query
+        required: false
+        description: ID владельца результата
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: age_group_id
+        in: query
+        required: false
+        description: Возрастная группа
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: date_from
+        in: query
+        required: false
+        description: Начало периода включительно
+        schema:
+          type: string
+          format: date-time
+      - name: date_to
+        in: query
+        required: false
+        description: Конец периода исключительно
+        schema:
+          type: string
+          format: date-time
+      - name: status
+        in: query
+        required: false
+        description: Статус
+        schema:
+          type: string
+          enum:
+          - in_progress
+          - completed
+          - abandoned
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartAnalyticsSessionPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /analytics/profstart/results:
+    get:
+      tags:
+      - ПрофСтарт - Аналитика
+      summary: Результаты пользователей для аналитики
+      operationId: profstart_analytics_results_get
+      description: Проектируемый контракт; backend ещё не реализован. Право аналитики;
+        только финальные результаты. Период по created_at, порядок created_at DESC,
+        id DESC. Нет фильтров источника/интерфейса и флагов качества.
+      x-implementation-status: planned
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: test_type_id
+        in: query
+        required: false
+        description: Тип теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: test_id
+        in: query
+        required: false
+        description: Версия теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: user_id
+        in: query
+        required: false
+        description: ID владельца результата
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: age_group_id
+        in: query
+        required: false
+        description: Возрастная группа
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: date_from
+        in: query
+        required: false
+        description: Начало периода включительно
+        schema:
+          type: string
+          format: date-time
+      - name: date_to
+        in: query
+        required: false
+        description: Конец периода исключительно
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartResultPage'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /analytics/profstart/results/{result_id}:
+    get:
+      tags:
+      - ПрофСтарт - Аналитика
+      summary: Детальный результат пользователя
+      operationId: profstart_analytics_result_get
+      description: Проектируемый контракт; backend ещё не реализован. Право аналитики;
+        показатели и сохранённые профессии.
+      x-implementation-status: planned
+      parameters:
+      - name: result_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartResult'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /analytics/profstart/summary:
+    get:
+      tags:
+      - ПрофСтарт - Аналитика
+      summary: Агрегаты одного типа и версии
+      operationId: profstart_analytics_summary_get
+      description: Проектируемый контракт; backend ещё не реализован. Обязательны
+        соответствующие test_type_id и test_id. Период по started_at когорты; результаты
+        completed этой когорты. Нулевой знаменатель даёт null. Средние групп включают
+        нули, все равные ведущие учитываются. Средний score профессии только по содержащим
+        её результатам. groups содержит все шкалы, professions=[] при отсутствии результатов.
+      x-implementation-status: planned
+      parameters:
+      - name: test_type_id
+        in: query
+        required: true
+        description: Тип теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: test_id
+        in: query
+        required: true
+        description: Версия теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: age_group_id
+        in: query
+        required: false
+        description: Возрастная группа
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - name: date_from
+        in: query
+        required: false
+        description: Начало периода включительно
+        schema:
+          type: string
+          format: date-time
+      - name: date_to
+        in: query
+        required: false
+        description: Конец периода исключительно
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartSummary'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
   /analytics/events:
     post:
       tags:
@@ -3892,61 +5867,431 @@ paths:
   /cms/surveys:
     get:
       tags:
-      - cms
-      summary: Анкеты
-      description: Получить список анкет (CMS)
+      - Обратная связь - CMS
+      summary: Список анкет
+      description: Получить список анкет обратной связи с пагинацией
+      parameters:
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+        description: Фильтр по статусу активности
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
       responses:
         '200':
           description: Список анкет
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CmsSurvey'
+                  total:
+                    type: integer
     post:
       tags:
-      - cms
+      - Обратная связь - CMS
       summary: Создать анкету
-      description: Добавить новую анкету
+      description: Создать новую анкету (черновик)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyCreateRequest'
+      responses:
+        '201':
+          description: Анкета создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+  /cms/surveys/{survey_id}:
+    get:
+      tags:
+      - Обратная связь - CMS
+      summary: Детали анкеты
+      description: Получить анкету с вопросами
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Анкета с вопросами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+    put:
+      tags:
+      - Обратная связь - CMS
+      summary: Обновить анкету
+      description: Обновить название и описание анкеты. Нельзя редактировать активную
+        анкету.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyUpdateRequest'
+      responses:
+        '200':
+          description: Анкета обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Нельзя редактировать активную анкету
+    delete:
+      tags:
+      - Обратная связь - CMS
+      summary: Удалить анкету
+      description: Удалить анкету-черновик. Нельзя удалить активную анкету или анкету
+        с ответами.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Анкета удалена
+        '404':
+          description: Анкета не найдена
+        '409':
+          description: Нельзя удалить — есть связанные ответы
+        '422':
+          description: Нельзя удалить активную анкету
+  /cms/surveys/{survey_id}/copy:
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Создать новую версию анкеты
+      description: Скопировать анкету и все её вопросы в новый черновик с тем же external_id
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '201':
+          description: Новая версия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+  /cms/surveys/{survey_id}/publish:
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Опубликовать анкету
+      description: Активировать анкету. Предыдущая активная анкета с тем же external_id
+        автоматически деактивируется.
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Анкета опубликована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurvey'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Анкета уже активна
+  /cms/surveys/{survey_id}/questions:
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Добавить вопрос
+      description: Добавить вопрос в анкету-черновик
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyQuestionCreateRequest'
+      responses:
+        '201':
+          description: Вопрос добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurveyQuestion'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Нельзя редактировать активную анкету
+  /cms/surveys/{survey_id}/questions/reorder:
+    put:
+      tags:
+      - Обратная связь - CMS
+      summary: Изменить порядок вопросов
+      description: Переупорядочить вопросы анкеты
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-      responses:
-        '201':
-          description: Анкета создана
-  /feedback/surveys:
-    get:
-      tags:
-      - feedback
-      summary: Доступные анкеты
-      description: Получить список анкет обратной связи
-      security: []
+              required:
+              - question_ids
+              properties:
+                question_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+                  description: ID вопросов в новом порядке
       responses:
         '200':
-          description: Список анкет
-  /feedback/surveys/{id}/respond:
-    post:
+          description: Порядок обновлён
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CmsSurveyQuestion'
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: question_ids не совпадают с существующими вопросами
+  /cms/surveys/{survey_id}/questions/{question_id}:
+    put:
       tags:
-      - feedback
-      summary: Ответить на анкету
-      description: Отправить ответы на анкету обратной связи
+      - Обратная связь - CMS
+      summary: Обновить вопрос
+      description: Обновить вопрос анкеты-черновика
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsSurveyQuestionUpdateRequest'
+      responses:
+        '200':
+          description: Вопрос обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CmsSurveyQuestion'
+        '404':
+          description: Вопрос не найден
+        '422':
+          description: Нельзя редактировать вопросы активной анкеты
+    delete:
+      tags:
+      - Обратная связь - CMS
+      summary: Удалить вопрос
+      description: Удалить вопрос из анкеты-черновика
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Вопрос удалён
+        '404':
+          description: Вопрос не найден
+        '422':
+          description: Нельзя редактировать вопросы активной анкеты
+  /cms/surveys/responses:
+    get:
+      tags:
+      - Обратная связь - CMS
+      summary: Список ответов
+      description: Получить список ответов пользователей на анкеты с фильтрами
+      parameters:
+      - name: survey_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Фильтр по ID анкеты
+      - name: external_id
+        in: query
+        schema:
+          type: string
+        description: Фильтр по external_id анкеты
+      - name: is_active
+        in: query
+        schema:
+          type: boolean
+        description: Фильтр по статусу активности анкеты
+      - name: user_id
+        in: query
+        schema:
+          type: integer
+          format: int64
+        description: Фильтр по ID пользователя
+      - name: completed_from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Фильтр по дате начала (completed_at >=)
+      - name: completed_to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Фильтр по дате окончания (completed_at <=)
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Список ответов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CmsSurveyResponse'
+                  total:
+                    type: integer
+  /feedback/surveys/{external_id}:
+    get:
+      tags:
+      - Обратная связь - LED
+      summary: Активная анкета по external_id
+      description: Получить активную анкету по символьному идентификатору (используется
+        LED-плеером)
       security: []
       parameters:
-      - name: id
+      - name: external_id
         in: path
         required: true
         schema:
           type: string
+        description: Символьный идентификатор анкеты (например, videoresume_feedback)
+      responses:
+        '200':
+          description: Активная анкета с вопросами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSurvey'
+        '404':
+          description: Активная анкета не найдена
+  /feedback/surveys/{survey_id}/respond:
+    post:
+      tags:
+      - Обратная связь - Пользователь
+      summary: Ответить на анкету
+      description: Отправить ответы на анкету обратной связи
+      security: []
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
         description: Идентификатор анкеты
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/FeedbackSubmitRequest'
       responses:
         '201':
           description: Ответы отправлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSubmitResponse'
         '404':
           description: Анкета не найдена
+        '422':
+          description: Анкета не активна
   /files/{file_uuid}:
     get:
       tags:
@@ -5228,5 +7573,1881 @@ components:
               format: int64
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
+    CmsSurvey:
+      description: Анкета обратной связи (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        external_id:
+          type: string
+          description: Символьный идентификатор (например, videoresume_feedback)
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+          description: Активна ли анкета
+        copied_from_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID анкеты, от которой эта была скопирована
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CmsSurveyQuestion'
+    CmsSurveyCreateRequest:
+      type: object
+      required:
+      - external_id
+      - name
+      properties:
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CmsSurveyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CmsSurveyQuestion:
+      description: Вопрос анкеты (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID родительского вопроса для условного показа
+        type:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          description: 'Тип вопроса:
+
+            - `1` — rating_scale (шкала оценки)
+
+            - `2` — single_choice (одиночный выбор)
+
+            - `3` — multiple_choice (множественный выбор)
+
+            - `4` — text (текстовый ответ)
+
+            - `5` — profession_choice (выбор профессии)
+
+            '
+        text:
+          type: string
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+        required:
+          type: boolean
+        order:
+          type: integer
+        condition:
+          type: object
+          nullable: true
+          description: 'Условие показа (например, {"operator": "lte", "value": 2})'
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+          description: Минимальное значение шкалы (по умолчанию 1)
+        scale_max:
+          type: integer
+          nullable: true
+          description: Максимальное значение шкалы (по умолчанию 5)
+    CmsSurveyQuestionCreateRequest:
+      type: object
+      required:
+      - type
+      - text
+      - order
+      properties:
+        type:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+        text:
+          type: string
+        order:
+          type: integer
+        required:
+          type: boolean
+          default: false
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+        condition:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+        scale_max:
+          type: integer
+          nullable: true
+    CmsSurveyQuestionUpdateRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        required:
+          type: boolean
+        condition:
+          type: object
+          nullable: true
+          additionalProperties: true
+        scale_min:
+          type: integer
+          nullable: true
+        scale_max:
+          type: integer
+          nullable: true
+        media_id:
+          type: integer
+          format: int64
+          nullable: true
+    CmsSurveyResponse:
+      description: Ответ пользователя на анкету (CMS)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        user_id:
+          type: integer
+          format: int64
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+        survey:
+          $ref: '#/components/schemas/CmsSurvey'
+          nullable: true
+          description: Анкета, на которую дан ответ
+    FeedbackSurvey:
+      description: Активная анкета для прохождения (клиент)
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        external_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              parent_id:
+                type: integer
+                format: int64
+                nullable: true
+              type:
+                type: integer
+                enum:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+              text:
+                type: string
+              media_id:
+                type: integer
+                format: int64
+                nullable: true
+              required:
+                type: boolean
+              order:
+                type: integer
+              condition:
+                type: object
+                nullable: true
+                additionalProperties: true
+              scale_min:
+                type: integer
+                nullable: true
+              scale_max:
+                type: integer
+                nullable: true
+    FeedbackSubmitRequest:
+      description: Запрос на отправку ответов
+      type: object
+      required:
+      - source_id
+      - user_id
+      - duration
+      - answers
+      properties:
+        source_id:
+          type: string
+          description: XML_ID устройства (ПАК, веб)
+        user_id:
+          type: integer
+          format: int64
+          description: ID пользователя
+        duration:
+          type: integer
+          description: Время прохождения в секундах
+        consent_version_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID версии согласия, которое принял пользователь
+        answers:
+          type: array
+          items:
+            type: object
+            required:
+            - question_id
+            - value
+            properties:
+              question_id:
+                type: integer
+                format: int64
+              value:
+                type: string
+                description: Значение ответа (число, текст, JSON для множественного
+                  выбора)
+    FeedbackSubmitResponse:
+      description: Результат отправки ответов
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        survey_id:
+          type: integer
+          format: int64
+        completed_at:
+          type: string
+          format: date-time
+    ProfStartError:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - message
+      - details
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - code
+            - entity
+            - entity_id
+            - field
+            - message
+            properties:
+              code:
+                type: string
+              entity:
+                type: string
+              entity_id:
+                type:
+                - integer
+                - 'null'
+                format: int64
+                minimum: 1
+              field:
+                type:
+                - string
+                - 'null'
+              message:
+                type: string
+    ProfStartTestType:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - code
+      - name
+      - description
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        code:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+        name:
+          type: string
+        description:
+          type: string
+    ProfStartTestCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - test_type_id
+      - name
+      properties:
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        instructions:
+          type: string
+          default: ''
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+          default: []
+    ProfStartTestPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        instructions:
+          type: string
+          default: ''
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+          default: []
+      minProperties: 1
+    ProfStartTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - group_count
+      - published_at
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        instructions:
+          type: string
+          default: ''
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+          default: []
+        question_count:
+          type: integer
+          minimum: 0
+        group_count:
+          type: integer
+          minimum: 0
+        published_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: null — черновик только теста; дата — опубликованная неизменяемая
+            версия
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+    ProfStartPublicTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+        question_count:
+          type: integer
+          minimum: 1
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+    ProfStartGroupCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - category
+      - order
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+        order:
+          type: integer
+          minimum: 1
+    ProfStartGroupPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+        order:
+          type: integer
+          minimum: 1
+      minProperties: 1
+    ProfStartGroup:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - code
+      - name
+      - description
+      - category
+      - order
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+        order:
+          type: integer
+          minimum: 1
+    ProfStartOptionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - text
+      - order
+      - group_id
+      - weight
+      properties:
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+        order:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        weight:
+          type: number
+          minimum: 0
+          maximum: 3
+          description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется
+            из вопроса.'
+    ProfStartOptionPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+        order:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        weight:
+          type: number
+          minimum: 0
+          maximum: 3
+          description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется
+            из вопроса.'
+      minProperties: 1
+    ProfStartOption:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - question_id
+      - text
+      - media_id
+      - value
+      - order
+      - group_id
+      - weight
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        question_id:
+          type: integer
+          format: int64
+          minimum: 1
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+        order:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        weight:
+          type: number
+          minimum: 0
+          maximum: 3
+          description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется
+            из вопроса.'
+    ProfStartPublicOption:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - text
+      - media_id
+      - value
+      - order
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        text:
+          type: string
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+        order:
+          type: integer
+          minimum: 1
+    ProfStartQuestionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - axis
+      - text
+      - order
+      properties:
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        order:
+          type: integer
+          minimum: 1
+    ProfStartQuestionPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        order:
+          type: integer
+          minimum: 1
+      minProperties: 1
+    ProfStartQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - type
+      - axis
+      - text
+      - media_id
+      - order
+      - options
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        order:
+          type: integer
+          minimum: 1
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartOption'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ProfStartPublicQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - type
+      - axis
+      - text
+      - media_id
+      - order
+      - options
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+        text:
+          type: string
+          minLength: 1
+        media_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        order:
+          type: integer
+          minimum: 1
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartPublicOption'
+    ProfStartGroupProfessionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - profession_id
+      properties:
+        profession_id:
+          type: integer
+          format: int64
+          minimum: 1
+        coefficient:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+          default: 1
+    ProfStartGroupProfessionPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        coefficient:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+          default: 1
+      minProperties: 1
+    ProfStartGroupProfession:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - group_id
+      - profession_id
+      - profession_name
+      - coefficient
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        profession_id:
+          type: integer
+          format: int64
+          minimum: 1
+        profession_name:
+          type: string
+        coefficient:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+          default: 1
+    ProfStartValidation:
+      type: object
+      additionalProperties: false
+      required:
+      - valid
+      - errors
+      - question_count
+      - group_count
+      - scale_maxima
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - code
+            - entity
+            - entity_id
+            - field
+            - message
+            properties:
+              code:
+                type: string
+              entity:
+                type: string
+              entity_id:
+                type:
+                - integer
+                - 'null'
+                format: int64
+                minimum: 1
+              field:
+                type:
+                - string
+                - 'null'
+              message:
+                type: string
+        question_count:
+          type: integer
+          minimum: 0
+        group_count:
+          type: integer
+          minimum: 0
+        scale_maxima:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - group_id
+            - axis
+            - max_score
+            properties:
+              group_id:
+                type: integer
+                format: int64
+                minimum: 1
+              axis:
+                type: string
+                enum:
+                - want
+                - can
+                - general
+              max_score:
+                type: number
+                minimum: 0
+    ProfStartSessionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - test_id
+      properties:
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        age_group_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+    ProfStartAnswerWrite:
+      type: object
+      additionalProperties: false
+      required:
+      - question_id
+      - answer_option_id
+      - time_spent_ms
+      properties:
+        question_id:
+          type: integer
+          format: int64
+          minimum: 1
+        answer_option_id:
+          type: integer
+          format: int64
+          minimum: 1
+        time_spent_ms:
+          type: integer
+          minimum: 0
+    ProfStartSavedAnswer:
+      type: object
+      additionalProperties: false
+      required:
+      - question_id
+      - answer_option_id
+      - time_spent_ms
+      - answered_at
+      properties:
+        question_id:
+          type: integer
+          format: int64
+          minimum: 1
+        answer_option_id:
+          type: integer
+          format: int64
+          minimum: 1
+        time_spent_ms:
+          type: integer
+          minimum: 0
+        answered_at:
+          type: string
+          format: date-time
+    ProfStartSession:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - test_type_id
+      - test_code_type
+      - test_version
+      - user_id
+      - age_group_id
+      - status
+      - question_count
+      - answered_count
+      - next_question_id
+      - started_at
+      - completed_at
+      - result_id
+      - answers
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_version:
+          type: integer
+          minimum: 1
+        user_id:
+          type: integer
+          format: int64
+          minimum: 1
+        age_group_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        status:
+          type: string
+          enum:
+          - in_progress
+          - completed
+          - abandoned
+        question_count:
+          type: integer
+          minimum: 1
+        answered_count:
+          type: integer
+          minimum: 0
+        next_question_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        result_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartSavedAnswer'
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+    ProfStartAnswerReceipt:
+      type: object
+      additionalProperties: false
+      required:
+      - session_id
+      - answer
+      - answered_count
+      - question_count
+      - next_question_id
+      - ready_to_complete
+      properties:
+        session_id:
+          type: integer
+          format: int64
+          minimum: 1
+        answer:
+          $ref: '#/components/schemas/ProfStartSavedAnswer'
+        answered_count:
+          type: integer
+          minimum: 1
+        question_count:
+          type: integer
+          minimum: 1
+        next_question_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        ready_to_complete:
+          type: boolean
+    ProfStartScore:
+      type: object
+      additionalProperties: false
+      required:
+      - group_id
+      - group_code
+      - group_name
+      - category
+      - axis
+      - raw_score
+      - max_score
+      - normalized_score
+      - rank
+      - is_leading
+      properties:
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        group_code:
+          type: string
+        group_name:
+          type: string
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+        raw_score:
+          type: number
+          minimum: 0
+        max_score:
+          type: number
+          exclusiveMinimum: 0
+        normalized_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        rank:
+          type: integer
+          minimum: 1
+        is_leading:
+          type: boolean
+    ProfStartReason:
+      type: object
+      additionalProperties: false
+      required:
+      - group_id
+      - group_code
+      - group_name
+      - axis
+      - normalized_score
+      - coefficient
+      - contribution
+      properties:
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        group_code:
+          type: string
+        group_name:
+          type: string
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+        normalized_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        coefficient:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1
+        contribution:
+          type: number
+          minimum: 0
+          maximum: 100
+    ProfStartRecommendation:
+      type: object
+      additionalProperties: false
+      required:
+      - profession_id
+      - profession_name
+      - score
+      - position
+      - reasons
+      properties:
+        profession_id:
+          type: integer
+          format: int64
+          minimum: 1
+        profession_name:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        position:
+          type: integer
+          minimum: 1
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartReason'
+    ProfStartResult:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - session_id
+      - test_id
+      - test_type_id
+      - user_id
+      - test_code_type
+      - test_version
+      - age_group_id
+      - answered_count
+      - question_count
+      - created_at
+      - scores
+      - professions
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        session_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        user_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_version:
+          type: integer
+          minimum: 1
+        age_group_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        answered_count:
+          type: integer
+          minimum: 1
+        question_count:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartScore'
+        professions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartRecommendation'
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+    ProfStartAnalyticsSession:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - test_type_id
+      - test_code_type
+      - test_version
+      - user_id
+      - age_group_id
+      - status
+      - question_count
+      - answered_count
+      - started_at
+      - completed_at
+      - result_id
+      - duration_ms
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_version:
+          type: integer
+          minimum: 1
+        user_id:
+          type: integer
+          format: int64
+          minimum: 1
+        age_group_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        status:
+          type: string
+          enum:
+          - in_progress
+          - completed
+          - abandoned
+        question_count:
+          type: integer
+          minimum: 1
+        answered_count:
+          type: integer
+          minimum: 0
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        result_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        duration_ms:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+    ProfStartTestPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartTest'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartGroupPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartGroup'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartQuestionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartQuestion'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartOptionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartOption'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartGroupProfessionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartGroupProfession'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartResultPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartResult'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartAnalyticsSessionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartAnalyticsSession'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - test_type_id
+      - test_id
+      - date_from
+      - date_to
+      - started_count
+      - in_progress_count
+      - completed_count
+      - abandoned_count
+      - unique_user_count
+      - completion_rate
+      - mean_completed_duration_ms
+      - result_count
+      - groups
+      - professions
+      properties:
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        date_from:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        date_to:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        started_count:
+          type: integer
+          minimum: 0
+        in_progress_count:
+          type: integer
+          minimum: 0
+        completed_count:
+          type: integer
+          minimum: 0
+        abandoned_count:
+          type: integer
+          minimum: 0
+        unique_user_count:
+          type: integer
+          minimum: 0
+        completion_rate:
+          type:
+          - number
+          - 'null'
+          minimum: 0
+          maximum: 100
+        mean_completed_duration_ms:
+          type:
+          - number
+          - 'null'
+          minimum: 0
+        result_count:
+          type: integer
+          minimum: 0
+        groups:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - group_id
+            - group_code
+            - group_name
+            - category
+            - axis
+            - result_count
+            - mean_raw_score
+            - mean_normalized_score
+            - leading_count
+            - leading_percent
+            properties:
+              group_id:
+                type: integer
+                format: int64
+                minimum: 1
+              group_code:
+                type: string
+              group_name:
+                type: string
+              category:
+                type: string
+                enum:
+                - subject
+                - labor
+                - riasec
+                - geometry
+              axis:
+                type: string
+                enum:
+                - want
+                - can
+                - general
+              result_count:
+                type: integer
+                minimum: 0
+              mean_raw_score:
+                type:
+                - number
+                - 'null'
+                minimum: 0
+              mean_normalized_score:
+                type:
+                - number
+                - 'null'
+                minimum: 0
+                maximum: 100
+              leading_count:
+                type: integer
+                minimum: 0
+              leading_percent:
+                type:
+                - number
+                - 'null'
+                minimum: 0
+                maximum: 100
+        professions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - profession_id
+            - profession_name
+            - recommended_count
+            - recommended_percent
+            - mean_score
+            properties:
+              profession_id:
+                type: integer
+                format: int64
+                minimum: 1
+              profession_name:
+                type: string
+              recommended_count:
+                type: integer
+                minimum: 1
+              recommended_percent:
+                type: number
+                minimum: 0
+                maximum: 100
+              mean_score:
+                type: number
+                minimum: 0
+                maximum: 100
+  responses:
+    ProfStartError401:
+      description: Требуется действительный пользовательский/административный контекст
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartError'
+    ProfStartError403:
+      description: Нет требуемого права
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartError'
+    ProfStartError404:
+      description: Ресурс не найден или недоступен владельцу
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartError'
+    ProfStartError409:
+      description: Конфликт состояния, дубликат или несовместимое изменение
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartError'
+    ProfStartError422:
+      description: Некорректные параметры, ссылки или неполная версия
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartError'
 security:
 - bearerAuth: []

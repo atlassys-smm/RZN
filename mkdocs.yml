@@ -145,6 +145,7 @@ nav:
       - Журнал изменений: subsystems/cms/change-log.md
     - ПрофСтарт:
       - Обзор: subsystems/profstart/index.md
+      - Методики и группы: subsystems/profstart/methods.md
       - Процесс прохождения: subsystems/profstart/test-flow.md
       - Результаты: subsystems/profstart/results.md
     - Цифровой профиль и личный кабинет:
@@ -224,12 +225,14 @@ nav:
     - Источники событий: references/event-sources.md
   - API:
     - Обзор: api/index.md
+    - ПрофСтарт: api/profstart.md
     - API Reference: api/scalar.html
     - WebSocket API: api/websocket.md
   - История изменений:
     - Обзор: changelog/index.md
     - Документация:
       - Обзор: changelog/docs/index.md
+      - Версия 1.20: changelog/docs/v1.20.md
       - Версия 1.19: changelog/docs/v1.19.md
       - Версия 1.18: changelog/docs/v1.18.md
       - Версия 1.17: changelog/docs/v1.17.md
