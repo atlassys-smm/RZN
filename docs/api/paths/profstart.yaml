@@ -3,10 +3,10 @@ cms-types:
   get:
     tags:
     - ПрофСтарт - CMS
-    summary: Каталог трёх типов
+    summary: Каталог типов тестов
     operationId: profstart_cms_types_get
-    description: Проектируемый контракт; backend ещё не реализован. Системные коды неизменяемы; дополнительные типы
-      не создаются.
+    description: Проектируемый контракт; backend ещё не реализован. Все типы, включая созданные CMS; порядок id
+      ASC. Наличие типа не означает поддержку итогового расчёта.
     x-implementation-status: planned
     parameters: []
     responses:
@@ -28,14 +28,47 @@ cms-types:
         $ref: '#/components/responses/ProfStartError409'
       '422':
         $ref: '#/components/responses/ProfStartError422'
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Создать тип теста
+    operationId: profstart_cms_types_post
+    description: Проектируемый контракт; backend ещё не реализован. Создать новый тип с уникальным неизменяемым
+      code. Дубликат — 409. Алгоритмы результатов доступны только для solomin, holland, dellinger; создание типа
+      не добавляет алгоритм.
+    x-implementation-status: planned
+    parameters: []
+    responses:
+      '201':
+        description: Ресурс создан
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestType'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartTestTypeCreate'
 cms-tests:
   get:
     tags:
     - ПрофСтарт - CMS
     summary: Версии тестов
     operationId: profstart_cms_tests_get
-    description: Проектируемый контракт; backend ещё не реализован. Порядок created_at DESC, id DESC. is_draft фильтрует
-      по published_at, отдельного status нет.
+    description: Проектируемый контракт; backend ещё не реализован. Фильтры test_type_id и status=draft/active/archived;
+      порядок created_at DESC, id DESC. Каталог типов расширяем.
     x-implementation-status: planned
     parameters:
     - name: limit
@@ -63,12 +96,16 @@ cms-tests:
         type: integer
         format: int64
         minimum: 1
-    - name: is_draft
+    - name: status
       in: query
       required: false
-      description: 'true: published_at=null, false: дата публикации заполнена'
+      description: Статус теста
       schema:
-        type: boolean
+        type: string
+        enum:
+        - draft
+        - active
+        - archived
     responses:
       '200':
         description: Успешный ответ
@@ -91,8 +128,8 @@ cms-tests:
     - ПрофСтарт - CMS
     summary: Создать черновик версии
     operationId: profstart_cms_tests_post
-    description: Проектируемый контракт; backend ещё не реализован. Сервер назначает номер версии; published_at=null.
-      Черновик существует только у теста.
+    description: Проектируемый контракт; backend ещё не реализован. Любой существующий test_type_id; сервер назначает
+      номер версии, status=draft и published_at=null. Только тест имеет черновик.
     x-implementation-status: planned
     parameters: []
     responses:
@@ -124,8 +161,8 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Карточка версии
     operationId: profstart_cms_test_get
-    description: Проектируемый контракт; backend ещё не реализован. Карточка теста; состояние черновика определяется
-      published_at.
+    description: Проектируемый контракт; backend ещё не реализован. Карточка версии теста с status; код типа может
+      быть новым, не только одним из трёх предзаданных.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -158,8 +195,8 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Изменить черновик
     operationId: profstart_cms_test_patch
-    description: Проектируемый контракт; backend ещё не реализован. Тип и номер версии неизменяемы; опубликованная
-      версия возвращает 409.
+    description: Проектируемый контракт; backend ещё не реализован. Редактируется только draft. Тип, номер версии
+      и status не принимаются; active/archived — 409. Смена статуса через /publish и /archive.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -198,8 +235,8 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Удалить черновик
     operationId: profstart_cms_test_delete
-    description: Проектируемый контракт; backend ещё не реализован. Только неопубликованный тест без сессий. Его
-      вопросы, варианты, группы и связи удаляются вместе с тестом.
+    description: Проектируемый контракт; backend ещё не реализован. Только draft без сессий. Вопросы, варианты,
+      группы и связи удаляются вместе с черновиком. active/archived — 409.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -229,8 +266,8 @@ cms-copy:
     - ПрофСтарт - CMS
     summary: Копировать в новую версию
     operationId: profstart_cms_copy_post
-    description: Проектируемый контракт; backend ещё не реализован. Новый тест-черновик с published_at=null и собственными
-      ID вложенных записей; группам и вопросам отдельные черновики не создаются.
+    description: Проектируемый контракт; backend ещё не реализован. Копировать любую версию в новый тест status=draft,
+      published_at=null, с собственными ID всего состава. Исходная версия и её сессии сохраняются.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -264,8 +301,10 @@ cms-validate:
     - ПрофСтарт - CMS
     summary: Проверить готовность публикации
     operationId: profstart_cms_validate_post
-    description: Проектируемый контракт; backend ещё не реализован. Проверка не меняет статус. Ошибки банка возвращаются
-      с valid=false и errors в ответе 200.
+    description: 'Проектируемый контракт; backend ещё не реализован. Проверка не меняет статус. Ошибки банка возвращаются
+      с valid=false и errors в ответе 200. Для solomin ровно 42 вопроса: по 3 на группу на каждой из want/can, максимум
+      9; для holland ровно 15, максимум 15; dellinger 1 вопрос. Для новых типов только общая целостность, scale_maxima=[];
+      алгоритм итогового расчёта не добавляется.'
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -297,11 +336,14 @@ cms-publish:
   post:
     tags:
     - ПрофСтарт - CMS
-    summary: Опубликовать версию
+    summary: Опубликовать и активировать тест
     operationId: profstart_cms_publish_post
-    description: Проектируемый контракт; backend ещё не реализован. Проверяет целиком тест и атомарно устанавливает
-      published_at. Ошибки банка — 422. Повтор опубликованного возвращает ту же запись. Для новых стартов выбирается
-      опубликованная версия с наибольшим version внутри типа; прежние остаются в истории.
+    description: Проектируемый контракт; backend ещё не реализован. После проверки draft → active, published_at
+      заполняется. Предыдущий active того же типа атомарно становится archived. Не более одного active на тип, включая
+      конкурентную активацию; частичный UNIQUE(test_type_id) WHERE status=active. Неполный банк — 422. Повтор active
+      возвращает ту же запись; archived — 409, для новой публикации используется /copy. Новые типы могут активироваться
+      в CMS, но пользовательское прохождение и итоговый расчёт пока доступны только solomin/holland/dellinger. Начатые
+      сессии прежней версии продолжаются.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -336,7 +378,8 @@ cms-groups:
     summary: Группы версии
     operationId: profstart_cms_groups_get
     description: Проектируемый контракт; backend ещё не реализован. Обычные группы теста без собственных статусов,
-      сортировка order ASC, id ASC.
+      сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+      — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -386,8 +429,11 @@ cms-groups:
     - ПрофСтарт - CMS
     summary: Создать группу
     operationId: profstart_cms_groups_post
-    description: Проектируемый контракт; backend ещё не реализован. Создать группу в составе неопубликованного теста,
-      без отдельного черновика группы. Точный набор 7/6/5 проверяется при публикации теста.
+    description: Проектируемый контракт; backend ещё не реализован. Создать группу в составе draft без отдельного
+      статуса группы. Набор 7/6/5 и системные коды проверяются только для трёх поддерживаемых методик; для нового
+      типа состав задаётся CMS. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+      — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish используют общую
+      блокировку теста, поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -428,6 +474,7 @@ cms-group:
     summary: Группа результата
     operationId: profstart_cms_group_get
     description: Проектируемый контракт; backend ещё не реализован. Группа теста без статуса и без отдельной публикации.
+      Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -468,8 +515,10 @@ cms-group:
     - ПрофСтарт - CMS
     summary: Изменить группу
     operationId: profstart_cms_group_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание неопубликованного теста.
-      Код и категория проверяются по методике.
+    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание теста со status=draft. Код
+      и категория проверяются по методике. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+      несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish
+      используют общую блокировку теста, поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -516,8 +565,11 @@ cms-group:
     - ПрофСтарт - CMS
     summary: Удалить несвязанную группу
     operationId: profstart_cms_group_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить группу неопубликованного теста. Существующие
-      варианты с group_id или связи профессий блокируют удаление 409.
+    description: Проектируемый контракт; backend ещё не реализован. Удалить группу теста со status=draft. Существующие
+      варианты с group_id или связи профессий блокируют удаление 409. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение
+      состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
+      состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -556,7 +608,8 @@ cms-professions:
     summary: Профессии группы
     operationId: profstart_cms_professions_get
     description: Проектируемый контракт; backend ещё не реализован. Профессии группы, порядок profession_id ASC.
-      Существующие Profession не изменяются.
+      Существующие Profession не изменяются. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+      несоответствие — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -614,8 +667,10 @@ cms-professions:
     - ПрофСтарт - CMS
     summary: Привязать профессию
     operationId: profstart_cms_professions_post
-    description: Проектируемый контракт; backend ещё не реализован. Связь группы неопубликованного теста с существующей
-      профессией; дубликат — 409.
+    description: Проектируемый контракт; backend ещё не реализован. Связь группы теста со status=draft с существующей
+      профессией; дубликат — 409. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+      — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish используют общую
+      блокировку теста, поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -663,8 +718,10 @@ cms-profession:
     - ПрофСтарт - CMS
     summary: Изменить коэффициент связи
     operationId: profstart_cms_profession_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить coefficient связи в неопубликованном
-      тесте.
+    description: Проектируемый контракт; backend ещё не реализован. Изменить coefficient связи в тесте со status=draft.
+      Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение
+      только при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку теста,
+      поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -719,7 +776,10 @@ cms-profession:
     - ПрофСтарт - CMS
     summary: Отвязать профессию
     operationId: profstart_cms_profession_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить связь неопубликованного теста, не Profession.
+    description: Проектируемый контракт; backend ещё не реализован. Удалить связь теста со status=draft, не Profession.
+      Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение
+      только при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку теста,
+      поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -766,7 +826,8 @@ cms-questions:
     summary: Вопросы с вариантами и их весами
     operationId: profstart_cms_questions_get
     description: Проектируемый контракт; backend ещё не реализован. Вопросы теста с вариантами, group_id и weight.
-      Отдельных черновиков вопросов нет. Сортировка order ASC, id ASC.
+      Отдельных черновиков вопросов нет. Сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -816,8 +877,10 @@ cms-questions:
     - ПрофСтарт - CMS
     summary: Создать вопрос
     operationId: profstart_cms_questions_post
-    description: Проектируемый контракт; backend ещё не реализован. Создать вопрос в неопубликованном тесте. type
-      только single_choice; axis проверяется по методике.
+    description: Проектируемый контракт; backend ещё не реализован. Создать вопрос в тесте со status=draft. type
+      только single_choice; axis проверяется по методике. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+      несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish
+      используют общую блокировку теста, поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -858,7 +921,7 @@ cms-question:
     summary: Вопрос с ключом
     operationId: profstart_cms_question_get
     description: Проектируемый контракт; backend ещё не реализован. Вопрос и варианты с непосредственно сохранёнными
-      весами.
+      весами. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -899,8 +962,11 @@ cms-question:
     - ПрофСтарт - CMS
     summary: Изменить вопрос
     operationId: profstart_cms_question_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание неопубликованного теста,
-      без отдельного статуса вопроса. При смене оси проверяется ключ.
+    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание теста со status=draft, без
+      отдельного статуса вопроса. При смене оси проверяется ключ. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение
+      состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
+      состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -947,8 +1013,10 @@ cms-question:
     - ПрофСтарт - CMS
     summary: Удалить вопрос с вариантами
     operationId: profstart_cms_question_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить вопрос неопубликованного теста вместе
-      с вариантами. Отдельной таблицы весов нет.
+    description: Проектируемый контракт; backend ещё не реализован. Удалить вопрос теста со status=draft вместе
+      с вариантами. Отдельной таблицы весов нет. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+      несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish
+      используют общую блокировку теста, поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -986,8 +1054,11 @@ cms-order:
     - ПрофСтарт - CMS
     summary: Задать порядок всех вопросов
     operationId: profstart_cms_order_put
-    description: Проектируемый контракт; backend ещё не реализован. Полный список question_ids неопубликованного
-      теста без повторов, order назначается 1..N атомарно. Неполный или чужой список — 422.
+    description: Проектируемый контракт; backend ещё не реализован. Полный список question_ids теста со status=draft
+      без повторов, order назначается 1..N атомарно. Неполный или чужой список — 422. Все ID в URL проверяются как
+      цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived
+      — 409. Изменение состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже
+      активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1041,7 +1112,8 @@ cms-options:
     summary: Варианты вопроса с весами
     operationId: profstart_cms_options_get
     description: Проектируемый контракт; backend ещё не реализован. Варианты вопроса, каждый содержит group_id и
-      weight. Сортировка order ASC, id ASC.
+      weight. Сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+      несоответствие — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1100,7 +1172,10 @@ cms-options:
     summary: Создать вариант с группой и весом
     operationId: profstart_cms_options_post
     description: Проектируемый контракт; backend ещё не реализован. Создать вариант с непосредственными group_id
-      и weight. Группа той же версии; ось берётся из вопроса. Неполный банк допускается до публикации теста.
+      и weight. Группа той же версии; ось берётся из вопроса. Неполный банк допускается до публикации теста. Все
+      ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только
+      при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку теста, поэтому
+      запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1148,7 +1223,8 @@ cms-option:
     - ПрофСтарт - CMS
     summary: Вариант и ключ
     operationId: profstart_cms_option_get
-    description: Проектируемый контракт; backend ещё не реализован. Вариант с group_id и weight.
+    description: Проектируемый контракт; backend ещё не реализован. Вариант с group_id и weight. Все ID в URL проверяются
+      как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1198,7 +1274,10 @@ cms-option:
     summary: Изменить вариант, группу и вес
     operationId: profstart_cms_option_patch
     description: Проектируемый контракт; backend ещё не реализован. Изменить подпись, параметры, группу и вес через
-      один PATCH варианта. Группа той же версии; отдельного /weights нет.
+      один PATCH варианта. Группа той же версии; отдельного /weights нет. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение
+      состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
+      состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1253,8 +1332,10 @@ cms-option:
     - ПрофСтарт - CMS
     summary: Удалить вариант и его вес
     operationId: profstart_cms_option_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить вариант неопубликованного теста. Вес
-      является его полем.
+    description: Проектируемый контракт; backend ещё не реализован. Удалить вариант теста со status=draft. Вес является
+      его полем. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
+      Изменение только при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку
+      теста, поэтому запись не может попасть в уже активированный состав.
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1298,10 +1379,11 @@ tests:
   get:
     tags:
     - profstart
-    summary: Доступные опубликованные тесты
+    summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: Проектируемый контракт; backend ещё не реализован. Для каждого типа только последняя по version
-      опубликованная версия, без ключа; пустой список допустим.
+    description: Проектируемый контракт; backend ещё не реализован. Только status=active и поддерживаемые коды solomin/holland/dellinger;
+      максимум один тест на тип, независимо от номера версии. Фильтры возраста и типа; без ключей. Новые типы без
+      алгоритма в пользовательский каталог не входят; пустой список допустим.
     x-implementation-status: planned
     parameters:
     - name: age_group_id
@@ -1343,10 +1425,14 @@ test:
   get:
     tags:
     - profstart
-    summary: Инструкция опубликованного теста
+    summary: Карточка теста для старта или своей истории
     operationId: profstart_test_get
-    description: Проектируемый контракт; backend ещё не реализован. Инструкция последней опубликованной версии типа.
-      Старые версии для новых стартов недоступны, вопросы начатой сессии доступны через её /questions.
+    description: 'Проектируемый контракт; backend ещё не реализован. Активная версия поддерживаемого типа доступна
+      для просмотра инструкции. Архивная версия доступна только владельцу существующей сессии этого test_id (в любом
+      статусе), чтобы прочитать название и инструкцию в истории или продолжить начатый тест. Архивная без своей
+      сессии и draft — 409 test_not_active; неизвестный ID — 404. Тип без алгоритма — 422 unsupported_test_type.
+      Карточка содержит status, без весов и ключей. Доступность карточки archived не разрешает новый старт: /sessions
+      требует active.'
     x-implementation-status: planned
     parameters:
     - name: test_id
@@ -1380,9 +1466,11 @@ sessions:
     - profstart
     summary: Начать отдельное прохождение
     operationId: profstart_sessions_post
-    description: Проектируемый контракт; backend ещё не реализован. user_id определяется контекстом, включая гостя.
-      Старт только последней опубликованной версии типа. При непустом age_group_ids обязателен подходящий age_group_id.
-      Каждый успешный старт создаёт новую сессию.
+    description: 'Проектируемый контракт; backend ещё не реализован. user_id определяется контекстом, включая гостя.
+      Только status=active: иначе 409 test_not_active. Для нового типа без алгоритма — 422 unsupported_test_type,
+      сессия не создаётся. Разрешены solomin/holland/dellinger. При непустом age_group_ids обязателен подходящий
+      age_group_id. Каждый успешный старт создаёт отдельную сессию. Проверка активности согласована с /publish и
+      /archive атомарно.'
     x-implementation-status: planned
     parameters: []
     responses:
@@ -1489,7 +1577,8 @@ answer:
     description: Проектируемый контракт; backend ещё не реализован. Только следующий неотвеченный вопрос. Повтор
       ранее принятого того же варианта возвращает сохранённый ответ и текущий прогресс без начисления, даже после
       закрытия сессии. Изменение принятого варианта, новая запись в закрытую сессию или нарушение порядка — 409;
-      чужой вариант — 422.
+      чужой вариант — 422. ready_to_complete=true только для in_progress со всеми ответами; при повторе в completed/abandoned
+      — false. next_question_id=null у закрытой сессии. Принятые time_spent_ms и answered_at не изменяются повтором.
     x-implementation-status: planned
     parameters:
     - name: id
@@ -1533,8 +1622,10 @@ complete:
     - profstart
     summary: Завершить и рассчитать результат
     operationId: profstart_complete_post
-    description: Проектируемый контракт; backend ещё не реализован. Проверяет все вопросы. Неполная/abandoned-сессия
-      — 409. Атомарно создаёт результат и рекомендации. Повтор completed возвращает тот же результат.
+    description: 'Проектируемый контракт; backend ещё не реализован. Проверяет все вопросы версии сессии: solomin
+      42, holland 15, dellinger 1. Неполная/abandoned-сессия — 409. Расчёт только для solomin/holland/dellinger;
+      иной код — 422 unsupported_test_type без записи результата. Атомарно создаёт результат и рекомендации. Повтор
+      completed возвращает тот же результат. Архивирование теста не препятствует завершению начатой сессии.'
     x-implementation-status: planned
     parameters:
     - name: id
@@ -1814,6 +1905,8 @@ analytics-results:
     operationId: profstart_analytics_results_get
     description: Проектируемый контракт; backend ещё не реализован. Право аналитики; только финальные результаты.
       Период по created_at, порядок created_at DESC, id DESC. Нет фильтров источника/интерфейса и флагов качества.
+      Итоги создаются только для solomin/holland/dellinger; новые типы не получают нулевые или произвольно рассчитанные
+      результаты.
     x-implementation-status: planned
     parameters:
     - name: limit
@@ -1939,7 +2032,11 @@ analytics-summary:
     description: Проектируемый контракт; backend ещё не реализован. Обязательны соответствующие test_type_id и test_id.
       Период по started_at когорты; результаты completed этой когорты. Нулевой знаменатель даёт null. Средние групп
       включают нули, все равные ведущие учитываются. Средний score профессии только по содержащим её результатам.
-      groups содержит все шкалы, professions=[] при отсутствии результатов.
+      groups содержит все шкалы, professions=[] при отсутствии результатов. Для типа без алгоритма — 422 unsupported_test_type;
+      отсутствие результатов не подменяет неподдерживаемую методику. Агрегаты только опубликованной версии (active/archived);
+      draft — 409 test_not_published. recommended_percent = recommended_count/result_count × 100. profession_name
+      — текущее название из Profession, снимки названий в отдельных результатах неизменяемы. duration_ms = completed_at
+      - started_at в целых миллисекундах; у незавершённой сессии null.
     x-implementation-status: planned
     parameters:
     - name: test_type_id
@@ -1987,6 +2084,148 @@ analytics-summary:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartSummary'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-type:
+  get:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Карточка типа теста
+    operationId: profstart_cms_type_get
+    description: Проектируемый контракт; backend ещё не реализован. Карточка типа, включая произвольный код нового
+      типа.
+    x-implementation-status: planned
+    parameters:
+    - name: test_type_id
+      in: path
+      required: true
+      description: ID типа теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestType'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+  patch:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Изменить название и описание типа
+    operationId: profstart_cms_type_patch
+    description: Проектируемый контракт; backend ещё не реализован. Редактируются только name и description; code
+      неизменяем, чтобы сохранить связь с алгоритмом и историей.
+    x-implementation-status: planned
+    parameters:
+    - name: test_type_id
+      in: path
+      required: true
+      description: ID типа теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestType'
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartTestTypePatch'
+  delete:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Удалить неиспользуемый тип
+    operationId: profstart_cms_type_delete
+    description: 'Проектируемый контракт; backend ещё не реализован. Тип, используемый активным тестом, удалить
+      нельзя: 409 type_in_use. Ссылки черновиков и архивных тестов также защищены FK: 409, пока существуют связанные
+      тесты; они не удаляются каскадно. Проверка ссылок и удаление атомарны и согласованы с активацией тестов.'
+    x-implementation-status: planned
+    parameters:
+    - name: test_type_id
+      in: path
+      required: true
+      description: ID типа теста
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '204':
+        description: Тип удалён
+      '401':
+        $ref: '#/components/responses/ProfStartError401'
+      '403':
+        $ref: '#/components/responses/ProfStartError403'
+      '404':
+        $ref: '#/components/responses/ProfStartError404'
+      '409':
+        $ref: '#/components/responses/ProfStartError409'
+      '422':
+        $ref: '#/components/responses/ProfStartError422'
+cms-archive:
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Архивировать активный тест
+    operationId: profstart_cms_archive_post
+    description: Проектируемый контракт; backend ещё не реализован. active → archived; повтор archived возвращает
+      ту же запись, draft — 409. published_at сохраняется; новых стартов нет, начатые сессии и результаты остаются.
+      После архивирования тип может не иметь активного теста.
+    x-implementation-status: planned
+    parameters:
+    - name: test_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTest'
       '401':
         $ref: '#/components/responses/ProfStartError401'
       '403':

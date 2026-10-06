@@ -3798,10 +3798,11 @@ paths:
     get:
       tags:
       - ПрофСтарт - CMS
-      summary: Каталог трёх типов
+      summary: Каталог типов тестов
       operationId: profstart_cms_types_get
-      description: Проектируемый контракт; backend ещё не реализован. Системные коды
-        неизменяемы; дополнительные типы не создаются.
+      description: Проектируемый контракт; backend ещё не реализован. Все типы, включая
+        созданные CMS; порядок id ASC. Наличие типа не означает поддержку итогового
+        расчёта.
       x-implementation-status: planned
       parameters: []
       responses:
@@ -3823,14 +3824,49 @@ paths:
           $ref: '#/components/responses/ProfStartError409'
         '422':
           $ref: '#/components/responses/ProfStartError422'
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Создать тип теста
+      operationId: profstart_cms_types_post
+      description: Проектируемый контракт; backend ещё не реализован. Создать новый
+        тип с уникальным неизменяемым code. Дубликат — 409. Алгоритмы результатов
+        доступны только для solomin, holland, dellinger; создание типа не добавляет
+        алгоритм.
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '201':
+          description: Ресурс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTestType'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestTypeCreate'
   /cms/profstart/tests:
     get:
       tags:
       - ПрофСтарт - CMS
       summary: Версии тестов
       operationId: profstart_cms_tests_get
-      description: Проектируемый контракт; backend ещё не реализован. Порядок created_at
-        DESC, id DESC. is_draft фильтрует по published_at, отдельного status нет.
+      description: Проектируемый контракт; backend ещё не реализован. Фильтры test_type_id
+        и status=draft/active/archived; порядок created_at DESC, id DESC. Каталог
+        типов расширяем.
       x-implementation-status: planned
       parameters:
       - name: limit
@@ -3858,12 +3894,16 @@ paths:
           type: integer
           format: int64
           minimum: 1
-      - name: is_draft
+      - name: status
         in: query
         required: false
-        description: 'true: published_at=null, false: дата публикации заполнена'
+        description: Статус теста
         schema:
-          type: boolean
+          type: string
+          enum:
+          - draft
+          - active
+          - archived
       responses:
         '200':
           description: Успешный ответ
@@ -3886,8 +3926,9 @@ paths:
       - ПрофСтарт - CMS
       summary: Создать черновик версии
       operationId: profstart_cms_tests_post
-      description: Проектируемый контракт; backend ещё не реализован. Сервер назначает
-        номер версии; published_at=null. Черновик существует только у теста.
+      description: Проектируемый контракт; backend ещё не реализован. Любой существующий
+        test_type_id; сервер назначает номер версии, status=draft и published_at=null.
+        Только тест имеет черновик.
       x-implementation-status: planned
       parameters: []
       responses:
@@ -3919,8 +3960,8 @@ paths:
       - ПрофСтарт - CMS
       summary: Карточка версии
       operationId: profstart_cms_test_get
-      description: Проектируемый контракт; backend ещё не реализован. Карточка теста;
-        состояние черновика определяется published_at.
+      description: Проектируемый контракт; backend ещё не реализован. Карточка версии
+        теста с status; код типа может быть новым, не только одним из трёх предзаданных.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -3953,8 +3994,9 @@ paths:
       - ПрофСтарт - CMS
       summary: Изменить черновик
       operationId: profstart_cms_test_patch
-      description: Проектируемый контракт; backend ещё не реализован. Тип и номер
-        версии неизменяемы; опубликованная версия возвращает 409.
+      description: Проектируемый контракт; backend ещё не реализован. Редактируется
+        только draft. Тип, номер версии и status не принимаются; active/archived —
+        409. Смена статуса через /publish и /archive.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -3993,9 +4035,9 @@ paths:
       - ПрофСтарт - CMS
       summary: Удалить черновик
       operationId: profstart_cms_test_delete
-      description: Проектируемый контракт; backend ещё не реализован. Только неопубликованный
-        тест без сессий. Его вопросы, варианты, группы и связи удаляются вместе с
-        тестом.
+      description: Проектируемый контракт; backend ещё не реализован. Только draft
+        без сессий. Вопросы, варианты, группы и связи удаляются вместе с черновиком.
+        active/archived — 409.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4025,9 +4067,9 @@ paths:
       - ПрофСтарт - CMS
       summary: Копировать в новую версию
       operationId: profstart_cms_copy_post
-      description: Проектируемый контракт; backend ещё не реализован. Новый тест-черновик
-        с published_at=null и собственными ID вложенных записей; группам и вопросам
-        отдельные черновики не создаются.
+      description: Проектируемый контракт; backend ещё не реализован. Копировать любую
+        версию в новый тест status=draft, published_at=null, с собственными ID всего
+        состава. Исходная версия и её сессии сохраняются.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4061,8 +4103,11 @@ paths:
       - ПрофСтарт - CMS
       summary: Проверить готовность публикации
       operationId: profstart_cms_validate_post
-      description: Проектируемый контракт; backend ещё не реализован. Проверка не
+      description: 'Проектируемый контракт; backend ещё не реализован. Проверка не
         меняет статус. Ошибки банка возвращаются с valid=false и errors в ответе 200.
+        Для solomin ровно 42 вопроса: по 3 на группу на каждой из want/can, максимум
+        9; для holland ровно 15, максимум 15; dellinger 1 вопрос. Для новых типов
+        только общая целостность, scale_maxima=[]; алгоритм итогового расчёта не добавляется.'
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4094,12 +4139,16 @@ paths:
     post:
       tags:
       - ПрофСтарт - CMS
-      summary: Опубликовать версию
+      summary: Опубликовать и активировать тест
       operationId: profstart_cms_publish_post
-      description: Проектируемый контракт; backend ещё не реализован. Проверяет целиком
-        тест и атомарно устанавливает published_at. Ошибки банка — 422. Повтор опубликованного
-        возвращает ту же запись. Для новых стартов выбирается опубликованная версия
-        с наибольшим version внутри типа; прежние остаются в истории.
+      description: Проектируемый контракт; backend ещё не реализован. После проверки
+        draft → active, published_at заполняется. Предыдущий active того же типа атомарно
+        становится archived. Не более одного active на тип, включая конкурентную активацию;
+        частичный UNIQUE(test_type_id) WHERE status=active. Неполный банк — 422. Повтор
+        active возвращает ту же запись; archived — 409, для новой публикации используется
+        /copy. Новые типы могут активироваться в CMS, но пользовательское прохождение
+        и итоговый расчёт пока доступны только solomin/holland/dellinger. Начатые
+        сессии прежней версии продолжаются.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4134,7 +4183,9 @@ paths:
       summary: Группы версии
       operationId: profstart_cms_groups_get
       description: Проектируемый контракт; backend ещё не реализован. Обычные группы
-        теста без собственных статусов, сортировка order ASC, id ASC.
+        теста без собственных статусов, сортировка order ASC, id ASC. Все ID в URL
+        проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+        — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4185,8 +4236,12 @@ paths:
       summary: Создать группу
       operationId: profstart_cms_groups_post
       description: Проектируемый контракт; backend ещё не реализован. Создать группу
-        в составе неопубликованного теста, без отдельного черновика группы. Точный
-        набор 7/6/5 проверяется при публикации теста.
+        в составе draft без отдельного статуса группы. Набор 7/6/5 и системные коды
+        проверяются только для трёх поддерживаемых методик; для нового типа состав
+        задаётся CMS. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+        несоответствие — 404. Изменение только при status=draft; active/archived —
+        409. Изменение состава и /publish используют общую блокировку теста, поэтому
+        запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4227,7 +4282,8 @@ paths:
       summary: Группа результата
       operationId: profstart_cms_group_get
       description: Проектируемый контракт; backend ещё не реализован. Группа теста
-        без статуса и без отдельной публикации.
+        без статуса и без отдельной публикации. Все ID в URL проверяются как цепочка
+        принадлежности тесту/группе/вопросу; несоответствие — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4269,7 +4325,11 @@ paths:
       summary: Изменить группу
       operationId: profstart_cms_group_patch
       description: Проектируемый контракт; backend ещё не реализован. Изменить содержание
-        неопубликованного теста. Код и категория проверяются по методике.
+        теста со status=draft. Код и категория проверяются по методике. Все ID в URL
+        проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+        — 404. Изменение только при status=draft; active/archived — 409. Изменение
+        состава и /publish используют общую блокировку теста, поэтому запись не может
+        попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4317,8 +4377,11 @@ paths:
       summary: Удалить несвязанную группу
       operationId: profstart_cms_group_delete
       description: Проектируемый контракт; backend ещё не реализован. Удалить группу
-        неопубликованного теста. Существующие варианты с group_id или связи профессий
-        блокируют удаление 409.
+        теста со status=draft. Существующие варианты с group_id или связи профессий
+        блокируют удаление 409. Все ID в URL проверяются как цепочка принадлежности
+        тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft;
+        active/archived — 409. Изменение состава и /publish используют общую блокировку
+        теста, поэтому запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4357,7 +4420,9 @@ paths:
       summary: Профессии группы
       operationId: profstart_cms_professions_get
       description: Проектируемый контракт; backend ещё не реализован. Профессии группы,
-        порядок profession_id ASC. Существующие Profession не изменяются.
+        порядок profession_id ASC. Существующие Profession не изменяются. Все ID в
+        URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+        — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4416,7 +4481,11 @@ paths:
       summary: Привязать профессию
       operationId: profstart_cms_professions_post
       description: Проектируемый контракт; backend ещё не реализован. Связь группы
-        неопубликованного теста с существующей профессией; дубликат — 409.
+        теста со status=draft с существующей профессией; дубликат — 409. Все ID в
+        URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+        — 404. Изменение только при status=draft; active/archived — 409. Изменение
+        состава и /publish используют общую блокировку теста, поэтому запись не может
+        попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4465,7 +4534,10 @@ paths:
       summary: Изменить коэффициент связи
       operationId: profstart_cms_profession_patch
       description: Проектируемый контракт; backend ещё не реализован. Изменить coefficient
-        связи в неопубликованном тесте.
+        связи в тесте со status=draft. Все ID в URL проверяются как цепочка принадлежности
+        тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft;
+        active/archived — 409. Изменение состава и /publish используют общую блокировку
+        теста, поэтому запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4521,7 +4593,11 @@ paths:
       summary: Отвязать профессию
       operationId: profstart_cms_profession_delete
       description: Проектируемый контракт; backend ещё не реализован. Удалить связь
-        неопубликованного теста, не Profession.
+        теста со status=draft, не Profession. Все ID в URL проверяются как цепочка
+        принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только
+        при status=draft; active/archived — 409. Изменение состава и /publish используют
+        общую блокировку теста, поэтому запись не может попасть в уже активированный
+        состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4569,7 +4645,8 @@ paths:
       operationId: profstart_cms_questions_get
       description: Проектируемый контракт; backend ещё не реализован. Вопросы теста
         с вариантами, group_id и weight. Отдельных черновиков вопросов нет. Сортировка
-        order ASC, id ASC.
+        order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+        несоответствие — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4620,7 +4697,11 @@ paths:
       summary: Создать вопрос
       operationId: profstart_cms_questions_post
       description: Проектируемый контракт; backend ещё не реализован. Создать вопрос
-        в неопубликованном тесте. type только single_choice; axis проверяется по методике.
+        в тесте со status=draft. type только single_choice; axis проверяется по методике.
+        Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+        несоответствие — 404. Изменение только при status=draft; active/archived —
+        409. Изменение состава и /publish используют общую блокировку теста, поэтому
+        запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4661,7 +4742,8 @@ paths:
       summary: Вопрос с ключом
       operationId: profstart_cms_question_get
       description: Проектируемый контракт; backend ещё не реализован. Вопрос и варианты
-        с непосредственно сохранёнными весами.
+        с непосредственно сохранёнными весами. Все ID в URL проверяются как цепочка
+        принадлежности тесту/группе/вопросу; несоответствие — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4703,8 +4785,11 @@ paths:
       summary: Изменить вопрос
       operationId: profstart_cms_question_patch
       description: Проектируемый контракт; backend ещё не реализован. Изменить содержание
-        неопубликованного теста, без отдельного статуса вопроса. При смене оси проверяется
-        ключ.
+        теста со status=draft, без отдельного статуса вопроса. При смене оси проверяется
+        ключ. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+        несоответствие — 404. Изменение только при status=draft; active/archived —
+        409. Изменение состава и /publish используют общую блокировку теста, поэтому
+        запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4752,7 +4837,11 @@ paths:
       summary: Удалить вопрос с вариантами
       operationId: profstart_cms_question_delete
       description: Проектируемый контракт; backend ещё не реализован. Удалить вопрос
-        неопубликованного теста вместе с вариантами. Отдельной таблицы весов нет.
+        теста со status=draft вместе с вариантами. Отдельной таблицы весов нет. Все
+        ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+        — 404. Изменение только при status=draft; active/archived — 409. Изменение
+        состава и /publish используют общую блокировку теста, поэтому запись не может
+        попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4791,8 +4880,11 @@ paths:
       summary: Задать порядок всех вопросов
       operationId: profstart_cms_order_put
       description: Проектируемый контракт; backend ещё не реализован. Полный список
-        question_ids неопубликованного теста без повторов, order назначается 1..N
-        атомарно. Неполный или чужой список — 422.
+        question_ids теста со status=draft без повторов, order назначается 1..N атомарно.
+        Неполный или чужой список — 422. Все ID в URL проверяются как цепочка принадлежности
+        тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft;
+        active/archived — 409. Изменение состава и /publish используют общую блокировку
+        теста, поэтому запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4846,7 +4938,9 @@ paths:
       summary: Варианты вопроса с весами
       operationId: profstart_cms_options_get
       description: Проектируемый контракт; backend ещё не реализован. Варианты вопроса,
-        каждый содержит group_id и weight. Сортировка order ASC, id ASC.
+        каждый содержит group_id и weight. Сортировка order ASC, id ASC. Все ID в
+        URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+        — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4906,7 +5000,11 @@ paths:
       operationId: profstart_cms_options_post
       description: Проектируемый контракт; backend ещё не реализован. Создать вариант
         с непосредственными group_id и weight. Группа той же версии; ось берётся из
-        вопроса. Неполный банк допускается до публикации теста.
+        вопроса. Неполный банк допускается до публикации теста. Все ID в URL проверяются
+        как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение
+        только при status=draft; active/archived — 409. Изменение состава и /publish
+        используют общую блокировку теста, поэтому запись не может попасть в уже активированный
+        состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -4955,7 +5053,8 @@ paths:
       summary: Вариант и ключ
       operationId: profstart_cms_option_get
       description: Проектируемый контракт; backend ещё не реализован. Вариант с group_id
-        и weight.
+        и weight. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+        несоответствие — 404.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -5006,7 +5105,10 @@ paths:
       operationId: profstart_cms_option_patch
       description: Проектируемый контракт; backend ещё не реализован. Изменить подпись,
         параметры, группу и вес через один PATCH варианта. Группа той же версии; отдельного
-        /weights нет.
+        /weights нет. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+        несоответствие — 404. Изменение только при status=draft; active/archived —
+        409. Изменение состава и /publish используют общую блокировку теста, поэтому
+        запись не может попасть в уже активированный состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -5062,7 +5164,11 @@ paths:
       summary: Удалить вариант и его вес
       operationId: profstart_cms_option_delete
       description: Проектируемый контракт; backend ещё не реализован. Удалить вариант
-        неопубликованного теста. Вес является его полем.
+        теста со status=draft. Вес является его полем. Все ID в URL проверяются как
+        цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение
+        только при status=draft; active/archived — 409. Изменение состава и /publish
+        используют общую блокировку теста, поэтому запись не может попасть в уже активированный
+        состав.
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -5106,11 +5212,12 @@ paths:
     get:
       tags:
       - profstart
-      summary: Доступные опубликованные тесты
+      summary: Доступные активные тесты
       operationId: profstart_tests_get
-      description: Проектируемый контракт; backend ещё не реализован. Для каждого
-        типа только последняя по version опубликованная версия, без ключа; пустой
-        список допустим.
+      description: Проектируемый контракт; backend ещё не реализован. Только status=active
+        и поддерживаемые коды solomin/holland/dellinger; максимум один тест на тип,
+        независимо от номера версии. Фильтры возраста и типа; без ключей. Новые типы
+        без алгоритма в пользовательский каталог не входят; пустой список допустим.
       x-implementation-status: planned
       parameters:
       - name: age_group_id
@@ -5152,11 +5259,16 @@ paths:
     get:
       tags:
       - profstart
-      summary: Инструкция опубликованного теста
+      summary: Карточка теста для старта или своей истории
       operationId: profstart_test_get
-      description: Проектируемый контракт; backend ещё не реализован. Инструкция последней
-        опубликованной версии типа. Старые версии для новых стартов недоступны, вопросы
-        начатой сессии доступны через её /questions.
+      description: 'Проектируемый контракт; backend ещё не реализован. Активная версия
+        поддерживаемого типа доступна для просмотра инструкции. Архивная версия доступна
+        только владельцу существующей сессии этого test_id (в любом статусе), чтобы
+        прочитать название и инструкцию в истории или продолжить начатый тест. Архивная
+        без своей сессии и draft — 409 test_not_active; неизвестный ID — 404. Тип
+        без алгоритма — 422 unsupported_test_type. Карточка содержит status, без весов
+        и ключей. Доступность карточки archived не разрешает новый старт: /sessions
+        требует active.'
       x-implementation-status: planned
       parameters:
       - name: test_id
@@ -5190,10 +5302,12 @@ paths:
       - profstart
       summary: Начать отдельное прохождение
       operationId: profstart_sessions_post
-      description: Проектируемый контракт; backend ещё не реализован. user_id определяется
-        контекстом, включая гостя. Старт только последней опубликованной версии типа.
-        При непустом age_group_ids обязателен подходящий age_group_id. Каждый успешный
-        старт создаёт новую сессию.
+      description: 'Проектируемый контракт; backend ещё не реализован. user_id определяется
+        контекстом, включая гостя. Только status=active: иначе 409 test_not_active.
+        Для нового типа без алгоритма — 422 unsupported_test_type, сессия не создаётся.
+        Разрешены solomin/holland/dellinger. При непустом age_group_ids обязателен
+        подходящий age_group_id. Каждый успешный старт создаёт отдельную сессию. Проверка
+        активности согласована с /publish и /archive атомарно.'
       x-implementation-status: planned
       parameters: []
       responses:
@@ -5302,7 +5416,9 @@ paths:
         неотвеченный вопрос. Повтор ранее принятого того же варианта возвращает сохранённый
         ответ и текущий прогресс без начисления, даже после закрытия сессии. Изменение
         принятого варианта, новая запись в закрытую сессию или нарушение порядка —
-        409; чужой вариант — 422.
+        409; чужой вариант — 422. ready_to_complete=true только для in_progress со
+        всеми ответами; при повторе в completed/abandoned — false. next_question_id=null
+        у закрытой сессии. Принятые time_spent_ms и answered_at не изменяются повтором.
       x-implementation-status: planned
       parameters:
       - name: id
@@ -5346,9 +5462,12 @@ paths:
       - profstart
       summary: Завершить и рассчитать результат
       operationId: profstart_complete_post
-      description: Проектируемый контракт; backend ещё не реализован. Проверяет все
-        вопросы. Неполная/abandoned-сессия — 409. Атомарно создаёт результат и рекомендации.
-        Повтор completed возвращает тот же результат.
+      description: 'Проектируемый контракт; backend ещё не реализован. Проверяет все
+        вопросы версии сессии: solomin 42, holland 15, dellinger 1. Неполная/abandoned-сессия
+        — 409. Расчёт только для solomin/holland/dellinger; иной код — 422 unsupported_test_type
+        без записи результата. Атомарно создаёт результат и рекомендации. Повтор completed
+        возвращает тот же результат. Архивирование теста не препятствует завершению
+        начатой сессии.'
       x-implementation-status: planned
       parameters:
       - name: id
@@ -5630,7 +5749,9 @@ paths:
       operationId: profstart_analytics_results_get
       description: Проектируемый контракт; backend ещё не реализован. Право аналитики;
         только финальные результаты. Период по created_at, порядок created_at DESC,
-        id DESC. Нет фильтров источника/интерфейса и флагов качества.
+        id DESC. Нет фильтров источника/интерфейса и флагов качества. Итоги создаются
+        только для solomin/holland/dellinger; новые типы не получают нулевые или произвольно
+        рассчитанные результаты.
       x-implementation-status: planned
       parameters:
       - name: limit
@@ -5759,6 +5880,12 @@ paths:
         completed этой когорты. Нулевой знаменатель даёт null. Средние групп включают
         нули, все равные ведущие учитываются. Средний score профессии только по содержащим
         её результатам. groups содержит все шкалы, professions=[] при отсутствии результатов.
+        Для типа без алгоритма — 422 unsupported_test_type; отсутствие результатов
+        не подменяет неподдерживаемую методику. Агрегаты только опубликованной версии
+        (active/archived); draft — 409 test_not_published. recommended_percent = recommended_count/result_count
+        × 100. profession_name — текущее название из Profession, снимки названий в
+        отдельных результатах неизменяемы. duration_ms = completed_at - started_at
+        в целых миллисекундах; у незавершённой сессии null.
       x-implementation-status: planned
       parameters:
       - name: test_type_id
@@ -5806,6 +5933,151 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProfStartSummary'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/test-types/{test_type_id}:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Карточка типа теста
+      operationId: profstart_cms_type_get
+      description: Проектируемый контракт; backend ещё не реализован. Карточка типа,
+        включая произвольный код нового типа.
+      x-implementation-status: planned
+      parameters:
+      - name: test_type_id
+        in: path
+        required: true
+        description: ID типа теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTestType'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+    patch:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Изменить название и описание типа
+      operationId: profstart_cms_type_patch
+      description: Проектируемый контракт; backend ещё не реализован. Редактируются
+        только name и description; code неизменяем, чтобы сохранить связь с алгоритмом
+        и историей.
+      x-implementation-status: planned
+      parameters:
+      - name: test_type_id
+        in: path
+        required: true
+        description: ID типа теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTestType'
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartTestTypePatch'
+    delete:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Удалить неиспользуемый тип
+      operationId: profstart_cms_type_delete
+      description: 'Проектируемый контракт; backend ещё не реализован. Тип, используемый
+        активным тестом, удалить нельзя: 409 type_in_use. Ссылки черновиков и архивных
+        тестов также защищены FK: 409, пока существуют связанные тесты; они не удаляются
+        каскадно. Проверка ссылок и удаление атомарны и согласованы с активацией тестов.'
+      x-implementation-status: planned
+      parameters:
+      - name: test_type_id
+        in: path
+        required: true
+        description: ID типа теста
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '204':
+          description: Тип удалён
+        '401':
+          $ref: '#/components/responses/ProfStartError401'
+        '403':
+          $ref: '#/components/responses/ProfStartError403'
+        '404':
+          $ref: '#/components/responses/ProfStartError404'
+        '409':
+          $ref: '#/components/responses/ProfStartError409'
+        '422':
+          $ref: '#/components/responses/ProfStartError422'
+  /cms/profstart/tests/{test_id}/archive:
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Архивировать активный тест
+      operationId: profstart_cms_archive_post
+      description: Проектируемый контракт; backend ещё не реализован. active → archived;
+        повтор archived возвращает ту же запись, draft — 409. published_at сохраняется;
+        новых стартов нет, начатые сессии и результаты остаются. После архивирования
+        тип может не иметь активного теста.
+      x-implementation-status: planned
+      parameters:
+      - name: test_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartTest'
         '401':
           $ref: '#/components/responses/ProfStartError401'
         '403':
@@ -7944,6 +8216,8 @@ components:
       - code
       - name
       - description
+      - created_at
+      - updated_at
       properties:
         id:
           type: integer
@@ -7951,14 +8225,22 @@ components:
           minimum: 1
         code:
           type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland,
+            dellinger; CMS может добавлять другие.'
         name:
           type: string
+          minLength: 1
         description:
           type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     ProfStartTestCreate:
       type: object
       additionalProperties: false
@@ -8027,6 +8309,7 @@ components:
       - published_at
       - created_at
       - updated_at
+      - status
       properties:
         id:
           type: integer
@@ -8059,6 +8342,8 @@ components:
         question_count:
           type: integer
           minimum: 0
+          description: 'В draft количество может быть неполным. Для публикации: solomin
+            — 42, holland — 15, dellinger — 1. Для нового типа число задаётся CMS.'
         group_count:
           type: integer
           minimum: 0
@@ -8067,8 +8352,8 @@ components:
           - string
           - 'null'
           format: date-time
-          description: null — черновик только теста; дата — опубликованная неизменяемая
-            версия
+          description: Дата первой активации; null у draft, заполнена у active и archived.
+            Статус определяется полем status.
         created_at:
           type: string
           format: date-time
@@ -8077,10 +8362,93 @@ components:
           format: date-time
         test_code_type:
           type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland,
+            dellinger; CMS может добавлять другие.'
+        status:
+          type: string
           enum:
-          - solomin
-          - holland
-          - dellinger
+          - draft
+          - active
+          - archived
+          description: Только тест имеет жизненный цикл. На один test_type_id допускается
+            не более одного active.
+      allOf:
+      - if:
+          properties:
+            status:
+              const: draft
+          required:
+          - status
+        then:
+          properties:
+            published_at:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              enum:
+              - active
+              - archived
+          required:
+          - status
+        then:
+          properties:
+            published_at:
+              type: string
+      - if:
+          properties:
+            status:
+              enum:
+              - active
+              - archived
+            test_code_type:
+              const: solomin
+          required:
+          - status
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            group_count:
+              const: 7
+      - if:
+          properties:
+            status:
+              enum:
+              - active
+              - archived
+            test_code_type:
+              const: holland
+          required:
+          - status
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            group_count:
+              const: 6
+      - if:
+          properties:
+            status:
+              enum:
+              - active
+              - archived
+            test_code_type:
+              const: dellinger
+          required:
+          - status
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            group_count:
+              const: 5
     ProfStartPublicTest:
       type: object
       additionalProperties: false
@@ -8094,6 +8462,7 @@ components:
       - instructions
       - age_group_ids
       - question_count
+      - status
       properties:
         id:
           type: integer
@@ -8118,15 +8487,56 @@ components:
             type: integer
             format: int64
             minimum: 1
+          uniqueItems: true
         question_count:
           type: integer
           minimum: 1
+          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
+            2), holland — 15, dellinger — 1.'
         test_code_type:
           type: string
           enum:
           - solomin
           - holland
           - dellinger
+        status:
+          type: string
+          enum:
+          - active
+          - archived
+          description: Архивная карточка доступна только владельцу существующей сессии;
+            новый старт разрешён только active.
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
     ProfStartGroupCreate:
       type: object
       additionalProperties: false
@@ -8140,6 +8550,8 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+          description: Уникальный внутри версии. Предзаданные коды фиксируются методикой;
+            для новых типов код группы задаётся CMS.
         name:
           type: string
           minLength: 1
@@ -8165,6 +8577,8 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+          description: Уникальный внутри версии. Предзаданные коды фиксируются методикой;
+            для новых типов код группы задаётся CMS.
         name:
           type: string
           minLength: 1
@@ -8206,6 +8620,8 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+          description: Уникальный внутри версии. Предзаданные коды фиксируются методикой;
+            для новых типов код группы задаётся CMS.
         name:
           type: string
           minLength: 1
@@ -8534,6 +8950,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartPublicOption'
+          minItems: 4
+          maxItems: 6
+          description: 'Полный набор опубликованного вопроса: 4 варианта Соломина,
+            6 Голланда, 5 Деллингер; точный состав проверяет сервер.'
     ProfStartGroupProfessionCreate:
       type: object
       additionalProperties: false
@@ -8658,6 +9078,11 @@ components:
               max_score:
                 type: number
                 minimum: 0
+      description: 'Общая проверка целостности для любого типа. Для solomin: 42 вопроса,
+        по 3 на каждую из 7 групп и осей want/can, максимум 9. Для holland: ровно
+        15 вопросов, 6 вариантов с весом 1, максимум 15. Для dellinger: 1 вопрос и
+        5 изображений. Для новых типов scale_maxima=[]: алгоритм итогового расчёта
+        пока отсутствует; общая проверка и активация в CMS допустимы.'
     ProfStartSessionCreate:
       type: object
       additionalProperties: false
@@ -8770,6 +9195,8 @@ components:
         question_count:
           type: integer
           minimum: 1
+          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
+            2), holland — 15, dellinger — 1.'
         answered_count:
           type: integer
           minimum: 0
@@ -8803,6 +9230,184 @@ components:
           - solomin
           - holland
           - dellinger
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            answered_count:
+              maximum: 42
+            answers:
+              maxItems: 42
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 42
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answers:
+                  minItems: 42
+          - if:
+              properties:
+                answered_count:
+                  const: 42
+              required:
+              - answered_count
+            then:
+              properties:
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            answered_count:
+              maximum: 15
+            answers:
+              maxItems: 15
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 15
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answers:
+                  minItems: 15
+          - if:
+              properties:
+                answered_count:
+                  const: 15
+              required:
+              - answered_count
+            then:
+              properties:
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            answered_count:
+              maximum: 1
+            answers:
+              maxItems: 1
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 1
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answers:
+                  minItems: 1
+          - if:
+              properties:
+                answered_count:
+                  const: 1
+              required:
+              - answered_count
+            then:
+              properties:
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            status:
+              const: abandoned
+          required:
+          - status
+        then:
+          properties:
+            next_question_id:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              const: completed
+          required:
+          - status
+        then:
+          properties:
+            completed_at:
+              type: string
+            result_id:
+              type: integer
+            next_question_id:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              enum:
+              - in_progress
+              - abandoned
+          required:
+          - status
+        then:
+          properties:
+            completed_at:
+              type: 'null'
+            result_id:
+              type: 'null'
+      description: Связь количества ответов с массивом answers, порядок ответов, уникальность
+        question_id и соответствие next_question_id проверяются сервером. completed
+        всегда имеет полный набор, completed_at и result_id; прочие статусы не имеют
+        результата.
     ProfStartAnswerReceipt:
       type: object
       additionalProperties: false
@@ -8826,6 +9431,10 @@ components:
         question_count:
           type: integer
           minimum: 1
+          enum:
+          - 1
+          - 15
+          - 42
         next_question_id:
           type:
           - integer
@@ -8834,6 +9443,78 @@ components:
           minimum: 1
         ready_to_complete:
           type: boolean
+          description: true только для in_progress после всех ответов. При повторе
+            ответа в completed/abandoned false.
+      allOf:
+      - if:
+          properties:
+            question_count:
+              const: 1
+          required:
+          - question_count
+        then:
+          properties:
+            answered_count:
+              maximum: 1
+          allOf:
+          - if:
+              properties:
+                ready_to_complete:
+                  const: true
+              required:
+              - ready_to_complete
+            then:
+              properties:
+                answered_count:
+                  const: 1
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            question_count:
+              const: 15
+          required:
+          - question_count
+        then:
+          properties:
+            answered_count:
+              maximum: 15
+          allOf:
+          - if:
+              properties:
+                ready_to_complete:
+                  const: true
+              required:
+              - ready_to_complete
+            then:
+              properties:
+                answered_count:
+                  const: 15
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            question_count:
+              const: 42
+          required:
+          - question_count
+        then:
+          properties:
+            answered_count:
+              maximum: 42
+          allOf:
+          - if:
+              properties:
+                ready_to_complete:
+                  const: true
+              required:
+              - ready_to_complete
+            then:
+              properties:
+                answered_count:
+                  const: 42
+                next_question_id:
+                  type: 'null'
     ProfStartScore:
       type: object
       additionalProperties: false
@@ -8876,10 +9557,14 @@ components:
         max_score:
           type: number
           exclusiveMinimum: 0
+          description: solomin — 9 на каждую группу/ось, holland — 15 на тип, dellinger
+            — 1 на фигуру.
         normalized_score:
           type: number
           minimum: 0
           maximum: 100
+          description: ' Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
+            JSON number.'
         rank:
           type: integer
           minimum: 1
@@ -8915,6 +9600,8 @@ components:
           type: number
           minimum: 0
           maximum: 100
+          description: ' Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
+            JSON number.'
         coefficient:
           type: number
           exclusiveMinimum: 0
@@ -8923,6 +9610,12 @@ components:
           type: number
           minimum: 0
           maximum: 100
+          description: round_half_up(normalized_score * coefficient, 2). Для Соломина
+            вклад до усреднения двух категорий; reasons содержит одну максимальную
+            subject- и одну labor-группу want. Для Голланда/Деллингер одну группу
+            общего максимального вклада. При равенстве вкладов выбирается наименьший
+            group_id. Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
+            JSON number.
     ProfStartRecommendation:
       type: object
       additionalProperties: false
@@ -8943,6 +9636,8 @@ components:
           type: number
           minimum: 0
           maximum: 100
+          description: ' Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
+            JSON number.'
         position:
           type: integer
           minimum: 1
@@ -8950,6 +9645,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartReason'
+          minItems: 1
     ProfStartResult:
       type: object
       additionalProperties: false
@@ -9003,6 +9699,8 @@ components:
         question_count:
           type: integer
           minimum: 1
+          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
+            2), holland — 15, dellinger — 1.'
         created_at:
           type: string
           format: date-time
@@ -9020,6 +9718,150 @@ components:
           - solomin
           - holland
           - dellinger
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            answered_count:
+              const: 42
+            scores:
+              minItems: 14
+              maxItems: 14
+              items:
+                properties:
+                  group_code:
+                    enum:
+                    - human_human
+                    - human_technology
+                    - human_sign
+                    - human_art
+                    - human_nature
+                    - executive
+                    - creative
+                  axis:
+                    enum:
+                    - want
+                    - can
+                  category:
+                    enum:
+                    - subject
+                    - labor
+                  raw_score:
+                    maximum: 9
+                    multipleOf: 1
+                  max_score:
+                    const: 9
+            professions:
+              items:
+                properties:
+                  reasons:
+                    minItems: 2
+                    maxItems: 2
+                    items:
+                      properties:
+                        axis:
+                          const: want
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            answered_count:
+              const: 15
+            scores:
+              minItems: 6
+              maxItems: 6
+              items:
+                properties:
+                  group_code:
+                    enum:
+                    - R
+                    - I
+                    - S
+                    - E
+                    - C
+                    - A
+                  axis:
+                    enum:
+                    - general
+                  category:
+                    enum:
+                    - riasec
+                  raw_score:
+                    maximum: 15
+                    multipleOf: 1
+                  max_score:
+                    const: 15
+            professions:
+              items:
+                properties:
+                  reasons:
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      properties:
+                        axis:
+                          const: general
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            answered_count:
+              const: 1
+            scores:
+              minItems: 5
+              maxItems: 5
+              items:
+                properties:
+                  group_code:
+                    enum:
+                    - square
+                    - triangle
+                    - circle
+                    - zigzag
+                    - rectangle
+                  axis:
+                    enum:
+                    - general
+                  category:
+                    enum:
+                    - geometry
+                  raw_score:
+                    maximum: 1
+                    multipleOf: 1
+                  max_score:
+                    const: 1
+            professions:
+              items:
+                properties:
+                  reasons:
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      properties:
+                        axis:
+                          const: general
+      description: 'Один итог завершённой сессии. Сервер проверяет полный набор уникальных
+        (group_id, axis): solomin 14, holland 6, dellinger 5; соответствие group_code,
+        category и test_id; уникальность profession_id и порядок рекомендаций.'
     ProfStartAnalyticsSession:
       type: object
       additionalProperties: false
@@ -9073,6 +9915,8 @@ components:
         question_count:
           type: integer
           minimum: 1
+          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 ×
+            2), holland — 15, dellinger — 1.'
         answered_count:
           type: integer
           minimum: 0
@@ -9101,6 +9945,110 @@ components:
           - solomin
           - holland
           - dellinger
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            answered_count:
+              maximum: 42
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            answered_count:
+              maximum: 15
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            answered_count:
+              maximum: 1
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: completed
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 1
+      - if:
+          properties:
+            status:
+              const: completed
+          required:
+          - status
+        then:
+          properties:
+            completed_at:
+              type: string
+            result_id:
+              type: integer
+            duration_ms:
+              type: integer
+      - if:
+          properties:
+            status:
+              enum:
+              - in_progress
+              - abandoned
+          required:
+          - status
+        then:
+          properties:
+            completed_at:
+              type: 'null'
+            result_id:
+              type: 'null'
+            duration_ms:
+              type: 'null'
+      description: Связь количества ответов с массивом answers, порядок ответов, уникальность
+        question_id и соответствие next_question_id проверяются сервером. completed
+        всегда имеет полный набор, completed_at и result_id; прочие статусы не имеют
+        результата.
     ProfStartTestPage:
       type: object
       additionalProperties: false
@@ -9407,6 +10355,8 @@ components:
                 minimum: 1
               profession_name:
                 type: string
+                description: Текущее название из справочника Profession; историческое
+                  название конкретной рекомендации хранится в результате.
               recommended_count:
                 type: integer
                 minimum: 1
@@ -9414,10 +10364,42 @@ components:
                 type: number
                 minimum: 0
                 maximum: 100
+                description: recommended_count / result_count * 100; знаменатель —
+                  все результаты выбранной когорты.
               mean_score:
                 type: number
                 minimum: 0
                 maximum: 100
+    ProfStartTestTypeCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland,
+            dellinger; CMS может добавлять другие.'
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+    ProfStartTestTypePatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
   responses:
     ProfStartError401:
       description: Требуется действительный пользовательский/административный контекст
