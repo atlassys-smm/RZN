@@ -1127,6 +1127,8 @@ session-active:
     description: |
       Возвращает текущую незавершённую сессию (status=1, waiting или status=2, active) для указанного LED-устройства.
       Оператор использует запрос для отображения сессии, уже запущенной на этом устройстве.
+      Всегда возвращает `round_count` — общее количество раундов и `current_round_question_count` — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов относится к первому раунду.
+      Во время active также возвращает текущий раунд, вопрос и таймер. `select=teams` и `select=participants` добавляют состав команд и участников; несколько значений select передаются повторяющимися параметрами запроса.
       Если активной сессии нет — возвращает 404.
     parameters:
       - name: device_id
@@ -1139,7 +1141,7 @@ session-active:
         in: query
         description: Связанные данные для включения
         style: form
-        explode: false
+        explode: true
         schema:
           type: array
           items:
@@ -1169,8 +1171,8 @@ session-detail:
     tags: [Викторина]
     summary: Получить сессию
     description: |
-      Без параметра select возвращает только базовые поля сессии (QuizSession).
-      С параметром select возвращает QuizSessionFull с запрошенными связями. Если `participant_id` принадлежит капитану и запрошен `current_question`, `answer_submissions` содержит предварительные ответы команды. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
+      Возвращает базовые поля сессии и счётчики round_count/current_round_question_count; во время active также текущий раунд, вопрос и таймер.
+      `select=teams` и `select=participants` добавляют состав команд и участников. Несколько значений select передаются повторяющимися параметрами запроса. Если `participant_id` принадлежит капитану, `answer_submissions` текущего вопроса содержит ответы его команды. До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
     parameters:
       - name: id
         in: path
@@ -1182,7 +1184,7 @@ session-detail:
         in: query
         description: Связанные данные для включения
         style: form
-        explode: false
+        explode: true
         schema:
           type: array
           items:
@@ -1201,7 +1203,7 @@ session-detail:
           format: int64
     responses:
       '200':
-        description: Сессия. Без select — только базовые поля. С select — запрошенные связи заполнены, остальные null.
+        description: Состояние сессии; select добавляет запрошенные списки команд и участников.
         content:
           application/json:
             schema:
@@ -1809,93 +1811,28 @@ player-answer:
 # ═══════════════════════════════════════════════════════════════
 # WebSocket — обновления в реальном времени
 # ═══════════════════════════════════════════════════════════════
+# URL: ws://host/api/quiz/sessions/{sessionId}/ws
+# Формат: {"type": "event_name", "data": {...}}; data опускается у уведомлений без данных.
+# Схема: components/schemas/QuizWebSocketEvent в openapi.yaml.
+# Канал: x-websocket-channels.quiz-session в openapi.yaml.
+# Полное описание и примеры: ../websocket.md, раздел «Викторина».
 #
-# WebSocket-эндпоинты для получения обновлений в реальном времени.
-# OpenAPI 3.1 не поддерживает WebSocket, поэтому описание приведено ниже.
-#
-# ## Подключение
-#
-# ws://host/api/quiz/sessions/{sessionId}/ws
-#
-# ## События от сервера
-#
-# ### session_state
-# Обновление состояния сессии (для оператора и LED).
-#
-# {
-#   "type": "session_state",
-#   "data": {
-#     "status": 2,
-#     "current_round": { "index": 0, "round_type": 1 },
-#     "current_question": { ... },
-#     "timer": { "ends_at": 1780000000000, "remaining_at_pause": null, "running": true },
-#     "scores": [...]
-#   }
-# }
-#
-# ### question_started
-# Начался приём ответов на вопрос.
-#
-# {
-#   "type": "question_started",
-#   "data": {
-#     "question_index": 0,
-#     "time_limit": 30
-#   }
-# }
-#
-# ### answers_update
-# Новый предварительный ответ участника или решающий ответ капитана. Капитан обновляет состояние запросом GET /quiz/sessions/{id}?select=current_question&participant_id={captainParticipantId}.
-#
-# {
-#   "type": "answers_update",
-#   "data": {
-#     "submitted_count": 8,
-#     "eligible_count": 12
-#   }
-# }
-#
-# ### question_revealed
-# Правильный ответ показан.
-#
-# {
-#   "type": "question_revealed",
-#   "data": {
-#     "correct_answer": {
-#       "answer": { ... },
-#       "explanation": "Пояснение"
-#     }
-#   }
-# }
-#
-# ### round_finished
-# Раунд завершён, показ результатов.
-#
-# {
-#   "type": "round_finished",
-#   "data": {
-#     "round_index": 0,
-#     "scores": [...]
-#   }
-# }
-#
-# ### session_finished
-# Сессия завершена.
-#
-# {
-#   "type": "session_finished",
-#   "data": {}
-# }
-#
-# ## События от клиента
-#
-# ### subscribe
-# Подписка на определённые типы событий.
-#
-# {
-#   "type": "subscribe",
-#   "events": ["answers_update", "question_revealed"]
-# }
-#
-# Если не отправлено — клиент получает все события.
-
+# Все события имеют формат {"type": "event_name"}, без data.
+# session_state — уведомление после смены вопроса, раскрытия ответа,
+# изменения таймера и завершения сессии; снимок состояния не передаётся.
+# При подключении/переподключении сервер не отправляет начальный session_state.
+# После подключения и каждого события клиент запрашивает
+# GET /quiz/sessions/active?device_id=...&select=teams&select=participants.
+# Состояние содержит round_count и current_round_question_count.
+# События: participant_joined, participant_team_changed, captain_changed,
+# team_renamed, answers_update, question_started, question_revealed,
+# timer_paused, timer_resumed, timer_updated, timer_stopped, timer_expired,
+# round_finished (включая последний раунд), session_finished, session_state.
+# После завершения active возвращает 404; состояние и результаты доступны по ID.
+# Ответы команды доступны капитану через
+# GET /quiz/sessions/{id}?participant_id={captainParticipantId}.
+# Истечение таймера проверяет POST /quiz/sessions/{id}/led/next, фоновой рассылки нет.
+# Подключение получает все события сессии; subscribe-фильтрация не поддерживается.
+# Перед регистрацией сокета проверяется существование сессии запросом только её id.
+# Соединение с БД освобождается до ожидания сообщений.
+# Несуществующая сессия отклоняется до принятия WebSocket: close 1008 в ASGI, HTTP 403 при handshake.

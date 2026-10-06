@@ -12,6 +12,34 @@ servers:
   - url: http://localhost:8000/api
     description: Локальная разработка
 
+x-websocket-channels:
+  quiz-session:
+    url: /api/quiz/sessions/{sessionId}/ws
+    description: |
+      Канал оператора, LED и игрока. После подключения и переподключения клиент сам
+      запрашивает актуальное состояние через GET /quiz/sessions/active с device_id.
+      Все сообщения содержат только type, без data. После каждого события клиент запрашивает
+      GET /quiz/sessions/active?device_id=...; состав доступен с select=teams&select=participants.
+      session_state уведомляет о смене вопроса, раскрытии ответа, изменении таймера и завершении сессии.
+      Ответы команды доступны капитану через REST с participant_id, не в общей рассылке.
+      Подключение к сокету не вызывает отправку session_state. Перед регистрацией
+      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
+      Истечение таймера проверяется вызовом POST /quiz/sessions/{id}/led/next.
+    message:
+      $ref: '#/components/schemas/QuizWebSocketEvent'
+  interactive-video-session:
+    url: /api/interactive-video/sessions/{sessionId}/ws
+    description: |
+      Канал LED, оператора и мобильного клиента видеосценариев. Перед регистрацией
+      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
+      После подключения и переподключения клиент сам запрашивает состояние через
+      GET /interactive-video/sessions/{id}/state или /voting?participant_id=... .
+      Начальное состояние сервер не отправляет. Все уведомления относятся к sessionId из URL.
+    message:
+      $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
+
 tags:
   - name: auth
     description: Авторизация и аутентификация
@@ -1439,10 +1467,19 @@ components:
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от параметра select.
       type: object
+      required: [round_count, current_round_question_count]
       allOf:
         - $ref: '#/components/schemas/QuizSession'
         - type: object
           properties:
+            round_count:
+              type: integer
+              minimum: 0
+              description: Общее количество раундов в сессии.
+            current_round_question_count:
+              type: integer
+              minimum: 0
+              description: Количество вопросов в текущем раунде; до старта — в первом раунде, 0 при отсутствии раунда.
             current_round:
               type: object
               nullable: true
@@ -1552,8 +1589,10 @@ components:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
     QuizSessionState:
-      description: Текущее состояние игры викторины (для next, reveal)
+      description: Текущее состояние игры викторины для REST-запросов. По WebSocket передаются только уведомления.
       type: object
+      allOf:
+        - $ref: '#/components/schemas/QuizSessionFull'
       properties:
         status:
           type: integer
@@ -1675,10 +1714,46 @@ components:
         remaining_at_pause:
           type: integer
           nullable: true
-          description: Секунд осталось на момент паузы. Заполняется если running=false.
+          description: Секунд осталось на момент паузы. Null при работающем или закрытом таймере.
         running:
           type: boolean
-          description: true — таймер идёт, false — на паузе
+          description: true — таймер идёт, false — на паузе или приём ответов закрыт
+    QuizWebSocketEvent:
+      type: object
+      required: [type]
+      additionalProperties: false
+      description: |
+        Уведомление канала викторины, содержащее только тип события.
+        Сессия определяется URL подключения. После события клиент запрашивает
+        GET /quiz/sessions/active?device_id=...; состояние игры в сокете не передаётся.
+      properties:
+        type:
+          type: string
+          enum:
+            - session_state
+            - participant_joined
+            - participant_team_changed
+            - captain_changed
+            - team_renamed
+            - answers_update
+            - question_started
+            - question_revealed
+            - timer_paused
+            - timer_resumed
+            - timer_updated
+            - timer_stopped
+            - timer_expired
+            - round_finished
+            - session_finished
+      example:
+        type: answers_update
+    InteractiveVideoWebSocketEvent:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [phase_changed, votes_updated, scenario_finished, session_finished]
     QuizScoredEntry:
       description: Запись с баллами. id — team_id для mode=2 (team), participant_id для mode=1 (individual).
       type: object
