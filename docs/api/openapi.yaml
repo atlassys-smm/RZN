@@ -81,12 +81,10 @@ tags:
     description: Получение состояния показа для LED-экрана
   - name: Профессии в действии - Зритель
     description: Мобильный клиент — подключение и голосование
-  - name: profstart
+  - name: ПрофСтарт - Пользователь
     description: ПрофСтарт — тестирование
   - name: ПрофСтарт - CMS
-    description: Проектируемое управление версиями, вопросами, весами и связями профессий
-  - name: ПрофСтарт - Аналитика
-    description: Проектируемые результаты и агрегаты ПрофСтарт
+    description: Управление версиями, вопросами, весами и связями профессий
   - name: analytics
     description: Аналитика и события
   - name: cms
@@ -341,22 +339,16 @@ paths:
     $ref: ./paths/profstart.yaml#/questions
   /profstart/sessions/{id}/answer:
     $ref: ./paths/profstart.yaml#/answer
-  /profstart/sessions/{id}/complete:
-    $ref: ./paths/profstart.yaml#/complete
   /profstart/sessions/{id}/abandon:
     $ref: ./paths/profstart.yaml#/abandon
   /profstart/sessions/{id}/result:
     $ref: ./paths/profstart.yaml#/result
+  /profstart/me/recommendations:
+    $ref: ./paths/profstart.yaml#/me-recommendations
   /profstart/me/results:
     $ref: ./paths/profstart.yaml#/me-results
-  /analytics/profstart/sessions:
-    $ref: ./paths/profstart.yaml#/analytics-sessions
-  /analytics/profstart/results:
-    $ref: ./paths/profstart.yaml#/analytics-results
-  /analytics/profstart/results/{result_id}:
-    $ref: ./paths/profstart.yaml#/analytics-result
-  /analytics/profstart/summary:
-    $ref: ./paths/profstart.yaml#/analytics-summary
+  /cms/profstart/test-types/recommendation-weights:
+    $ref: ./paths/profstart.yaml#/cms-recommendation-weights
   /cms/profstart/test-types/{test_type_id}:
     $ref: ./paths/profstart.yaml#/cms-type
   /cms/profstart/tests/{test_id}/archive:
@@ -2502,47 +2494,7 @@ components:
           type: string
           format: date-time
 
-    # ── ПрофСтарт: проектируемые схемы ─────────────
-    ProfStartError:
-      type: object
-      additionalProperties: false
-      required:
-      - code
-      - message
-      - details
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        details:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - code
-            - entity
-            - entity_id
-            - field
-            - message
-            properties:
-              code:
-                type: string
-              entity:
-                type: string
-              entity_id:
-                type:
-                - integer
-                - 'null'
-                format: int64
-                minimum: 1
-              field:
-                type:
-                - string
-                - 'null'
-              message:
-                type: string
+    # ── ПрофСтарт: схемы ─────────────
     ProfStartTestType:
       type: object
       additionalProperties: false
@@ -2553,6 +2505,7 @@ components:
       - description
       - created_at
       - updated_at
+      - recommendation_weight_percent
       properties:
         id:
           type: integer
@@ -2563,8 +2516,8 @@ components:
           pattern: ^[a-z][a-z0-9_]*$
           minLength: 1
           maxLength: 64
-          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland, dellinger; CMS может добавлять
-            другие.'
+          description: Уникальный код типа. Коды solomin, holland, dellinger фиксированы. Код дополнительного
+            типа можно изменить только при отсутствии связанных тестов.
         name:
           type: string
           minLength: 1
@@ -2576,6 +2529,13 @@ components:
         updated_at:
           type: string
           format: date-time
+        recommendation_weight_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 'Влияние типа на общий подбор профессий, целый процент. Предзаданные веса: solomin=40,
+            holland=40, dellinger=20. 0 исключает тип из общего подбора; новые типы без алгоритма имеют только
+            0.'
     ProfStartTestCreate:
       type: object
       additionalProperties: false
@@ -2586,7 +2546,6 @@ components:
         test_type_id:
           type: integer
           format: int64
-          minimum: 1
         name:
           type: string
           minLength: 1
@@ -2601,7 +2560,6 @@ components:
           items:
             type: integer
             format: int64
-            minimum: 1
           uniqueItems: true
           default: []
     ProfStartTestPatch:
@@ -2623,7 +2581,6 @@ components:
           items:
             type: integer
             format: int64
-            minimum: 1
           uniqueItems: true
           default: []
       minProperties: 1
@@ -2677,8 +2634,8 @@ components:
         question_count:
           type: integer
           minimum: 0
-          description: 'В draft количество может быть неполным. Для публикации: solomin — 42, holland — 15, dellinger
-            — 1. Для нового типа число задаётся CMS.'
+          description: 'В draft количество может быть неполным. Для публикации: solomin — 42, holland — 15,
+            dellinger — 1. Для нового типа число задаётся CMS.'
         group_count:
           type: integer
           minimum: 0
@@ -2687,8 +2644,8 @@ components:
           - string
           - 'null'
           format: date-time
-          description: Дата первой активации; null у draft, заполнена у active и archived. Статус определяется полем
-            status.
+          description: Дата первой активации; null у draft, заполнена у active и archived. Статус определяется
+            полем status.
         created_at:
           type: string
           format: date-time
@@ -2700,20 +2657,22 @@ components:
           pattern: ^[a-z][a-z0-9_]*$
           minLength: 1
           maxLength: 64
-          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland, dellinger; CMS может добавлять
-            другие.'
+          description: Уникальный код типа. Коды solomin, holland, dellinger фиксированы. Код дополнительного
+            типа можно изменить только при отсутствии связанных тестов.
         status:
-          type: string
+          type: integer
+          format: int32
           enum:
-          - draft
-          - active
-          - archived
-          description: Только тест имеет жизненный цикл. На один test_type_id допускается не более одного active.
+          - 1
+          - 2
+          - 3
+          description: 1 — draft, 2 — active, 3 — archived. Только тест имеет жизненный цикл. На один test_type_id допускается не более одного
+            active.
       allOf:
       - if:
           properties:
             status:
-              const: draft
+              const: 1
           required:
           - status
         then:
@@ -2724,8 +2683,8 @@ components:
           properties:
             status:
               enum:
-              - active
-              - archived
+              - 2
+              - 3
           required:
           - status
         then:
@@ -2736,8 +2695,8 @@ components:
           properties:
             status:
               enum:
-              - active
-              - archived
+              - 2
+              - 3
             test_code_type:
               const: solomin
           required:
@@ -2753,8 +2712,8 @@ components:
           properties:
             status:
               enum:
-              - active
-              - archived
+              - 2
+              - 3
             test_code_type:
               const: holland
           required:
@@ -2770,8 +2729,8 @@ components:
           properties:
             status:
               enum:
-              - active
-              - archived
+              - 2
+              - 3
             test_code_type:
               const: dellinger
           required:
@@ -2833,11 +2792,12 @@ components:
           - holland
           - dellinger
         status:
-          type: string
+          type: integer
+          format: int32
           enum:
-          - active
-          - archived
-          description: Архивная карточка доступна только владельцу существующей сессии; новый старт разрешён только
+          - 2
+          - 3
+          description: 2 — active, 3 — archived. Архивная карточка доступна только владельцу существующей сессии; новый старт разрешён только
             active.
       allOf:
       - if:
@@ -2983,30 +2943,53 @@ components:
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
         value:
           type:
           - integer
           - 'null'
           minimum: 0
           maximum: 3
+          description: Шкала Соломина 0–3; для Голланда и Деллингер поле формы не передаётся, в ответе value=null.
         order:
           type: integer
           minimum: 1
         group_id:
           type: integer
           format: int64
-          minimum: 1
         weight:
           type: number
           minimum: 0
           maximum: 3
           description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется из вопроса.'
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Файл вопроса или варианта; при PATCH заменяет прикреплённый файл.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file. Без превью для видео создаётся
+            первый кадр.
+      description: Поля передаются отдельными частями multipart/form-data, файл — в file, превью — в file_preview.
+        media_id не принимается. file_preview без нового file — 422. При PATCH без нового file сохраняются
+        прежний файл и его метаданные; file_title и file_description применяются только к новому файлу.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
     ProfStartOptionPatch:
       type: object
       additionalProperties: false
@@ -3015,31 +2998,54 @@ components:
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
         value:
           type:
           - integer
           - 'null'
           minimum: 0
           maximum: 3
+          description: Шкала Соломина 0–3; для Голланда и Деллингер поле формы не передаётся, в ответе value=null.
         order:
           type: integer
           minimum: 1
         group_id:
           type: integer
           format: int64
-          minimum: 1
         weight:
           type: number
           minimum: 0
           maximum: 3
           description: 'Соломин: 0–3 и равно value; Голланд/Деллингер: 1. Ось наследуется из вопроса.'
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Файл вопроса или варианта; при PATCH заменяет прикреплённый файл.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file. Без превью для видео создаётся
+            первый кадр.
       minProperties: 1
+      description: Поля передаются отдельными частями multipart/form-data, файл — в file, превью — в file_preview.
+        media_id не принимается. file_preview без нового file — 422. При PATCH без нового file сохраняются
+        прежний файл и его метаданные; file_title и file_description применяются только к новому файлу.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
     ProfStartOption:
       type: object
       additionalProperties: false
@@ -3047,7 +3053,7 @@ components:
       - id
       - question_id
       - text
-      - media_id
+      - file
       - value
       - order
       - group_id
@@ -3064,12 +3070,12 @@ components:
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Файл с подписанными url/preview_url и метаданными; null без вложения. Внутренний media_id
+            не выдаётся.
         value:
           type:
           - integer
@@ -3094,7 +3100,7 @@ components:
       required:
       - id
       - text
-      - media_id
+      - file
       - value
       - order
       properties:
@@ -3104,12 +3110,12 @@ components:
           minimum: 1
         text:
           type: string
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Файл с подписанными url/preview_url и метаданными; null без вложения. Внутренний media_id
+            не выдаётся.
         value:
           type:
           - integer
@@ -3138,18 +3144,43 @@ components:
           - want
           - can
           - general
+          description: 'Блок вопроса: want/can у Соломина, general у других тестов. В итогах Соломина блоки
+            суммируются по группе.'
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
         order:
           type: integer
           minimum: 1
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Файл вопроса или варианта; при PATCH заменяет прикреплённый файл.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file. Без превью для видео создаётся
+            первый кадр.
+      description: Поля передаются отдельными частями multipart/form-data, файл — в file, превью — в file_preview.
+        media_id не принимается. file_preview без нового file — 422. При PATCH без нового file сохраняются
+        прежний файл и его метаданные; file_title и file_description применяются только к новому файлу.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
     ProfStartQuestionPatch:
       type: object
       additionalProperties: false
@@ -3165,19 +3196,44 @@ components:
           - want
           - can
           - general
+          description: 'Блок вопроса: want/can у Соломина, general у других тестов. В итогах Соломина блоки
+            суммируются по группе.'
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
         order:
           type: integer
           minimum: 1
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Файл вопроса или варианта; при PATCH заменяет прикреплённый файл.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file. Без превью для видео создаётся
+            первый кадр.
       minProperties: 1
+      description: Поля передаются отдельными частями multipart/form-data, файл — в file, превью — в file_preview.
+        media_id не принимается. file_preview без нового file — 422. При PATCH без нового file сохраняются
+        прежний файл и его метаданные; file_title и file_description применяются только к новому файлу.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
     ProfStartQuestion:
       type: object
       additionalProperties: false
@@ -3187,7 +3243,7 @@ components:
       - type
       - axis
       - text
-      - media_id
+      - file
       - order
       - options
       - created_at
@@ -3211,15 +3267,17 @@ components:
           - want
           - can
           - general
+          description: 'Блок вопроса: want/can у Соломина, general у других тестов. В итогах Соломина блоки
+            суммируются по группе.'
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Файл с подписанными url/preview_url и метаданными; null без вложения. Внутренний media_id
+            не выдаётся.
         order:
           type: integer
           minimum: 1
@@ -3242,7 +3300,7 @@ components:
       - type
       - axis
       - text
-      - media_id
+      - file
       - order
       - options
       properties:
@@ -3264,15 +3322,17 @@ components:
           - want
           - can
           - general
+          description: 'Блок вопроса: want/can у Соломина, general у других тестов. В итогах Соломина блоки
+            суммируются по группе.'
         text:
           type: string
           minLength: 1
-        media_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Файл с подписанными url/preview_url и метаданными; null без вложения. Внутренний media_id
+            не выдаётся.
         order:
           type: integer
           minimum: 1
@@ -3282,8 +3342,8 @@ components:
             $ref: '#/components/schemas/ProfStartPublicOption'
           minItems: 4
           maxItems: 6
-          description: 'Полный набор опубликованного вопроса: 4 варианта Соломина, 6 Голланда, 5 Деллингер; точный состав
-            проверяет сервер.'
+          description: 'Полный набор опубликованного вопроса: 4 варианта Соломина, 6 Голланда, 5 Деллингер;
+            точный состав проверяет сервер.'
     ProfStartGroupProfessionCreate:
       type: object
       additionalProperties: false
@@ -3293,7 +3353,6 @@ components:
         profession_id:
           type: integer
           format: int64
-          minimum: 1
         coefficient:
           type: number
           exclusiveMinimum: 0
@@ -3392,26 +3451,22 @@ components:
             additionalProperties: false
             required:
             - group_id
-            - axis
             - max_score
             properties:
               group_id:
                 type: integer
                 format: int64
                 minimum: 1
-              axis:
-                type: string
-                enum:
-                - want
-                - can
-                - general
               max_score:
                 type: number
                 minimum: 0
-      description: 'Общая проверка целостности для любого типа. Для solomin: 42 вопроса, по 3 на каждую из 7 групп и
-        осей want/can, максимум 9. Для holland: ровно 15 вопросов, 6 вариантов с весом 1, максимум 15. Для dellinger:
-        1 вопрос и 5 изображений. Для новых типов scale_maxima=[]: алгоритм итогового расчёта пока отсутствует; общая
-        проверка и активация в CMS допустимы.'
+          description: 'Максимум общего показателя каждой группы: solomin — 18, holland — 15, dellinger —
+            1; без разделения по блокам вопросов.'
+      description: 'Общая проверка целостности для любого типа. Для solomin: 42 вопроса, по 3 на каждую из
+        7 групп и блоков want/can; общий максимум группы 18, семь показателей результата. Для holland: ровно
+        15 вопросов, 6 вариантов с весом 1, максимум 15. Для dellinger: 1 вопрос и 5 изображений. Для новых
+        типов scale_maxima=[]: алгоритм итогового расчёта пока отсутствует; общая проверка и активация в CMS
+        допустимы.'
     ProfStartSessionCreate:
       type: object
       additionalProperties: false
@@ -3421,13 +3476,11 @@ components:
         test_id:
           type: integer
           format: int64
-          minimum: 1
         age_group_id:
           type:
           - integer
           - 'null'
           format: int64
-          minimum: 1
     ProfStartAnswerWrite:
       type: object
       additionalProperties: false
@@ -3439,13 +3492,12 @@ components:
         question_id:
           type: integer
           format: int64
-          minimum: 1
         answer_option_id:
           type: integer
           format: int64
-          minimum: 1
         time_spent_ms:
           type: integer
+          format: int32
           minimum: 0
     ProfStartSavedAnswer:
       type: object
@@ -3466,7 +3518,9 @@ components:
           minimum: 1
         time_spent_ms:
           type: integer
+          format: int32
           minimum: 0
+          maximum: 2147483647
         answered_at:
           type: string
           format: date-time
@@ -3516,11 +3570,13 @@ components:
           format: int64
           minimum: 1
         status:
-          type: string
+          type: integer
+          format: int32
           enum:
-          - in_progress
-          - completed
-          - abandoned
+          - 1
+          - 2
+          - 3
+          description: 1 — in_progress, 2 — completed, 3 — abandoned.
         question_count:
           type: integer
           minimum: 1
@@ -3577,7 +3633,7 @@ components:
           - if:
               properties:
                 status:
-                  const: completed
+                  const: 2
               required:
               - status
             then:
@@ -3587,7 +3643,7 @@ components:
           - if:
               properties:
                 status:
-                  const: completed
+                  const: 2
               required:
               - status
             then:
@@ -3622,7 +3678,7 @@ components:
           - if:
               properties:
                 status:
-                  const: completed
+                  const: 2
               required:
               - status
             then:
@@ -3632,7 +3688,7 @@ components:
           - if:
               properties:
                 status:
-                  const: completed
+                  const: 2
               required:
               - status
             then:
@@ -3667,7 +3723,7 @@ components:
           - if:
               properties:
                 status:
-                  const: completed
+                  const: 2
               required:
               - status
             then:
@@ -3677,7 +3733,7 @@ components:
           - if:
               properties:
                 status:
-                  const: completed
+                  const: 2
               required:
               - status
             then:
@@ -3697,7 +3753,7 @@ components:
       - if:
           properties:
             status:
-              const: abandoned
+              const: 3
           required:
           - status
         then:
@@ -3707,7 +3763,7 @@ components:
       - if:
           properties:
             status:
-              const: completed
+              const: 2
           required:
           - status
         then:
@@ -3722,8 +3778,8 @@ components:
           properties:
             status:
               enum:
-              - in_progress
-              - abandoned
+              - 1
+              - 3
           required:
           - status
         then:
@@ -3744,7 +3800,7 @@ components:
       - answered_count
       - question_count
       - next_question_id
-      - ready_to_complete
+      - status
       properties:
         session_id:
           type: integer
@@ -3768,9 +3824,15 @@ components:
           - 'null'
           format: int64
           minimum: 1
-        ready_to_complete:
-          type: boolean
-          description: true только для in_progress после всех ответов. При повторе ответа в completed/abandoned false.
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'Текущий статус прохождения: 1 — in_progress, 2 — completed, 3 — abandoned. После последнего
+            ответа — 2; результат читается отдельно через GET /profstart/sessions/{id}/result.'
       allOf:
       - if:
           properties:
@@ -3785,10 +3847,10 @@ components:
           allOf:
           - if:
               properties:
-                ready_to_complete:
-                  const: true
+                status:
+                  const: 2
               required:
-              - ready_to_complete
+              - status
             then:
               properties:
                 answered_count:
@@ -3808,10 +3870,10 @@ components:
           allOf:
           - if:
               properties:
-                ready_to_complete:
-                  const: true
+                status:
+                  const: 2
               required:
-              - ready_to_complete
+              - status
             then:
               properties:
                 answered_count:
@@ -3831,16 +3893,32 @@ components:
           allOf:
           - if:
               properties:
-                ready_to_complete:
-                  const: true
+                status:
+                  const: 2
               required:
-              - ready_to_complete
+              - status
             then:
               properties:
                 answered_count:
                   const: 42
                 next_question_id:
                   type: 'null'
+      - if:
+          properties:
+            status:
+              enum:
+              - 2
+              - 3
+          required:
+          - status
+        then:
+          properties:
+            next_question_id:
+              type: 'null'
+      description: Последний ответ, показатели групп, рекомендации и переход в completed сохраняются одной
+        транзакцией. При ошибке расчёта последний ответ не принимается. Повтор возвращает сохранённый ответ
+        и текущий прогресс без повторного расчёта. Сам результат в подтверждение не включается и читается
+        через GET /profstart/sessions/{id}/result.
     ProfStartScore:
       type: object
       additionalProperties: false
@@ -3849,7 +3927,6 @@ components:
       - group_code
       - group_name
       - category
-      - axis
       - raw_score
       - max_score
       - normalized_score
@@ -3871,19 +3948,14 @@ components:
           - labor
           - riasec
           - geometry
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
         raw_score:
           type: number
           minimum: 0
         max_score:
           type: number
           exclusiveMinimum: 0
-          description: solomin — 9 на каждую группу/ось, holland — 15 на тип, dellinger — 1 на фигуру.
+          description: solomin — 18 на группу (3 вопроса × 2 блока × 3 балла), holland — 15 на тип, dellinger
+            — 1 на фигуру.
         normalized_score:
           type: number
           minimum: 0
@@ -3894,6 +3966,8 @@ components:
           minimum: 1
         is_leading:
           type: boolean
+      description: Один общий показатель группы. У Соломина суммируются ответы блоков want и can; axis в результат
+        не входит.
     ProfStartReason:
       type: object
       additionalProperties: false
@@ -3901,7 +3975,6 @@ components:
       - group_id
       - group_code
       - group_name
-      - axis
       - normalized_score
       - coefficient
       - contribution
@@ -3914,12 +3987,6 @@ components:
           type: string
         group_name:
           type: string
-        axis:
-          type: string
-          enum:
-          - want
-          - can
-          - general
         normalized_score:
           type: number
           minimum: 0
@@ -3933,10 +4000,11 @@ components:
           type: number
           minimum: 0
           maximum: 100
-          description: round_half_up(normalized_score * coefficient, 2). Для Соломина вклад до усреднения двух категорий;
-            reasons содержит одну максимальную subject- и одну labor-группу want. Для Голланда/Деллингер одну группу
-            общего максимального вклада. При равенстве вкладов выбирается наименьший group_id. Значение округлено до
-            двух знаков ROUND_HALF_UP на Decimal; JSON number.
+          description: round_half_up(normalized_score * coefficient, 2). Для Соломина вклад до усреднения
+            двух категорий; reasons содержит одну максимальную subject- и одну labor-группу по объединённым
+            баллам want + can. Для Голланда/Деллингер одну группу общего максимального вклада. При равенстве
+            вкладов выбирается наименьший group_id. Значение округлено до двух знаков ROUND_HALF_UP на Decimal;
+            JSON number.
     ProfStartRecommendation:
       type: object
       additionalProperties: false
@@ -4019,7 +4087,8 @@ components:
         question_count:
           type: integer
           minimum: 1
-          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 × 2), holland — 15, dellinger — 1.'
+          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 × 2), holland — 15, dellinger
+            — 1.'
         created_at:
           type: string
           format: date-time
@@ -4051,8 +4120,8 @@ components:
             answered_count:
               const: 42
             scores:
-              minItems: 14
-              maxItems: 14
+              minItems: 7
+              maxItems: 7
               items:
                 properties:
                   group_code:
@@ -4064,29 +4133,21 @@ components:
                     - human_nature
                     - executive
                     - creative
-                  axis:
-                    enum:
-                    - want
-                    - can
                   category:
                     enum:
                     - subject
                     - labor
                   raw_score:
-                    maximum: 9
+                    maximum: 18
                     multipleOf: 1
                   max_score:
-                    const: 9
+                    const: 18
             professions:
               items:
                 properties:
                   reasons:
                     minItems: 2
                     maxItems: 2
-                    items:
-                      properties:
-                        axis:
-                          const: want
       - if:
           properties:
             test_code_type:
@@ -4112,9 +4173,6 @@ components:
                     - E
                     - C
                     - A
-                  axis:
-                    enum:
-                    - general
                   category:
                     enum:
                     - riasec
@@ -4129,10 +4187,6 @@ components:
                   reasons:
                     minItems: 1
                     maxItems: 1
-                    items:
-                      properties:
-                        axis:
-                          const: general
       - if:
           properties:
             test_code_type:
@@ -4157,9 +4211,6 @@ components:
                     - circle
                     - zigzag
                     - rectangle
-                  axis:
-                    enum:
-                    - general
                   category:
                     enum:
                     - geometry
@@ -4174,198 +4225,9 @@ components:
                   reasons:
                     minItems: 1
                     maxItems: 1
-                    items:
-                      properties:
-                        axis:
-                          const: general
-      description: 'Один итог завершённой сессии. Сервер проверяет полный набор уникальных (group_id, axis): solomin
-        14, holland 6, dellinger 5; соответствие group_code, category и test_id; уникальность profession_id и порядок
-        рекомендаций.'
-    ProfStartAnalyticsSession:
-      type: object
-      additionalProperties: false
-      required:
-      - id
-      - test_id
-      - test_type_id
-      - test_code_type
-      - test_version
-      - user_id
-      - age_group_id
-      - status
-      - question_count
-      - answered_count
-      - started_at
-      - completed_at
-      - result_id
-      - duration_ms
-      properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_version:
-          type: integer
-          minimum: 1
-        user_id:
-          type: integer
-          format: int64
-          minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        status:
-          type: string
-          enum:
-          - in_progress
-          - completed
-          - abandoned
-        question_count:
-          type: integer
-          minimum: 1
-          description: 'Число вопросов закреплённой версии: solomin — 42 (7 × 3 × 2), holland — 15, dellinger — 1.'
-        answered_count:
-          type: integer
-          minimum: 0
-        started_at:
-          type: string
-          format: date-time
-        completed_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        result_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
-        duration_ms:
-          type:
-          - integer
-          - 'null'
-          minimum: 0
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-      allOf:
-      - if:
-          properties:
-            test_code_type:
-              const: solomin
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 42
-            answered_count:
-              maximum: 42
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 42
-      - if:
-          properties:
-            test_code_type:
-              const: holland
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 15
-            answered_count:
-              maximum: 15
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 15
-      - if:
-          properties:
-            test_code_type:
-              const: dellinger
-          required:
-          - test_code_type
-        then:
-          properties:
-            question_count:
-              const: 1
-            answered_count:
-              maximum: 1
-          allOf:
-          - if:
-              properties:
-                status:
-                  const: completed
-              required:
-              - status
-            then:
-              properties:
-                answered_count:
-                  const: 1
-      - if:
-          properties:
-            status:
-              const: completed
-          required:
-          - status
-        then:
-          properties:
-            completed_at:
-              type: string
-            result_id:
-              type: integer
-            duration_ms:
-              type: integer
-      - if:
-          properties:
-            status:
-              enum:
-              - in_progress
-              - abandoned
-          required:
-          - status
-        then:
-          properties:
-            completed_at:
-              type: 'null'
-            result_id:
-              type: 'null'
-            duration_ms:
-              type: 'null'
-      description: Связь количества ответов с массивом answers, порядок ответов, уникальность question_id и соответствие
-        next_question_id проверяются сервером. completed всегда имеет полный набор, completed_at и result_id; прочие
-        статусы не имеют результата.
+      description: 'Один итог завершённой сессии. Сервер проверяет полный набор уникальных group_id: solomin
+        7, holland 6, dellinger 5; соответствие group_code, category и test_id; уникальность profession_id
+        и порядок рекомендаций.'
     ProfStartTestPage:
       type: object
       additionalProperties: false
@@ -4504,188 +4366,6 @@ components:
         offset:
           type: integer
           minimum: 0
-    ProfStartAnalyticsSessionPage:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - total
-      - limit
-      - offset
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartAnalyticsSession'
-        total:
-          type: integer
-          minimum: 0
-        limit:
-          type: integer
-          minimum: 1
-          maximum: 100
-        offset:
-          type: integer
-          minimum: 0
-    ProfStartSummary:
-      type: object
-      additionalProperties: false
-      required:
-      - test_type_id
-      - test_id
-      - date_from
-      - date_to
-      - started_count
-      - in_progress_count
-      - completed_count
-      - abandoned_count
-      - unique_user_count
-      - completion_rate
-      - mean_completed_duration_ms
-      - result_count
-      - groups
-      - professions
-      properties:
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        date_from:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        date_to:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        started_count:
-          type: integer
-          minimum: 0
-        in_progress_count:
-          type: integer
-          minimum: 0
-        completed_count:
-          type: integer
-          minimum: 0
-        abandoned_count:
-          type: integer
-          minimum: 0
-        unique_user_count:
-          type: integer
-          minimum: 0
-        completion_rate:
-          type:
-          - number
-          - 'null'
-          minimum: 0
-          maximum: 100
-        mean_completed_duration_ms:
-          type:
-          - number
-          - 'null'
-          minimum: 0
-        result_count:
-          type: integer
-          minimum: 0
-        groups:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - group_id
-            - group_code
-            - group_name
-            - category
-            - axis
-            - result_count
-            - mean_raw_score
-            - mean_normalized_score
-            - leading_count
-            - leading_percent
-            properties:
-              group_id:
-                type: integer
-                format: int64
-                minimum: 1
-              group_code:
-                type: string
-              group_name:
-                type: string
-              category:
-                type: string
-                enum:
-                - subject
-                - labor
-                - riasec
-                - geometry
-              axis:
-                type: string
-                enum:
-                - want
-                - can
-                - general
-              result_count:
-                type: integer
-                minimum: 0
-              mean_raw_score:
-                type:
-                - number
-                - 'null'
-                minimum: 0
-              mean_normalized_score:
-                type:
-                - number
-                - 'null'
-                minimum: 0
-                maximum: 100
-              leading_count:
-                type: integer
-                minimum: 0
-              leading_percent:
-                type:
-                - number
-                - 'null'
-                minimum: 0
-                maximum: 100
-        professions:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            required:
-            - profession_id
-            - profession_name
-            - recommended_count
-            - recommended_percent
-            - mean_score
-            properties:
-              profession_id:
-                type: integer
-                format: int64
-                minimum: 1
-              profession_name:
-                type: string
-                description: Текущее название из справочника Profession; историческое название конкретной рекомендации
-                  хранится в результате.
-              recommended_count:
-                type: integer
-                minimum: 1
-              recommended_percent:
-                type: number
-                minimum: 0
-                maximum: 100
-                description: recommended_count / result_count * 100; знаменатель — все результаты выбранной когорты.
-              mean_score:
-                type: number
-                minimum: 0
-                maximum: 100
     ProfStartTestTypeCreate:
       type: object
       additionalProperties: false
@@ -4698,56 +4378,331 @@ components:
           pattern: ^[a-z][a-z0-9_]*$
           minLength: 1
           maxLength: 64
-          description: 'Уникальный неизменяемый код. Предзаданные: solomin, holland, dellinger; CMS может добавлять
-            другие.'
+          description: Уникальный код типа. Коды solomin, holland, dellinger фиксированы. Код дополнительного
+            типа можно изменить только при отсутствии связанных тестов.
         name:
           type: string
           minLength: 1
         description:
           type: string
           default: ''
+        recommendation_weight_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 'Влияние типа на общий подбор профессий, целый процент. Предзаданные веса: solomin=40,
+            holland=40, dellinger=20. 0 исключает тип из общего подбора; новые типы без алгоритма имеют только
+            0.'
+          default: 0
     ProfStartTestTypePatch:
       type: object
       additionalProperties: false
       minProperties: 1
       properties:
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: Уникальный код типа. Коды solomin, holland, dellinger фиксированы. Код дополнительного
+            типа можно изменить только при отсутствии связанных тестов.
         name:
           type: string
           minLength: 1
         description:
           type: string
-
-  responses:
-    ProfStartError401:
-      description: Требуется действительный пользовательский/административный контекст
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError403:
-      description: Нет требуемого права
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError404:
-      description: Ресурс не найден или недоступен владельцу
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError409:
-      description: Конфликт состояния, дубликат или несовместимое изменение
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
-    ProfStartError422:
-      description: Некорректные параметры, ссылки или неполная версия
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartError'
+        recommendation_weight_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 'Влияние типа на общий подбор профессий, целый процент. Предзаданные веса: solomin=40,
+            holland=40, dellinger=20. 0 исключает тип из общего подбора; новые типы без алгоритма имеют только
+            0.'
+    ProfStartRecommendationWeightsUpdate:
+      type: object
+      additionalProperties: false
+      required:
+      - solomin
+      - holland
+      - dellinger
+      properties:
+        solomin:
+          type: integer
+          minimum: 0
+          maximum: 100
+        holland:
+          type: integer
+          minimum: 0
+          maximum: 100
+        dellinger:
+          type: integer
+          minimum: 0
+          maximum: 100
+      description: Полный набор процентов. Сумма solomin + holland + dellinger обязана равняться 100; проверяется
+        сервером. Все изменения сохраняются атомарно в test_types.recommendation_weight_percent.
+      example:
+        solomin: 40
+        holland: 40
+        dellinger: 20
+    ProfStartCombinedWeight:
+      type: object
+      additionalProperties: false
+      required:
+      - test_type_id
+      - test_code_type
+      - recommendation_weight_percent
+      properties:
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+        recommendation_weight_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 'Влияние типа на общий подбор профессий, целый процент. Предзаданные веса: solomin=40,
+            holland=40, dellinger=20. 0 исключает тип из общего подбора; новые типы без алгоритма имеют только
+            0.'
+      description: Текущий настроенный вес поддерживаемого типа, в том числе 0.
+    ProfStartCombinedSource:
+      type: object
+      additionalProperties: false
+      required:
+      - test_type_id
+      - test_code_type
+      - recommendation_weight_percent
+      - result_id
+      - test_id
+      - test_version
+      - result_created_at
+      - effective_weight_percent
+      properties:
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+        recommendation_weight_percent:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: 'Влияние типа на общий подбор профессий, целый процент. Предзаданные веса: solomin=40,
+            holland=40, dellinger=20. 0 исключает тип из общего подбора; новые типы без алгоритма имеют только
+            0.'
+        result_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_version:
+          type: integer
+          minimum: 1
+        result_created_at:
+          type: string
+          format: date-time
+        effective_weight_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          exclusiveMinimum: 0
+          description: 100 * recommendation_weight_percent / available_weight_percent; отображение до двух
+            знаков. Формула общего балла использует точную дробь.
+      description: 'Последний завершённый результат данного типа у владельца, включая архивные версии. Сортировка
+        при выборе: created_at DESC, id DESC. Только типы с положительным весом.'
+    ProfStartCombinedContribution:
+      type: object
+      additionalProperties: false
+      required:
+      - test_type_id
+      - test_code_type
+      - recommendation_weight_percent
+      - result_id
+      - effective_weight_percent
+      - test_score
+      - contribution
+      properties:
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_code_type:
+          type: string
+          enum:
+          - solomin
+          - holland
+          - dellinger
+        recommendation_weight_percent:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: 'Влияние типа на общий подбор профессий, целый процент. Предзаданные веса: solomin=40,
+            holland=40, dellinger=20. 0 исключает тип из общего подбора; новые типы без алгоритма имеют только
+            0.'
+        result_id:
+          type: integer
+          format: int64
+          minimum: 1
+        effective_weight_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          exclusiveMinimum: 0
+        test_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Сохранённый score профессии в результате этого теста; 0, если профессии в нём нет.
+        contribution:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: round_half_up(test_score * recommendation_weight_percent / available_weight_percent,
+            2). Отображаемый вклад; общий score округляется после точного суммирования.
+      description: Одна запись для каждого результата из results, включая нулевой вклад профессии. Порядок
+        solomin, holland, dellinger.
+    ProfStartCombinedProfession:
+      type: object
+      additionalProperties: false
+      required:
+      - profession_id
+      - profession_name
+      - score
+      - position
+      - contributions
+      properties:
+        profession_id:
+          type: integer
+          format: int64
+          minimum: 1
+        profession_name:
+          type: string
+          description: Текущее название Profession; снимки отдельных результатов не изменяются.
+        score:
+          type: number
+          minimum: 0
+          exclusiveMinimum: 0
+          maximum: 100
+          description: round_half_up(sum(test_score * recommendation_weight_percent) / available_weight_percent,
+            2).
+        position:
+          type: integer
+          minimum: 1
+        contributions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartCombinedContribution'
+          minItems: 1
+          maxItems: 3
+      description: Уникальная профессия общего рейтинга. Порядок по округлённому score DESC, profession_id
+        ASC; только score > 0.
+    ProfStartCombinedRecommendations:
+      type: object
+      additionalProperties: false
+      required:
+      - calculated_at
+      - is_complete
+      - available_weight_percent
+      - weights
+      - results
+      - missing_test_types
+      - professions
+      properties:
+        calculated_at:
+          type: string
+          format: date-time
+        is_complete:
+          type: boolean
+        available_weight_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Сумма настроенных весов типов, имеющих завершённый результат у владельца.
+        weights:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartCombinedWeight'
+          minItems: 1
+          maxItems: 3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartCombinedSource'
+          maxItems: 3
+        missing_test_types:
+          type: array
+          items:
+            type: string
+            enum:
+            - solomin
+            - holland
+            - dellinger
+          uniqueItems: true
+          maxItems: 3
+          description: Типы с положительным настроенным весом, для которых нет завершённого результата.
+        professions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartCombinedProfession'
+      description: Общий подбор владельца по актуальным весам и последним завершённым результатам. Изменение
+        весов пересчитывает эту выдачу, не меняя сохранённые итоги тестов. Все массивы типов идут в порядке
+        solomin, holland, dellinger; сервер проверяет уникальность типов, владельца и соответствие contributions/results.
+      allOf:
+      - if:
+          properties:
+            available_weight_percent:
+              const: 0
+          required:
+          - available_weight_percent
+        then:
+          properties:
+            is_complete:
+              const: false
+            results:
+              maxItems: 0
+            professions:
+              maxItems: 0
+            missing_test_types:
+              minItems: 1
+      - if:
+          properties:
+            is_complete:
+              const: true
+          required:
+          - is_complete
+        then:
+          properties:
+            available_weight_percent:
+              const: 100
+            results:
+              minItems: 1
+            missing_test_types:
+              maxItems: 0
+      - if:
+          properties:
+            is_complete:
+              const: false
+          required:
+          - is_complete
+        then:
+          properties:
+            available_weight_percent:
+              maximum: 99
+            missing_test_types:
+              minItems: 1
 
 security:
   - bearerAuth: []

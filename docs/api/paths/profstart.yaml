@@ -1,13 +1,14 @@
-# Целевой контракт ПрофСтарт; backend не реализован.
+# Контракт ПрофСтарт: CMS и пользовательское прохождение.
 cms-types:
   get:
     tags:
     - ПрофСтарт - CMS
     summary: Каталог типов тестов
     operationId: profstart_cms_types_get
-    description: Проектируемый контракт; backend ещё не реализован. Все типы, включая созданные CMS; порядок id
-      ASC. Наличие типа не означает поддержку итогового расчёта.
-    x-implementation-status: planned
+    description: Все типы, включая созданные CMS; порядок
+      id ASC. Наличие типа не означает поддержку итогового расчёта.
+    x-implementation-status: implemented
+    security: []
     parameters: []
     responses:
       '200':
@@ -18,25 +19,24 @@ cms-types:
               type: array
               items:
                 $ref: '#/components/schemas/ProfStartTestType'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Создать тип теста
     operationId: profstart_cms_types_post
-    description: Проектируемый контракт; backend ещё не реализован. Создать новый тип с уникальным неизменяемым
-      code. Дубликат — 409. Алгоритмы результатов доступны только для solomin, holland, dellinger; создание типа
-      не добавляет алгоритм.
-    x-implementation-status: planned
+    description: 'Создать новый тип с уникальным неизменяемым
+      code. Дубликат — 409. Алгоритмы результатов доступны только для solomin, holland, dellinger; создание
+      типа не добавляет алгоритм. recommendation_weight_percent по умолчанию 0. Неподдерживаемый тип не
+      может получить положительный вес: 422. Сумма весов поддерживаемых типов должна
+      оставаться 100: иначе 422.'
+    x-implementation-status: implemented
+    security: []
     parameters: []
     responses:
       '201':
@@ -45,16 +45,12 @@ cms-types:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTestType'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -67,9 +63,10 @@ cms-tests:
     - ПрофСтарт - CMS
     summary: Версии тестов
     operationId: profstart_cms_tests_get
-    description: Проектируемый контракт; backend ещё не реализован. Фильтры test_type_id и status=draft/active/archived;
+    description: Фильтры test_type_id и status=1/2/3 (draft/active/archived);
       порядок created_at DESC, id DESC. Каталог типов расширяем.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: limit
       in: query
@@ -99,13 +96,11 @@ cms-tests:
     - name: status
       in: query
       required: false
-      description: Статус теста
+      description: 1 — draft, 2 — active, 3 — archived
       schema:
-        type: string
-        enum:
-        - draft
-        - active
-        - archived
+        type: integer
+        format: int32
+        enum: [1, 2, 3]
     responses:
       '200':
         description: Успешный ответ
@@ -113,24 +108,21 @@ cms-tests:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTestPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Создать черновик версии
     operationId: profstart_cms_tests_post
-    description: Проектируемый контракт; backend ещё не реализован. Любой существующий test_type_id; сервер назначает
-      номер версии, status=draft и published_at=null. Только тест имеет черновик.
-    x-implementation-status: planned
+    description: Любой существующий test_type_id; сервер назначает
+      номер версии, status=1 (draft) и published_at=null. Только тест имеет черновик.
+    x-implementation-status: implemented
+    security: []
     parameters: []
     responses:
       '201':
@@ -139,16 +131,12 @@ cms-tests:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTest'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -161,9 +149,10 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Карточка версии
     operationId: profstart_cms_test_get
-    description: Проектируемый контракт; backend ещё не реализован. Карточка версии теста с status; код типа может
+    description: Карточка версии теста с status; код типа может
       быть новым, не только одним из трёх предзаданных.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -180,24 +169,21 @@ cms-test:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTest'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   patch:
     tags:
     - ПрофСтарт - CMS
     summary: Изменить черновик
     operationId: profstart_cms_test_patch
-    description: Проектируемый контракт; backend ещё не реализован. Редактируется только draft. Тип, номер версии
+    description: Редактируется только draft. Тип, номер версии
       и status не принимаются; active/archived — 409. Смена статуса через /publish и /archive.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -214,16 +200,12 @@ cms-test:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTest'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -235,9 +217,10 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Удалить черновик
     operationId: profstart_cms_test_delete
-    description: Проектируемый контракт; backend ещё не реализован. Только draft без сессий. Вопросы, варианты,
+    description: Только draft без сессий. Вопросы, варианты,
       группы и связи удаляются вместе с черновиком. active/archived — 409.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -250,25 +233,22 @@ cms-test:
     responses:
       '204':
         description: Удалено
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-copy:
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Копировать в новую версию
     operationId: profstart_cms_copy_post
-    description: Проектируемый контракт; backend ещё не реализован. Копировать любую версию в новый тест status=draft,
+    description: Копировать любую версию в новый тест status=1 (draft),
       published_at=null, с собственными ID всего состава. Исходная версия и её сессии сохраняются.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -285,27 +265,25 @@ cms-copy:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTest'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-validate:
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Проверить готовность публикации
     operationId: profstart_cms_validate_post
-    description: 'Проектируемый контракт; backend ещё не реализован. Проверка не меняет статус. Ошибки банка возвращаются
-      с valid=false и errors в ответе 200. Для solomin ровно 42 вопроса: по 3 на группу на каждой из want/can, максимум
-      9; для holland ровно 15, максимум 15; dellinger 1 вопрос. Для новых типов только общая целостность, scale_maxima=[];
-      алгоритм итогового расчёта не добавляется.'
-    x-implementation-status: planned
+    description: 'Проверка не меняет статус. Ошибки
+      банка возвращаются с valid=false и errors в ответе 200. Для solomin ровно 42 вопроса: по 3 на группу
+      в каждом блоке want/can; общий максимум группы 18. scale_maxima содержит по одной записи на группу
+      без axis. Для holland ровно 15, максимум 15; dellinger 1 вопрос. Для новых
+      типов только общая целостность, scale_maxima=[]; алгоритм итогового расчёта не добавляется.'
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -322,29 +300,26 @@ cms-validate:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartValidation'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-publish:
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Опубликовать и активировать тест
     operationId: profstart_cms_publish_post
-    description: Проектируемый контракт; backend ещё не реализован. После проверки draft → active, published_at
+    description: После проверки draft → active, published_at
       заполняется. Предыдущий active того же типа атомарно становится archived. Не более одного active на тип, включая
-      конкурентную активацию; частичный UNIQUE(test_type_id) WHERE status=active. Неполный банк — 422. Повтор active
+      конкурентную активацию; частичный UNIQUE(test_type_id) WHERE status=2. Неполный банк — 422. Повтор active
       возвращает ту же запись; archived — 409, для новой публикации используется /copy. Новые типы могут активироваться
       в CMS, но пользовательское прохождение и итоговый расчёт пока доступны только solomin/holland/dellinger. Начатые
       сессии прежней версии продолжаются.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -361,26 +336,23 @@ cms-publish:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTest'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-groups:
   get:
     tags:
     - ПрофСтарт - CMS
     summary: Группы версии
     operationId: profstart_cms_groups_get
-    description: Проектируемый контракт; backend ещё не реализован. Обычные группы теста без собственных статусов,
+    description: Обычные группы теста без собственных статусов,
       сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
       — 404.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -414,27 +386,24 @@ cms-groups:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroupPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Создать группу
     operationId: profstart_cms_groups_post
-    description: Проектируемый контракт; backend ещё не реализован. Создать группу в составе draft без отдельного
+    description: Создать группу в составе draft без отдельного
       статуса группы. Набор 7/6/5 и системные коды проверяются только для трёх поддерживаемых методик; для нового
       типа состав задаётся CMS. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
-      — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish используют общую
+      — 404. Изменение только при status=1 (draft); active/archived — 409. Изменение состава и /publish используют общую
       блокировку теста, поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -451,16 +420,12 @@ cms-groups:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroup'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -473,9 +438,10 @@ cms-group:
     - ПрофСтарт - CMS
     summary: Группа результата
     operationId: profstart_cms_group_get
-    description: Проектируемый контракт; backend ещё не реализован. Группа теста без статуса и без отдельной публикации.
+    description: Группа теста без статуса и без отдельной публикации.
       Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -500,26 +466,23 @@ cms-group:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroup'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   patch:
     tags:
     - ПрофСтарт - CMS
     summary: Изменить группу
     operationId: profstart_cms_group_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание теста со status=draft. Код
+    description: Изменить содержание теста со status=1 (draft). Код
       и категория проверяются по методике. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
-      несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish
+      несоответствие — 404. Изменение только при status=1 (draft); active/archived — 409. Изменение состава и /publish
       используют общую блокировку теста, поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -544,16 +507,12 @@ cms-group:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroup'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -565,12 +524,13 @@ cms-group:
     - ПрофСтарт - CMS
     summary: Удалить несвязанную группу
     operationId: profstart_cms_group_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить группу теста со status=draft. Существующие
+    description: Удалить группу теста со status=1 (draft). Существующие
       варианты с group_id или связи профессий блокируют удаление 409. Все ID в URL проверяются как цепочка принадлежности
-      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение
+      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=1 (draft); active/archived — 409. Изменение
       состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
       состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -591,26 +551,23 @@ cms-group:
     responses:
       '204':
         description: Удалено
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-professions:
   get:
     tags:
     - ПрофСтарт - CMS
     summary: Профессии группы
     operationId: profstart_cms_professions_get
-    description: Проектируемый контракт; backend ещё не реализован. Профессии группы, порядок profession_id ASC.
+    description: Профессии группы, порядок profession_id ASC.
       Существующие Profession не изменяются. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
       несоответствие — 404.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -652,26 +609,23 @@ cms-professions:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroupProfessionPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Привязать профессию
     operationId: profstart_cms_professions_post
-    description: Проектируемый контракт; backend ещё не реализован. Связь группы теста со status=draft с существующей
+    description: Связь группы теста со status=1 (draft) с существующей
       профессией; дубликат — 409. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
-      — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish используют общую
+      — 404. Изменение только при status=1 (draft); active/archived — 409. Изменение состава и /publish используют общую
       блокировку теста, поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -696,16 +650,12 @@ cms-professions:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroupProfession'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -718,11 +668,12 @@ cms-profession:
     - ПрофСтарт - CMS
     summary: Изменить коэффициент связи
     operationId: profstart_cms_profession_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить coefficient связи в тесте со status=draft.
+    description: Изменить coefficient связи в тесте со status=1 (draft).
       Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение
-      только при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку теста,
+      только при status=1 (draft); active/archived — 409. Изменение состава и /publish используют общую блокировку теста,
       поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -755,16 +706,12 @@ cms-profession:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartGroupProfession'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -776,11 +723,12 @@ cms-profession:
     - ПрофСтарт - CMS
     summary: Отвязать профессию
     operationId: profstart_cms_profession_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить связь теста со status=draft, не Profession.
+    description: Удалить связь теста со status=1 (draft), не Profession.
       Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение
-      только при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку теста,
+      только при status=1 (draft); active/archived — 409. Изменение состава и /publish используют общую блокировку теста,
       поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -809,26 +757,23 @@ cms-profession:
     responses:
       '204':
         description: Удалено
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-questions:
   get:
     tags:
     - ПрофСтарт - CMS
     summary: Вопросы с вариантами и их весами
     operationId: profstart_cms_questions_get
-    description: Проектируемый контракт; backend ещё не реализован. Вопросы теста с вариантами, group_id и weight.
-      Отдельных черновиков вопросов нет. Сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности
-      тесту/группе/вопросу; несоответствие — 404.
-    x-implementation-status: planned
+    description: Вопросы теста с вариантами, group_id
+      и weight. Отдельных черновиков вопросов нет. Сортировка order ASC, id ASC. Все ID в URL проверяются
+      как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -862,26 +807,27 @@ cms-questions:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartQuestionPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Создать вопрос
     operationId: profstart_cms_questions_post
-    description: Проектируемый контракт; backend ещё не реализован. Создать вопрос в тесте со status=draft. type
-      только single_choice; axis проверяется по методике. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
-      несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish
-      используют общую блокировку теста, поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    description: Создать вопрос в тесте со status=1 (draft).
+      type только single_choice; axis проверяется по методике. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=1 (draft); active/archived —
+      409. Изменение состава и /publish используют общую блокировку теста, поэтому запись не может попасть
+      в уже активированный состав. Поля передаются отдельными частями multipart/form-data, файл — в file,
+      превью — в file_preview. media_id не принимается. file_preview без нового file — 422. При PATCH
+      без нового file сохраняются прежний файл и его метаданные; file_title и file_description применяются
+      только к новому файлу.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -898,20 +844,16 @@ cms-questions:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartQuestion'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartQuestionCreate'
 cms-question:
@@ -920,9 +862,11 @@ cms-question:
     - ПрофСтарт - CMS
     summary: Вопрос с ключом
     operationId: profstart_cms_question_get
-    description: Проектируемый контракт; backend ещё не реализован. Вопрос и варианты с непосредственно сохранёнными
-      весами. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
-    x-implementation-status: planned
+    description: Вопрос и варианты с непосредственно
+      сохранёнными весами. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+      — 404.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -947,27 +891,27 @@ cms-question:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartQuestion'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   patch:
     tags:
     - ПрофСтарт - CMS
     summary: Изменить вопрос
     operationId: profstart_cms_question_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить содержание теста со status=draft, без
-      отдельного статуса вопроса. При смене оси проверяется ключ. Все ID в URL проверяются как цепочка принадлежности
-      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение
-      состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
-      состав.
-    x-implementation-status: planned
+    description: Изменить содержание теста со status=1 (draft),
+      без отдельного статуса вопроса. При смене оси проверяется ключ. Все ID в URL проверяются как цепочка
+      принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только при status=1 (draft); active/archived
+      — 409. Изменение состава и /publish используют общую блокировку теста, поэтому запись не может попасть
+      в уже активированный состав. Поля передаются отдельными частями multipart/form-data, файл — в file,
+      превью — в file_preview. media_id не принимается. file_preview без нового file — 422. При PATCH
+      без нового file сохраняются прежний файл и его метаданные; file_title и file_description применяются
+      только к новому файлу.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -992,20 +936,16 @@ cms-question:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartQuestion'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartQuestionPatch'
   delete:
@@ -1013,11 +953,13 @@ cms-question:
     - ПрофСтарт - CMS
     summary: Удалить вопрос с вариантами
     operationId: profstart_cms_question_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить вопрос теста со status=draft вместе
-      с вариантами. Отдельной таблицы весов нет. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
-      несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение состава и /publish
-      используют общую блокировку теста, поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    description: Удалить вопрос теста со status=1 (draft)
+      вместе с вариантами. Отдельной таблицы весов нет. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=1 (draft); active/archived —
+      409. Изменение состава и /publish используют общую блокировку теста, поэтому запись не может попасть
+      в уже активированный состав.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1038,28 +980,25 @@ cms-question:
     responses:
       '204':
         description: Удалено
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-order:
   put:
     tags:
     - ПрофСтарт - CMS
     summary: Задать порядок всех вопросов
     operationId: profstart_cms_order_put
-    description: Проектируемый контракт; backend ещё не реализован. Полный список question_ids теста со status=draft
+    description: Полный список question_ids теста со status=1 (draft)
       без повторов, order назначается 1..N атомарно. Неполный или чужой список — 422. Все ID в URL проверяются как
-      цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived
+      цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только при status=1 (draft); active/archived
       — 409. Изменение состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже
       активированный состав.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1078,16 +1017,12 @@ cms-order:
               type: array
               items:
                 $ref: '#/components/schemas/ProfStartQuestion'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -1111,10 +1046,11 @@ cms-options:
     - ПрофСтарт - CMS
     summary: Варианты вопроса с весами
     operationId: profstart_cms_options_get
-    description: Проектируемый контракт; backend ещё не реализован. Варианты вопроса, каждый содержит group_id и
-      weight. Сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
-      несоответствие — 404.
-    x-implementation-status: planned
+    description: Варианты вопроса, каждый содержит
+      group_id и weight. Сортировка order ASC, id ASC. Все ID в URL проверяются как цепочка принадлежности
+      тесту/группе/вопросу; несоответствие — 404.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1156,27 +1092,27 @@ cms-options:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartOptionPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Создать вариант с группой и весом
     operationId: profstart_cms_options_post
-    description: Проектируемый контракт; backend ещё не реализован. Создать вариант с непосредственными group_id
-      и weight. Группа той же версии; ось берётся из вопроса. Неполный банк допускается до публикации теста. Все
-      ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только
-      при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку теста, поэтому
-      запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    description: Создать вариант с непосредственными
+      group_id и weight. Группа той же версии; блок определяется вопросом, результаты Соломина объединяют want и can. Неполный банк допускается до публикации
+      теста. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие
+      — 404. Изменение только при status=1 (draft); active/archived — 409. Изменение состава и /publish используют
+      общую блокировку теста, поэтому запись не может попасть в уже активированный состав. Поля передаются
+      отдельными частями multipart/form-data, файл — в file, превью — в file_preview. media_id не принимается.
+      file_preview без нового file — 422. При PATCH без нового file сохраняются прежний файл и его метаданные;
+      file_title и file_description применяются только к новому файлу.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1201,20 +1137,16 @@ cms-options:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartOption'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartOptionCreate'
 cms-option:
@@ -1223,9 +1155,10 @@ cms-option:
     - ПрофСтарт - CMS
     summary: Вариант и ключ
     operationId: profstart_cms_option_get
-    description: Проектируемый контракт; backend ещё не реализован. Вариант с group_id и weight. Все ID в URL проверяются
-      как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
-    x-implementation-status: planned
+    description: Вариант с group_id и weight. Все ID
+      в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1258,27 +1191,27 @@ cms-option:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartOption'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   patch:
     tags:
     - ПрофСтарт - CMS
     summary: Изменить вариант, группу и вес
     operationId: profstart_cms_option_patch
-    description: Проектируемый контракт; backend ещё не реализован. Изменить подпись, параметры, группу и вес через
-      один PATCH варианта. Группа той же версии; отдельного /weights нет. Все ID в URL проверяются как цепочка принадлежности
-      тесту/группе/вопросу; несоответствие — 404. Изменение только при status=draft; active/archived — 409. Изменение
-      состава и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
-      состав.
-    x-implementation-status: planned
+    description: Изменить подпись, параметры, группу
+      и вес через один PATCH варианта. Группа той же версии; отдельного /weights нет. Все ID в URL проверяются
+      как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404. Изменение только при status=1 (draft);
+      active/archived — 409. Изменение состава и /publish используют общую блокировку теста, поэтому запись
+      не может попасть в уже активированный состав. Поля передаются отдельными частями multipart/form-data,
+      файл — в file, превью — в file_preview. media_id не принимается. file_preview без нового file —
+      422. При PATCH без нового file сохраняются прежний файл и его метаданные; file_title и file_description
+      применяются только к новому файлу.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1311,20 +1244,16 @@ cms-option:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartOption'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartOptionPatch'
   delete:
@@ -1332,11 +1261,13 @@ cms-option:
     - ПрофСтарт - CMS
     summary: Удалить вариант и его вес
     operationId: profstart_cms_option_delete
-    description: Проектируемый контракт; backend ещё не реализован. Удалить вариант теста со status=draft. Вес является
-      его полем. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу; несоответствие — 404.
-      Изменение только при status=draft; active/archived — 409. Изменение состава и /publish используют общую блокировку
-      теста, поэтому запись не может попасть в уже активированный состав.
-    x-implementation-status: planned
+    description: Удалить вариант теста со status=1 (draft).
+      Вес является его полем. Все ID в URL проверяются как цепочка принадлежности тесту/группе/вопросу;
+      несоответствие — 404. Изменение только при status=1 (draft); active/archived — 409. Изменение состава
+      и /publish используют общую блокировку теста, поэтому запись не может попасть в уже активированный
+      состав.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -1365,26 +1296,22 @@ cms-option:
     responses:
       '204':
         description: Удалено
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 tests:
   get:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: Проектируемый контракт; backend ещё не реализован. Только status=active и поддерживаемые коды solomin/holland/dellinger;
+    description: Только status=2 (active) и поддерживаемые коды solomin/holland/dellinger;
       максимум один тест на тип, независимо от номера версии. Фильтры возраста и типа; без ключей. Новые типы без
       алгоритма в пользовательский каталог не входят; пустой список допустим.
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: age_group_id
       in: query
@@ -1412,28 +1339,26 @@ tests:
               items:
                 $ref: '#/components/schemas/ProfStartPublicTest'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 test:
   get:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Карточка теста для старта или своей истории
     operationId: profstart_test_get
-    description: 'Проектируемый контракт; backend ещё не реализован. Активная версия поддерживаемого типа доступна
+    description: 'Активная версия поддерживаемого типа доступна
       для просмотра инструкции. Архивная версия доступна только владельцу существующей сессии этого test_id (в любом
       статусе), чтобы прочитать название и инструкцию в истории или продолжить начатый тест. Архивная без своей
-      сессии и draft — 409 test_not_active; неизвестный ID — 404. Тип без алгоритма — 422 unsupported_test_type.
+      сессии и draft — 409; неизвестный ID — 404. Тип без алгоритма — 422.
       Карточка содержит status, без весов и ключей. Доступность карточки archived не разрешает новый старт: /sessions
       требует active.'
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: test_id
       in: path
@@ -1451,27 +1376,25 @@ test:
             schema:
               $ref: '#/components/schemas/ProfStartPublicTest'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 sessions:
   post:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Начать отдельное прохождение
     operationId: profstart_sessions_post
-    description: 'Проектируемый контракт; backend ещё не реализован. user_id определяется контекстом, включая гостя.
-      Только status=active: иначе 409 test_not_active. Для нового типа без алгоритма — 422 unsupported_test_type,
+    description: 'user_id определяется контекстом, включая гостя.
+      Только status=2 (active): иначе 409. Для нового типа без алгоритма — 422,
       сессия не создаётся. Разрешены solomin/holland/dellinger. При непустом age_group_ids обязателен подходящий
       age_group_id. Каждый успешный старт создаёт отдельную сессию. Проверка активности согласована с /publish и
       /archive атомарно.'
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters: []
     responses:
       '201':
@@ -1481,15 +1404,13 @@ sessions:
             schema:
               $ref: '#/components/schemas/ProfStartSession'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -1499,12 +1420,12 @@ sessions:
 session:
   get:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Состояние своего прохождения
     operationId: profstart_session_get
-    description: Проектируемый контракт; backend ещё не реализован. Прогресс, принятые ответы и первый неотвеченный
+    description: Прогресс, принятые ответы и первый неотвеченный
       вопрос; для восстановления после обрыва.
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: id
       in: path
@@ -1522,24 +1443,22 @@ session:
             schema:
               $ref: '#/components/schemas/ProfStartSession'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 questions:
   get:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Фиксированные вопросы сессии без ключа
     operationId: profstart_questions_get
-    description: Проектируемый контракт; backend ещё не реализован. Фиксированный набор версии сессии; владелец
+    description: Фиксированный набор версии сессии; владелец
       проверяется. В пользовательских вариантах нет group_id и weight.
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: id
       in: path
@@ -1559,27 +1478,33 @@ questions:
               items:
                 $ref: '#/components/schemas/ProfStartPublicQuestion'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 answer:
   post:
     tags:
-    - profstart
-    summary: Сохранить один ответ
+    - ПрофСтарт - Пользователь
+    summary: Сохранить ответ и рассчитать результат после последнего вопроса
     operationId: profstart_answer_post
-    description: Проектируемый контракт; backend ещё не реализован. Только следующий неотвеченный вопрос. Повтор
-      ранее принятого того же варианта возвращает сохранённый ответ и текущий прогресс без начисления, даже после
-      закрытия сессии. Изменение принятого варианта, новая запись в закрытую сессию или нарушение порядка — 409;
-      чужой вариант — 422. ready_to_complete=true только для in_progress со всеми ответами; при повторе в completed/abandoned
-      — false. next_question_id=null у закрытой сессии. Принятые time_spent_ms и answered_at не изменяются повтором.
-    x-implementation-status: planned
+    description: >-
+      Только следующий неотвеченный вопрос. Последний ответ атомарно сохраняет ответ,
+      результат, показатели групп и рекомендации и переводит сессию в completed (status=2).
+      Подтверждение содержит status: 1 — in_progress, 2 — completed, 3 — abandoned.
+      Результат в подтверждение не включается; для чтения используется GET /profstart/sessions/{id}/result.
+      Число вопросов: solomin 42, holland 15, dellinger 1. Расчёт поддерживает только эти типы.
+      Ошибка проверки банка или расчёта откатывает последний ответ и результат.
+      Повтор того же варианта возвращает сохранённый ответ и текущий прогресс
+      без повторного расчёта, включая конкурентные повторы. Результат завершённой сессии сохраняется.
+      Изменение принятого варианта, новая запись в закрытую сессию или нарушение порядка — 409;
+      чужой вариант — 422. next_question_id=null у закрытой сессии.
+      Принятые time_spent_ms и answered_at не изменяются повтором.
+      Архивирование теста не препятствует завершению начатой сессии.
+    x-implementation-status: implemented
     parameters:
     - name: id
       in: path
@@ -1597,15 +1522,13 @@ answer:
             schema:
               $ref: '#/components/schemas/ProfStartAnswerReceipt'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -1616,52 +1539,15 @@ answer:
             question_id: 101
             answer_option_id: 404
             time_spent_ms: 5200
-complete:
-  post:
-    tags:
-    - profstart
-    summary: Завершить и рассчитать результат
-    operationId: profstart_complete_post
-    description: 'Проектируемый контракт; backend ещё не реализован. Проверяет все вопросы версии сессии: solomin
-      42, holland 15, dellinger 1. Неполная/abandoned-сессия — 409. Расчёт только для solomin/holland/dellinger;
-      иной код — 422 unsupported_test_type без записи результата. Атомарно создаёт результат и рекомендации. Повтор
-      completed возвращает тот же результат. Архивирование теста не препятствует завершению начатой сессии.'
-    x-implementation-status: planned
-    parameters:
-    - name: id
-      in: path
-      required: true
-      description: Числовой идентификатор ресурса
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    responses:
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartResult'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
-      '404':
-        $ref: '#/components/responses/ProfStartError404'
-      '409':
-        $ref: '#/components/responses/ProfStartError409'
-      '422':
-        $ref: '#/components/responses/ProfStartError422'
 abandon:
   post:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Прервать без результата
     operationId: profstart_abandon_post
-    description: Проектируемый контракт; backend ещё не реализован. in_progress → abandoned; повтор abandoned возвращает
+    description: in_progress → abandoned; повтор abandoned возвращает
       прежнюю запись; completed — 409.
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: id
       in: path
@@ -1679,24 +1565,22 @@ abandon:
             schema:
               $ref: '#/components/schemas/ProfStartSession'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 result:
   get:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: Сохранённый результат своей сессии
     operationId: profstart_result_get
-    description: Проектируемый контракт; backend ещё не реализован. До завершения или после abandoned — 409. Изменение
+    description: До завершения или после abandoned — 409. Изменение
       CMS не пересчитывает результат.
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: id
       in: path
@@ -1714,24 +1598,22 @@ result:
             schema:
               $ref: '#/components/schemas/ProfStartResult'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 me-results:
   get:
     tags:
-    - profstart
+    - ПрофСтарт - Пользователь
     summary: История своих результатов
     operationId: profstart_me_results_get
-    description: Проектируемый контракт; backend ещё не реализован. Владелец определяется контекстом; user_id не
+    description: Владелец определяется контекстом; user_id не
       принимается. Порядок created_at DESC, id DESC; период по времени результата.
-    x-implementation-status: planned
+    x-implementation-status: implemented
     parameters:
     - name: limit
       in: query
@@ -1788,321 +1670,23 @@ me-results:
             schema:
               $ref: '#/components/schemas/ProfStartResultPage'
       '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
-analytics-sessions:
-  get:
-    tags:
-    - ПрофСтарт - Аналитика
-    summary: Прохождения для аналитики
-    operationId: profstart_analytics_sessions_get
-    description: Проектируемый контракт; backend ещё не реализован. Право аналитики; без исходных ответов и контактов.
-      Период по started_at. Фильтры источника и интерфейса отсутствуют; порядок started_at DESC, id DESC.
-    x-implementation-status: planned
-    parameters:
-    - name: limit
-      in: query
-      required: false
-      description: Размер страницы
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 50
-    - name: offset
-      in: query
-      required: false
-      description: Смещение
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-    - name: test_type_id
-      in: query
-      required: false
-      description: Тип теста
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: test_id
-      in: query
-      required: false
-      description: Версия теста
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: user_id
-      in: query
-      required: false
-      description: ID владельца результата
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: age_group_id
-      in: query
-      required: false
-      description: Возрастная группа
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: date_from
-      in: query
-      required: false
-      description: Начало периода включительно
-      schema:
-        type: string
-        format: date-time
-    - name: date_to
-      in: query
-      required: false
-      description: Конец периода исключительно
-      schema:
-        type: string
-        format: date-time
-    - name: status
-      in: query
-      required: false
-      description: Статус
-      schema:
-        type: string
-        enum:
-        - in_progress
-        - completed
-        - abandoned
-    responses:
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartAnalyticsSessionPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
-      '404':
-        $ref: '#/components/responses/ProfStartError404'
-      '409':
-        $ref: '#/components/responses/ProfStartError409'
-      '422':
-        $ref: '#/components/responses/ProfStartError422'
-analytics-results:
-  get:
-    tags:
-    - ПрофСтарт - Аналитика
-    summary: Результаты пользователей для аналитики
-    operationId: profstart_analytics_results_get
-    description: Проектируемый контракт; backend ещё не реализован. Право аналитики; только финальные результаты.
-      Период по created_at, порядок created_at DESC, id DESC. Нет фильтров источника/интерфейса и флагов качества.
-      Итоги создаются только для solomin/holland/dellinger; новые типы не получают нулевые или произвольно рассчитанные
-      результаты.
-    x-implementation-status: planned
-    parameters:
-    - name: limit
-      in: query
-      required: false
-      description: Размер страницы
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 50
-    - name: offset
-      in: query
-      required: false
-      description: Смещение
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-    - name: test_type_id
-      in: query
-      required: false
-      description: Тип теста
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: test_id
-      in: query
-      required: false
-      description: Версия теста
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: user_id
-      in: query
-      required: false
-      description: ID владельца результата
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: age_group_id
-      in: query
-      required: false
-      description: Возрастная группа
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: date_from
-      in: query
-      required: false
-      description: Начало периода включительно
-      schema:
-        type: string
-        format: date-time
-    - name: date_to
-      in: query
-      required: false
-      description: Конец периода исключительно
-      schema:
-        type: string
-        format: date-time
-    responses:
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartResultPage'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
-      '404':
-        $ref: '#/components/responses/ProfStartError404'
-      '409':
-        $ref: '#/components/responses/ProfStartError409'
-      '422':
-        $ref: '#/components/responses/ProfStartError422'
-analytics-result:
-  get:
-    tags:
-    - ПрофСтарт - Аналитика
-    summary: Детальный результат пользователя
-    operationId: profstart_analytics_result_get
-    description: Проектируемый контракт; backend ещё не реализован. Право аналитики; показатели и сохранённые профессии.
-    x-implementation-status: planned
-    parameters:
-    - name: result_id
-      in: path
-      required: true
-      description: Числовой идентификатор ресурса
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    responses:
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartResult'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
-      '404':
-        $ref: '#/components/responses/ProfStartError404'
-      '409':
-        $ref: '#/components/responses/ProfStartError409'
-      '422':
-        $ref: '#/components/responses/ProfStartError422'
-analytics-summary:
-  get:
-    tags:
-    - ПрофСтарт - Аналитика
-    summary: Агрегаты одного типа и версии
-    operationId: profstart_analytics_summary_get
-    description: Проектируемый контракт; backend ещё не реализован. Обязательны соответствующие test_type_id и test_id.
-      Период по started_at когорты; результаты completed этой когорты. Нулевой знаменатель даёт null. Средние групп
-      включают нули, все равные ведущие учитываются. Средний score профессии только по содержащим её результатам.
-      groups содержит все шкалы, professions=[] при отсутствии результатов. Для типа без алгоритма — 422 unsupported_test_type;
-      отсутствие результатов не подменяет неподдерживаемую методику. Агрегаты только опубликованной версии (active/archived);
-      draft — 409 test_not_published. recommended_percent = recommended_count/result_count × 100. profession_name
-      — текущее название из Profession, снимки названий в отдельных результатах неизменяемы. duration_ms = completed_at
-      - started_at в целых миллисекундах; у незавершённой сессии null.
-    x-implementation-status: planned
-    parameters:
-    - name: test_type_id
-      in: query
-      required: true
-      description: Тип теста
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: test_id
-      in: query
-      required: true
-      description: Версия теста
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: age_group_id
-      in: query
-      required: false
-      description: Возрастная группа
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: date_from
-      in: query
-      required: false
-      description: Начало периода включительно
-      schema:
-        type: string
-        format: date-time
-    - name: date_to
-      in: query
-      required: false
-      description: Конец периода исключительно
-      schema:
-        type: string
-        format: date-time
-    responses:
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartSummary'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
-      '404':
-        $ref: '#/components/responses/ProfStartError404'
-      '409':
-        $ref: '#/components/responses/ProfStartError409'
-      '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-type:
   get:
     tags:
     - ПрофСтарт - CMS
     summary: Карточка типа теста
     operationId: profstart_cms_type_get
-    description: Проектируемый контракт; backend ещё не реализован. Карточка типа, включая произвольный код нового
-      типа.
-    x-implementation-status: planned
+    description: Карточка типа, включая произвольный
+      код нового типа.
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_type_id
       in: path
@@ -2119,24 +1703,27 @@ cms-type:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTestType'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
   patch:
     tags:
     - ПрофСтарт - CMS
-    summary: Изменить название и описание типа
+    summary: Изменить тип теста
     operationId: profstart_cms_type_patch
-    description: Проектируемый контракт; backend ещё не реализован. Редактируются только name и description; code
-      неизменяем, чтобы сохранить связь с алгоритмом и историей.
-    x-implementation-status: planned
+    description: 'PATCH меняет name и description,
+      в том числе у типа с активным тестом. code дополнительного типа можно изменить только без связанных
+      тестов; коды solomin, holland, dellinger фиксированы. Недопустимая смена кода — 409,
+      дублирующий код — 409. Проверка ссылок и изменение кода атомарны и согласованы с созданием тестов.
+      recommendation_weight_percent — целый процент 0–100, изменяемый и при активном тесте. Сумма весов
+      поддерживаемых типов должна оставаться 100; иначе 422. Для перераспределения
+      между типами используйте атомарный PUT /cms/profstart/test-types/recommendation-weights. Тип без
+      алгоритма может иметь только 0: иначе 422.'
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_type_id
       in: path
@@ -2153,16 +1740,12 @@ cms-type:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTestType'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
     requestBody:
       required: true
       content:
@@ -2174,10 +1757,13 @@ cms-type:
     - ПрофСтарт - CMS
     summary: Удалить неиспользуемый тип
     operationId: profstart_cms_type_delete
-    description: 'Проектируемый контракт; backend ещё не реализован. Тип, используемый активным тестом, удалить
-      нельзя: 409 type_in_use. Ссылки черновиков и архивных тестов также защищены FK: 409, пока существуют связанные
-      тесты; они не удаляются каскадно. Проверка ссылок и удаление атомарны и согласованы с активацией тестов.'
-    x-implementation-status: planned
+    description: 'Тип, используемый активным тестом,
+      удалить нельзя: 409. Ссылки черновиков и архивных тестов также защищены FK: 409, пока
+      существуют связанные тесты; они не удаляются каскадно. Проверка ссылок и удаление атомарны и согласованы
+      с активацией тестов. Ненулевой вес также запрещает удаление: 409; сначала перераспределите
+      его атомарно, сохранив сумму 100.'
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_type_id
       in: path
@@ -2190,26 +1776,23 @@ cms-type:
     responses:
       '204':
         description: Тип удалён
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
 cms-archive:
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Архивировать активный тест
     operationId: profstart_cms_archive_post
-    description: Проектируемый контракт; backend ещё не реализован. active → archived; повтор archived возвращает
+    description: active → archived; повтор archived возвращает
       ту же запись, draft — 409. published_at сохраняется; новых стартов нет, начатые сессии и результаты остаются.
       После архивирования тип может не иметь активного теста.
-    x-implementation-status: planned
+    x-implementation-status: implemented
+    security: []
     parameters:
     - name: test_id
       in: path
@@ -2226,13 +1809,80 @@ cms-archive:
           application/json:
             schema:
               $ref: '#/components/schemas/ProfStartTest'
-      '401':
-        $ref: '#/components/responses/ProfStartError401'
-      '403':
-        $ref: '#/components/responses/ProfStartError403'
       '404':
-        $ref: '#/components/responses/ProfStartError404'
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
       '409':
-        $ref: '#/components/responses/ProfStartError409'
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
       '422':
-        $ref: '#/components/responses/ProfStartError422'
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
+
+cms-recommendation-weights:
+  put:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Настроить влияние тестов на общий подбор
+    operationId: profstart_cms_recommendation_weights_put
+    x-implementation-status: implemented
+    security: []
+    description: 'Полный набор весов сохраняется атомарно
+      в test_types.recommendation_weight_percent. Целые проценты 0–100, сумма обязана быть 100: иначе
+      422. 0 выключает влияние типа. Стандарт: solomin=40, holland=40, dellinger=20.
+      Конкурентные изменения весов, создание/удаление типов согласованы общей блокировкой конфигурации;
+      частичное сохранение запрещено. При конкурентных PUT сохраняется один полный набор, смешение значений
+      запрещено. Изменение доступно и при активных тестах; сохранённые результаты не меняются. Фиксированный
+      маршрут регистрируется перед /test-types/{test_type_id}.'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProfStartRecommendationWeightsUpdate'
+    responses:
+      '200':
+        description: Обновлённые три типа тестов; порядок solomin, holland, dellinger
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProfStartTestType'
+              minItems: 3
+              maxItems: 3
+      '404':
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
+      '409':
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
+      '422':
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.
+me-recommendations:
+  get:
+    tags:
+    - ПрофСтарт - Пользователь
+    summary: Общий подбор профессий по результатам тестов
+    operationId: profstart_me_recommendations_get
+    x-implementation-status: implemented
+    description: 'Владелец определяется контекстом,
+      включая гостя; user_id и веса клиента не принимаются. Берётся последний завершённый результат каждого
+      поддерживаемого типа с положительным весом: created_at DESC, id DESC, включая архивные версии. Кандидаты
+      — объединение сохранённых рекомендаций этих результатов; отсутствие профессии в одном из выбранных
+      результатов даёт test_score=0. score=round_half_up(sum(test_score*recommendation_weight_percent)/available_weight_percent,2).
+      При неполном наборе веса имеющихся результатов нормируются, is_complete=false и missing_test_types
+      перечисляет недостающие типы. При отсутствии результатов: 200, results=[], professions=[], available_weight_percent=0,
+      is_complete=false; деления на ноль нет. Веса и результаты читаются из одного согласованного снимка;
+      новый результат не сохраняется. При изменении весов выдача пересчитывается по текущей настройке.
+      Без пагинации и лимита; score DESC, profession_id ASC, только положительный округлённый score.'
+    responses:
+      '200':
+        description: Общий рейтинг и использованные результаты/веса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartCombinedRecommendations'
+      '401':
+        description: Требуется действительный пользовательский контекст. Ошибка FastAPI с полем detail.
+      '404':
+        description: Ресурс не найден или недоступен владельцу. Ошибка FastAPI с полем detail.
+      '409':
+        description: Конфликт состояния или уникальности. Ошибка FastAPI с полем detail.
+      '422':
+        description: Некорректные параметры, ссылки или состав теста. Ошибка FastAPI с полем detail.

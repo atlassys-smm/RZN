@@ -146,6 +146,12 @@ nav:
     - ПрофСтарт:
       - Обзор: subsystems/profstart/index.md
       - Методики и группы: subsystems/profstart/methods.md
+      - Тесты и вопросы:
+        - Состав банка: subsystems/profstart/questions/index.md
+        - Соломин: subsystems/profstart/questions/solomin.md
+        - Голланд: subsystems/profstart/questions/holland.md
+        - Голланд по группам: subsystems/profstart/questions/holland-groups.md
+        - Деллингер: subsystems/profstart/questions/dellinger.md
       - Процесс прохождения: subsystems/profstart/test-flow.md
       - Результаты: subsystems/profstart/results.md
     - Цифровой профиль и личный кабинет:
@@ -255,6 +261,7 @@ nav:
       - Версия 1.0: changelog/docs/v1.0.md
     - Бэкенд:
       - Обзор: changelog/back/index.md
+      - Версия 0.9: changelog/back/v0.9.md
       - Версия 0.8: changelog/back/v0.8.md
       - Версия 0.7: changelog/back/v0.7.md
       - Версия 0.4: changelog/back/v0.4.md
