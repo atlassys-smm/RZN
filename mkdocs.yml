@@ -169,6 +169,7 @@ nav:
     - Внешние идентификаторы: entities/external-identifiers.md
     - Аватар профессий: entities/profession-avatar.md
     - ПрофСтарт: entities/test.md
+    - Рекомендации пользователя: entities/user-recommendations.md
     - Аналитика: entities/analytics.md
     - Профессии в действии: entities/video-scenario.md
     - Устройства: entities/devices.md
@@ -232,6 +233,7 @@ nav:
   - API:
     - Обзор: api/index.md
     - ПрофСтарт: api/profstart.md
+    - Рекомендации пользователя: api/user-recommendations.md
     - API Reference: api/scalar.html
     - WebSocket API: api/websocket.md
   - История изменений:

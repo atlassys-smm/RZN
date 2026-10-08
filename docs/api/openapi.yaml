@@ -43,6 +43,8 @@ x-websocket-channels:
 tags:
   - name: auth
     description: Авторизация и аутентификация
+  - name: Рекомендации пользователя
+    description: Общий профиль рекомендаций текущего пользователя
   - name: users
     description: Пользователи и профили
   - name: LED-устройства
@@ -138,6 +140,8 @@ paths:
           description: Некорректный идентификатор
 
   # ── Пользователи ─────────────────────────────────
+  /users/me/recommendations:
+    $ref: ./paths/user-recommendations.yaml#/me-recommendations
   /users/me:
     $ref: './paths/users.yaml#/me'
 
@@ -4507,7 +4511,7 @@ components:
           maximum: 100
           exclusiveMinimum: 0
           description: Доля типа среди доступных результатов, %; округлена до двух знаков.
-      description: Последний завершённый результат типа с положительным текущим весом.
+      description: Завершённый результат типа с положительным текущим весом.
     ProfStartCombinedContribution:
       type: object
       additionalProperties: false
@@ -4636,8 +4640,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartCombinedProfession'
-      description: Общий подбор по текущим весам и последним результатам. Массивы типов идут в порядке solomin, holland,
-          dellinger.
+          maxItems: 3
+      description: Сохранённый общий профиль в формате ПрофСтарта, максимум три профессии.
       allOf:
       - if:
           properties:
@@ -4681,6 +4685,131 @@ components:
               maximum: 99
             missing_test_types:
               minItems: 1
+
+    RecommendationContribution:
+      properties:
+        source_code:
+          type: string
+        weight:
+          type: number
+        source_id:
+          type: integer
+        effective_weight_percent:
+          type: number
+        test_score:
+          type: number
+        contribution:
+          type: number
+        reasons:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+      required:
+      - source_code
+      - weight
+      - source_id
+      - effective_weight_percent
+      - test_score
+      - contribution
+      - reasons
+      type: object
+    RecommendationSource:
+      properties:
+        source_code:
+          type: string
+        weight:
+          type: number
+        id:
+          type: integer
+        source_reference:
+          additionalProperties: true
+          type: object
+        effective_weight_percent:
+          type: number
+      required:
+      - source_code
+      - weight
+      - id
+      - source_reference
+      - effective_weight_percent
+      type: object
+    RecommendationWeight:
+      properties:
+        source_code:
+          type: string
+        weight:
+          type: number
+      required:
+      - source_code
+      - weight
+      type: object
+    RecommendedProfession:
+      properties:
+        profession_id:
+          type: integer
+        profession_name:
+          type: string
+        score:
+          type: number
+        position:
+          type: integer
+        contributions:
+          items:
+            $ref: '#/components/schemas/RecommendationContribution'
+          type: array
+      required:
+      - profession_id
+      - profession_name
+      - score
+      - position
+      - contributions
+      type: object
+    UserRecommendations:
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        is_complete:
+          type: boolean
+        available_weight:
+          type: number
+        weights:
+          items:
+            $ref: '#/components/schemas/RecommendationWeight'
+          type: array
+        missing_sources:
+          items:
+            type: string
+          type: array
+        sources:
+          items:
+            $ref: '#/components/schemas/RecommendationSource'
+          type: array
+        professions:
+          items:
+            $ref: '#/components/schemas/RecommendedProfession'
+          type: array
+          maxItems: 3
+      required:
+      - id
+      - user_id
+      - created_at
+      - updated_at
+      - is_complete
+      - available_weight
+      - weights
+      - missing_sources
+      - sources
+      - professions
+      type: object
 
 security:
   - bearerAuth: []

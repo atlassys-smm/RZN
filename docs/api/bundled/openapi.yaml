@@ -65,6 +65,8 @@ x-websocket-channels:
 tags:
 - name: auth
   description: Авторизация и аутентификация
+- name: Рекомендации пользователя
+  description: Общий профиль рекомендаций текущего пользователя
 - name: users
   description: Пользователи и профили
 - name: LED-устройства
@@ -200,6 +202,28 @@ paths:
           description: Пользователь не найден
         '422':
           description: Некорректный идентификатор
+  /users/me/recommendations:
+    get:
+      tags:
+      - Рекомендации пользователя
+      summary: Общий профиль рекомендаций текущего пользователя
+      operationId: user_recommendations_get
+      description: Сохранённый профиль с максимум тремя профессиями и вкладами источников.
+        До первого завершённого теста — JSON null. Профиль обновляется после нового
+        результата и изменения весов CMS; GET только читает его.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль рекомендаций или null
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/UserRecommendations'
+                - type: 'null'
+        '401':
+          description: Требуется авторизация
   /users/me:
     get:
       tags:
@@ -5438,8 +5462,8 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Доступные активные тесты
       operationId: profstart_tests_get
-      description: 'Активные версии solomin, holland и dellinger: не более одной на
-        тип. Пустой список допустим.'
+      description: Активные версии solomin, holland и dellinger, которые пользователь
+        ещё не завершил. Не более одной версии на тип; пустой список допустим.
       x-implementation-status: implemented
       parameters:
       - name: age_group_id
@@ -5515,10 +5539,10 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Начать отдельное прохождение
       operationId: profstart_sessions_post
-      description: Начинает прохождение активной версии solomin, holland или dellinger.
-        Неактивная версия — 409; неподдерживаемый тип — 422. У пользователя может
-        быть только одна in_progress сессия, включая архивную версию; новый старт
-        при её наличии — 409.
+      description: 'Начинает прохождение активной версии solomin, holland или dellinger.
+        Допускается одна in_progress сессия на пользователя. Завершённый тип нельзя
+        пройти повторно, включая другую версию: 409. После abandoned можно начать
+        новую попытку. Неактивная версия — 409; неподдерживаемый тип — 422.'
       x-implementation-status: implemented
       parameters: []
       responses:
@@ -5712,11 +5736,11 @@ paths:
       summary: Общий подбор профессий по результатам тестов
       operationId: profstart_me_recommendations_get
       x-implementation-status: implemented
-      description: 'Последние завершённые результаты своих тестов с положительным
-        текущим весом, включая архивные версии. При недостающих результатах доступные
-        веса нормируются, is_complete=false. Без результатов — 200, пустые results
-        и professions, available_weight_percent=0, is_complete=false. Профессии с
-        положительным баллом: score DESC, profession_id ASC; без пагинации.'
+      description: 'Сохранённый общий профиль в совместимом формате ПрофСтарта: максимум
+        три профессии, источники и текущие веса. Обновляется после завершения нового
+        типа и изменения весов CMS. Каждый тип завершается один раз. Без результатов
+        — пустые results и professions, is_complete=false. Основной общий маршрут
+        — /users/me/recommendations.'
       responses:
         '200':
           description: Общий рейтинг и использованные результаты/веса
@@ -11167,7 +11191,7 @@ components:
           exclusiveMinimum: 0
           description: Доля типа среди доступных результатов, %; округлена до двух
             знаков.
-      description: Последний завершённый результат типа с положительным текущим весом.
+      description: Завершённый результат типа с положительным текущим весом.
     ProfStartCombinedContribution:
       type: object
       additionalProperties: false
@@ -11299,8 +11323,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartCombinedProfession'
-      description: Общий подбор по текущим весам и последним результатам. Массивы
-        типов идут в порядке solomin, holland, dellinger.
+          maxItems: 3
+      description: Сохранённый общий профиль в формате ПрофСтарта, максимум три профессии.
       allOf:
       - if:
           properties:
@@ -11344,5 +11368,129 @@ components:
               maximum: 99
             missing_test_types:
               minItems: 1
+    RecommendationContribution:
+      properties:
+        source_code:
+          type: string
+        weight:
+          type: number
+        source_id:
+          type: integer
+        effective_weight_percent:
+          type: number
+        test_score:
+          type: number
+        contribution:
+          type: number
+        reasons:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+      required:
+      - source_code
+      - weight
+      - source_id
+      - effective_weight_percent
+      - test_score
+      - contribution
+      - reasons
+      type: object
+    RecommendationSource:
+      properties:
+        source_code:
+          type: string
+        weight:
+          type: number
+        id:
+          type: integer
+        source_reference:
+          additionalProperties: true
+          type: object
+        effective_weight_percent:
+          type: number
+      required:
+      - source_code
+      - weight
+      - id
+      - source_reference
+      - effective_weight_percent
+      type: object
+    RecommendationWeight:
+      properties:
+        source_code:
+          type: string
+        weight:
+          type: number
+      required:
+      - source_code
+      - weight
+      type: object
+    RecommendedProfession:
+      properties:
+        profession_id:
+          type: integer
+        profession_name:
+          type: string
+        score:
+          type: number
+        position:
+          type: integer
+        contributions:
+          items:
+            $ref: '#/components/schemas/RecommendationContribution'
+          type: array
+      required:
+      - profession_id
+      - profession_name
+      - score
+      - position
+      - contributions
+      type: object
+    UserRecommendations:
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        is_complete:
+          type: boolean
+        available_weight:
+          type: number
+        weights:
+          items:
+            $ref: '#/components/schemas/RecommendationWeight'
+          type: array
+        missing_sources:
+          items:
+            type: string
+          type: array
+        sources:
+          items:
+            $ref: '#/components/schemas/RecommendationSource'
+          type: array
+        professions:
+          items:
+            $ref: '#/components/schemas/RecommendedProfession'
+          type: array
+          maxItems: 3
+      required:
+      - id
+      - user_id
+      - created_at
+      - updated_at
+      - is_complete
+      - available_weight
+      - weights
+      - missing_sources
+      - sources
+      - professions
+      type: object
 security:
 - bearerAuth: []

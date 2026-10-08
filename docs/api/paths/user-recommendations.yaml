@@ -1,0 +1,19 @@
+me-recommendations:
+  get:
+    tags: [Рекомендации пользователя]
+    summary: Общий профиль рекомендаций текущего пользователя
+    operationId: user_recommendations_get
+    description: Сохранённый профиль с максимум тремя профессиями и вкладами источников. До первого завершённого теста — JSON null. Профиль обновляется после нового результата и изменения весов CMS; GET только читает его.
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Профиль рекомендаций или null
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: '#/components/schemas/UserRecommendations'
+                - type: 'null'
+      '401':
+        description: Требуется авторизация

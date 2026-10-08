@@ -1248,7 +1248,7 @@ tests:
     - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: 'Активные версии solomin, holland и dellinger: не более одной на тип. Пустой список допустим.'
+    description: 'Активные версии solomin, holland и dellinger, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим.'
     x-implementation-status: implemented
     parameters:
     - name: age_group_id
@@ -1324,9 +1324,7 @@ sessions:
     - ПрофСтарт - Пользователь
     summary: Начать отдельное прохождение
     operationId: profstart_sessions_post
-    description: Начинает прохождение активной версии solomin, holland или dellinger. Неактивная версия — 409; неподдерживаемый
-        тип — 422. У пользователя может быть только одна in_progress сессия, включая архивную версию;
-        новый старт при её наличии — 409.
+    description: 'Начинает прохождение активной версии solomin, holland или dellinger. Допускается одна in_progress сессия на пользователя. Завершённый тип нельзя пройти повторно, включая другую версию: 409. После abandoned можно начать новую попытку. Неактивная версия — 409; неподдерживаемый тип — 422.'
     x-implementation-status: implemented
     parameters: []
     responses:
@@ -1806,10 +1804,7 @@ me-recommendations:
     summary: Общий подбор профессий по результатам тестов
     operationId: profstart_me_recommendations_get
     x-implementation-status: implemented
-    description: 'Последние завершённые результаты своих тестов с положительным текущим весом, включая архивные версии.
-        При недостающих результатах доступные веса нормируются, is_complete=false. Без результатов — 200,
-        пустые results и professions, available_weight_percent=0, is_complete=false. Профессии с положительным
-        баллом: score DESC, profession_id ASC; без пагинации.'
+    description: 'Сохранённый общий профиль в совместимом формате ПрофСтарта: максимум три профессии, источники и текущие веса. Обновляется после завершения нового типа и изменения весов CMS. Каждый тип завершается один раз. Без результатов — пустые results и professions, is_complete=false. Основной общий маршрут — /users/me/recommendations.'
     responses:
       '200':
         description: Общий рейтинг и использованные результаты/веса
