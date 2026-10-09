@@ -4,9 +4,11 @@
 
 avatars:
   get:
+    description: "Требуется действующий токен пользователя, сотрудника или активного устройства."
     tags: [Аватары профессий]
     summary: Список аватаров профессий
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
       - name: limit
         in: query
@@ -19,6 +21,8 @@ avatars:
           type: integer
           default: 0
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
       '200':
         description: Список аватаров
         content:
@@ -33,9 +37,11 @@ avatars:
                 total:
                   type: integer
   post:
+    security:
+    - bearerAuth: []
     tags: [Аватары профессий]
     summary: Создать аватар профессии
-    description: Добавить аватар для профессии — мужской и женский образ (требуются права CMS)
+    description: "Требуется staff access-токен admin/content_editor. Добавить аватар для профессии — мужской и женский образ (требуются права CMS)"
     requestBody:
       required: true
       content:
@@ -80,6 +86,10 @@ avatars:
             - female_photo
             title: Body_create_avatar_api_avatars_post
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Аватар создан
         content:
@@ -93,8 +103,9 @@ avatars-detail:
   get:
     tags: [Аватары профессий]
     summary: Аватар профессии
-    description: Получить аватар по ID профессии
-    security: []
+    description: "Требуется действующий токен пользователя, сотрудника или активного устройства. Получить аватар по ID профессии"
+    security:
+    - bearerAuth: []
     parameters:
       - name: profession_id
         in: path
@@ -103,6 +114,8 @@ avatars-detail:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
       '200':
         description: Аватар
         content:
@@ -112,9 +125,11 @@ avatars-detail:
       '404':
         description: Не найден
   put:
+    security:
+    - bearerAuth: []
     tags: [Аватары профессий]
     summary: Обновить аватар профессии
-    description: Обновить фото мужского или женского образа (требуются права CMS)
+    description: "Требуется staff access-токен admin/content_editor. Обновить фото мужского или женского образа (требуются права CMS)"
     parameters:
       - name: profession_id
         in: path
@@ -162,6 +177,10 @@ avatars-detail:
             type: object
             title: Body_update_avatar_api_avatars__profession_id__put
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Аватар обновлён
         content:
@@ -171,9 +190,11 @@ avatars-detail:
       '404':
         description: Не найден
   delete:
+    security:
+    - bearerAuth: []
     tags: [Аватары профессий]
     summary: Удалить аватар профессии
-    description: Удалить аватар профессии (требуются права CMS)
+    description: "Требуется staff access-токен admin/content_editor. Удалить аватар профессии (требуются права CMS)"
     parameters:
       - name: profession_id
         in: path
@@ -182,6 +203,10 @@ avatars-detail:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Аватар удалён
       '404':

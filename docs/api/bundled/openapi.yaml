@@ -1718,10 +1718,13 @@ paths:
                     type: integer
   /avatars:
     get:
+      description: Требуется действующий токен пользователя, сотрудника или активного
+        устройства.
       tags:
       - Аватары профессий
       summary: Список аватаров профессий
-      security: []
+      security:
+      - bearerAuth: []
       parameters:
       - name: limit
         in: query
@@ -1734,6 +1737,8 @@ paths:
           type: integer
           default: 0
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
         '200':
           description: Список аватаров
           content:
@@ -1748,11 +1753,13 @@ paths:
                   total:
                     type: integer
     post:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары профессий
       summary: Создать аватар профессии
-      description: Добавить аватар для профессии — мужской и женский образ (требуются
-        права CMS)
+      description: Требуется staff access-токен admin/content_editor. Добавить аватар
+        для профессии — мужской и женский образ (требуются права CMS)
       requestBody:
         required: true
         content:
@@ -1797,6 +1804,10 @@ paths:
               - female_photo
               title: Body_create_avatar_api_avatars_post
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
+        '403':
+          description: Недостаточно прав.
         '201':
           description: Аватар создан
           content:
@@ -1810,8 +1821,10 @@ paths:
       tags:
       - Аватары профессий
       summary: Аватар профессии
-      description: Получить аватар по ID профессии
-      security: []
+      description: Требуется действующий токен пользователя, сотрудника или активного
+        устройства. Получить аватар по ID профессии
+      security:
+      - bearerAuth: []
       parameters:
       - name: profession_id
         in: path
@@ -1820,6 +1833,8 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
         '200':
           description: Аватар
           content:
@@ -1829,10 +1844,13 @@ paths:
         '404':
           description: Не найден
     put:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары профессий
       summary: Обновить аватар профессии
-      description: Обновить фото мужского или женского образа (требуются права CMS)
+      description: Требуется staff access-токен admin/content_editor. Обновить фото
+        мужского или женского образа (требуются права CMS)
       parameters:
       - name: profession_id
         in: path
@@ -1880,6 +1898,10 @@ paths:
               type: object
               title: Body_update_avatar_api_avatars__profession_id__put
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
+        '403':
+          description: Недостаточно прав.
         '200':
           description: Аватар обновлён
           content:
@@ -1889,10 +1911,13 @@ paths:
         '404':
           description: Не найден
     delete:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары профессий
       summary: Удалить аватар профессии
-      description: Удалить аватар профессии (требуются права CMS)
+      description: Требуется staff access-токен admin/content_editor. Удалить аватар
+        профессии (требуются права CMS)
       parameters:
       - name: profession_id
         in: path
@@ -1901,6 +1926,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
+        '403':
+          description: Недостаточно прав.
         '204':
           description: Аватар удалён
         '404':
@@ -4640,10 +4669,13 @@ paths:
       - bearerAuth: []
   /interactive-video/sessions/{id}/scenarios:
     get:
+      security:
+      - bearerAuth: []
       tags:
       - Профессии в действии - LED
       summary: Сценарии сессии с первой веткой и файлом
-      description: 'Возвращает массив сценариев в порядке settings.scenario_ids для
+      description: 'Требуется staff access-токен admin/operator или device-токен активного
+        устройства. Возвращает массив сценариев в порядке settings.scenario_ids для
         карточек LED.
 
         first_branch — стартовая ветка (parent_id = null), без дочерних веток.
@@ -4652,9 +4684,7 @@ paths:
 
         Если стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.
 
-        Доступно для активных и завершённых сессий; не меняет состояние показа.
-
-        '
+        Доступно для активных и завершённых сессий; не меняет состояние показа.'
       parameters:
       - name: id
         in: path
@@ -4663,6 +4693,10 @@ paths:
           type: integer
           format: int64
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
+        '403':
+          description: Недостаточно прав.
         '200':
           description: Сценарии сессии; пустой массив, если доступных сценариев нет
           content:
@@ -7716,10 +7750,13 @@ paths:
           description: Не найден
   /users/{user_id}/avatars:
     post:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары пользователей
       summary: Сохранить аватар пользователя
-      description: Терминал сохраняет сгенерированный аватар для пользователя
+      description: Требуется device-токен активного устройства; user_id передаётся
+        в пути. Терминал сохраняет сгенерированный аватар для пользователя
       parameters:
       - name: user_id
         in: path
@@ -7758,6 +7795,8 @@ paths:
               - photo
               title: Body_create_user_avatar_api_users__user_id__avatars_post
       responses:
+        '401':
+          description: Отсутствующий или недействительный токен.
         '201':
           description: Аватар сохранён
           content:

@@ -4,9 +4,11 @@
 
 user-avatars-create:
   post:
+    security:
+    - bearerAuth: []
     tags: [Аватары пользователей]
     summary: Сохранить аватар пользователя
-    description: Терминал сохраняет сгенерированный аватар для пользователя
+    description: "Требуется device-токен активного устройства; user_id передаётся в пути. Терминал сохраняет сгенерированный аватар для пользователя"
     parameters:
       - name: user_id
         in: path
@@ -45,6 +47,8 @@ user-avatars-create:
             - photo
             title: Body_create_user_avatar_api_users__user_id__avatars_post
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
       '201':
         description: Аватар сохранён
         content:

@@ -456,14 +456,11 @@ session-stop:
 
 session-scenarios:
   get:
+    security:
+    - bearerAuth: []
     tags: [Профессии в действии - LED]
     summary: Сценарии сессии с первой веткой и файлом
-    description: |
-      Возвращает массив сценариев в порядке settings.scenario_ids для карточек LED.
-      first_branch — стартовая ветка (parent_id = null), без дочерних веток.
-      first_branch.file содержит url, preview_url, mime_type, title и description.
-      Если стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.
-      Доступно для активных и завершённых сессий; не меняет состояние показа.
+    description: "Требуется staff access-токен admin/operator или device-токен активного устройства. Возвращает массив сценариев в порядке settings.scenario_ids для карточек LED.\nfirst_branch — стартовая ветка (parent_id = null), без дочерних веток.\nfirst_branch.file содержит url, preview_url, mime_type, title и description.\nЕсли стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.\nДоступно для активных и завершённых сессий; не меняет состояние показа."
     parameters:
       - name: id
         in: path
@@ -472,6 +469,10 @@ session-scenarios:
           type: integer
           format: int64
     responses:
+      '401':
+        description: Отсутствующий или недействительный токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Сценарии сессии; пустой массив, если доступных сценариев нет
         content:
