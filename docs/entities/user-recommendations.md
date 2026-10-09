@@ -1,6 +1,6 @@
 # Рекомендации пользователя
 
-Общий профиль принадлежит User, включая гостя, и предназначен для источников разных модулей. ПрофСтарт добавляет один неизменяемый источник на завершённый тип. Новый источник уточняет существующий профиль; изменение весов пересчитывает его из сохранённых снимков. История отдельных тестов не меняется.
+Общий профиль принадлежит User, включая гостя, и предназначен для источников разных модулей. ПрофСтарт добавляет один неизменяемый источник на завершённый тип, включая дополнительные типы CMS. Каждый источник содержит показатели групп и профессий; в итоговом рейтинге участвуют только пары source_module/source_code с положительным весом в SOURCE_WEIGHTS. Итоговый рейтинг рассчитывается при каждом запросе из снимков источников и не сохраняется в БД. История отдельных тестов не меняется.
 
 ## UserRecommendation
 
@@ -10,43 +10,32 @@
 |---|---|---|
 | `id` | bigint | PK |
 | `user_id` | bigint | Уникальный FK → users.id |
-| `weights` | jsonb | Конфигурация источников: source_code, weight; ПрофСтарт также сохраняет test_type_id и test_code_type |
 | `created_at` | timestamp UTC | Создание профиля |
-| `updated_at` | timestamp UTC | Последнее обновление рейтинга |
+| `updated_at` | timestamp UTC | Последнее добавление источника |
 
 ## UserRecommendationSource
 
-Таблица `user_recommendation_sources`. Уникальность (recommendation_id, source_code). Источник неизменяем после успешного завершения; API записи для клиента отсутствует.
+Таблица `user_recommendation_sources`. Уникальность (recommendation_id, source_module, source_code). Индекс (source_module, source_code) поддерживает выборку по модулю и коду. Источник неизменяем после успешного завершения; API записи для клиента отсутствует.
 
 | Поле | Тип | Описание |
 |---|---|---|
 | `id` | bigint | PK |
 | `recommendation_id` | bigint | FK → user_recommendations.id |
-| `source_code` | string | Пространство модуля и тип: profstart.solomin, profstart.holland, profstart.dellinger |
-| `source_reference` | jsonb | Ссылка на исходный результат: result_id, test_id, test_type_id, test_code_type, test_version, result_created_at |
-| `weight` | decimal | Исходный вес; при расчёте применяется текущая настройка weights профиля |
+| `source_module` | string | Модуль источника: profstart |
+| `source_code` | string | Код внутри модуля: solomin, holland, dellinger |
+| `source_reference` | jsonb | Ссылка на исходный результат: session_id, test_id, test_type_id, test_code_type, test_version, completed_at |
 | `group_scores` | jsonb | Все показатели групп, включая нулевые: group_id/code/name, category, raw_score, max_score, normalized_score, rank, is_leading |
-| `profession_scores` | jsonb | Полный снимок соответствия профессиям: profession_id/name, score, position, reasons с группами и коэффициентами |
+| `profession_scores` | jsonb | Полный снимок соответствия профессиям: profession_id/name, score, position, reasons с группами и их баллами |
 | `created_at` | timestamp UTC | Создание источника |
 
-Внутри JSON десятичные значения сохраняются строками для точности. Типизированные поля score, weight и contribution API возвращает числами; структура reasons зависит от поставщика источника. Нулевой вес не препятствует сохранению источника. Исторический TestResult ссылается на источник уникальным обязательным recommendation_source_id. Связи group_id и profession_id внутри JSON — снимки, а не внешние ключи; сервис проверяет их при создании. Основные коды групп защищены.
+Внутри JSON десятичные значения сохраняются строками для точности. Типизированные поля score, weight и contribution API возвращает числами; структура reasons зависит от поставщика источника. Завершённая сессия любого типа ссылается на источник уникальным recommendation_source_id; для in_progress и abandoned ссылка равна null. Связи group_id и profession_id внутри JSON — снимки, а не внешние ключи; сервис проверяет их при создании. Основные коды групп защищены.
 
-Для нового источника ПрофСтарта учитываются все группы с положительным вкладом, включая неведущие. После переноса существующих результатов снимки сохраняют ранее рассчитанное соответствие профессиям без переинтерпретации истории.
+Для источника ПрофСтарта учитываются все группы с положительным вкладом, включая неведущие. Изменения связей профессий и подписей групп в CMS не меняют сохранённые снимки.
 
-## UserRecommendationProfession
+## Итоговый рейтинг
 
-Таблица `user_recommendation_professions`. Изменяемый текущий рейтинг, максимум три записи на профиль. Уникальны (recommendation_id, profession_id) и (recommendation_id, position).
+Веса источников заданы в `app/models/user_recommendations/weights.py`: ("profstart", "solomin")=40, ("profstart", "holland")=40, ("profstart", "dellinger")=20. В таблицах они не хранятся; CMS их не изменяет. Для новых поставщиков нужно добавить пару модуля и кода и её вес в SOURCE_WEIGHTS. Неизвестная пара имеет нулевое влияние.
 
-| Поле | Тип | Описание |
-|---|---|---|
-| `id` | bigint | PK |
-| `recommendation_id` | bigint | FK → user_recommendations.id |
-| `profession_id` | bigint | FK → professions.id |
-| `profession_name` | string | Название из снимка источника |
-| `position` | integer | Позиция 1–3 |
-| `score` | decimal(5,2) | Итоговое соответствие 0–100 |
-| `contributions` | jsonb | Вклады источников: source_id, source_code, weight, effective_weight_percent, test_score, contribution, reasons |
-
-Рейтинг сортируется по score DESC, profession_id ASC. Сохраняются только положительные округлённые баллы существующих профессий; набор может быть короче трёх или пустым. При неполном наборе источников веса нормируются по имеющимся источникам с положительным весом. Источник без данной профессии участвует с нулевым вкладом. Округление — Decimal ROUND_HALF_UP до двух знаков после суммирования точных взвешенных вкладов.
+GET рассчитывает максимум три профессии, не записывая результат. Рейтинг сортируется по score DESC, profession_id ASC. Возвращаются только положительные округлённые баллы существующих профессий; набор может быть короче трёх или пустым. При неполном наборе веса нормируются по имеющимся источникам с положительным весом. Источник без данной профессии участвует с нулевым вкладом. Источник с весом 0 сохраняется, но не влияет на выдачу. Округление — Decimal ROUND_HALF_UP до двух знаков после суммирования точных взвешенных вкладов.
 
 [API](../api/user-recommendations.md) · [Расчёт ПрофСтарта](../subsystems/profstart/results.md).

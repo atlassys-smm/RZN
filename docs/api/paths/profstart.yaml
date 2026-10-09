@@ -44,8 +44,7 @@ cms-types:
     - ПрофСтарт - CMS
     summary: Каталог типов тестов
     operationId: profstart_cms_types_get
-    description: Все типы, включая дополнительные; порядок id ASC. Прохождение доступно только для solomin, holland
-        и dellinger.
+    description: "Все типы, включая дополнительные; порядок id ASC. Прохождение и показатели групп доступны для всех типов; участие источника в итоговом рейтинге определяется SOURCE_WEIGHTS."
     x-implementation-status: implemented
     security: []
     parameters: []
@@ -69,8 +68,7 @@ cms-types:
     - ПрофСтарт - CMS
     summary: Создать тип теста
     operationId: profstart_cms_types_post
-    description: 'Код должен быть уникальным: дубликат — 409. Дополнительные типы имеют вес 0 и недоступны для пользовательского
-        прохождения.'
+    description: 'Код должен быть уникальным: дубликат — 409. Дополнительные типы недоступны для пользовательского прохождения.'
     x-implementation-status: implemented
     security: []
     parameters: []
@@ -490,8 +488,8 @@ cms-group:
     summary: Изменить группу
     operationId: profstart_cms_group_patch
     description: Редактирование доступно при любом статусе теста и не меняет сохранённые результаты. У основных групп
-        нельзя менять code и category; у дополнительных — если группа используется в вопросах или результатах
-        (409). Дубликат code — 409.
+        нельзя менять code и category (409). У дополнительных типов защищён code используемой группы (409);
+        category можно менять для новых результатов. Дубликат code — 409.
     x-implementation-status: implemented
     security: []
     parameters:
@@ -660,56 +658,6 @@ cms-professions:
           schema:
             $ref: '#/components/schemas/ProfStartGroupProfessionCreate'
 cms-profession:
-  patch:
-    tags:
-    - ПрофСтарт - CMS
-    summary: Изменить коэффициент связи
-    operationId: profstart_cms_profession_patch
-    description: Доступно при любом статусе теста. Новый коэффициент применяется только к новым результатам.
-    x-implementation-status: implemented
-    security: []
-    parameters:
-    - name: test_code_type
-      in: path
-      required: true
-      description: Код типа теста, например solomin, holland или dellinger
-      schema:
-        type: string
-    - name: group_id
-      in: path
-      required: true
-      description: Числовой идентификатор ресурса
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    - name: profession_id
-      in: path
-      required: true
-      description: Числовой идентификатор ресурса
-      schema:
-        type: integer
-        format: int64
-        minimum: 1
-    responses:
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartGroupProfession'
-      '404':
-        description: Ресурс не найден или недоступен владельцу.
-      '409':
-        description: Конфликт состояния или уникальности.
-      '422':
-        description: Некорректные параметры, ссылки или состав теста.
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartGroupProfessionPatch'
   delete:
     tags:
     - ПрофСтарт - CMS
@@ -755,7 +703,7 @@ cms-questions:
   get:
     tags:
     - ПрофСтарт - CMS
-    summary: Вопросы с вариантами и их весами
+    summary: Вопросы с вариантами
     operationId: profstart_cms_questions_get
     description: Порядок order ASC, id ASC.
     x-implementation-status: implemented
@@ -1006,7 +954,7 @@ cms-options:
   get:
     tags:
     - ПрофСтарт - CMS
-    summary: Варианты вопроса с весами
+    summary: Варианты вопроса
     operationId: profstart_cms_options_get
     description: Порядок order ASC, id ASC.
     x-implementation-status: implemented
@@ -1061,7 +1009,7 @@ cms-options:
   post:
     tags:
     - ПрофСтарт - CMS
-    summary: Создать вариант с группой и весом
+    summary: Создать вариант с группой и значением
     operationId: profstart_cms_options_post
     description: Только draft; active/archived — 409. group_id должен принадлежать тому же типу теста.
     x-implementation-status: implemented
@@ -1151,7 +1099,7 @@ cms-option:
   patch:
     tags:
     - ПрофСтарт - CMS
-    summary: Изменить вариант, группу и вес
+    summary: Изменить вариант, группу и значение
     operationId: profstart_cms_option_patch
     description: Только draft; active/archived — 409. group_id должен принадлежать тому же типу теста.
     x-implementation-status: implemented
@@ -1203,7 +1151,7 @@ cms-option:
   delete:
     tags:
     - ПрофСтарт - CMS
-    summary: Удалить вариант и его вес
+    summary: Удалить вариант
     operationId: profstart_cms_option_delete
     description: Только draft; active/archived — 409.
     x-implementation-status: implemented
@@ -1248,7 +1196,7 @@ tests:
     - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: 'Активные версии solomin, holland и dellinger, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим.'
+    description: 'Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим.'
     x-implementation-status: implemented
     parameters:
     - name: age_group_id
@@ -1290,9 +1238,7 @@ test:
     - ПрофСтарт - Пользователь
     summary: Карточка теста для старта или своей истории
     operationId: profstart_test_get
-    description: Активная версия доступна для просмотра. Архивная — только при наличии своей сессии этой версии.
-        Draft и архивная без своей сессии — 409; неподдерживаемый тип — 422. Новую сессию можно начать
-        только для active.
+    description: "Активная версия доступна для просмотра. Архивная — только при наличии своей сессии этой версии. Draft и архивная без своей сессии — 409. Новую сессию можно начать только для active."
     x-implementation-status: implemented
     parameters:
     - name: test_id
@@ -1324,7 +1270,7 @@ sessions:
     - ПрофСтарт - Пользователь
     summary: Начать отдельное прохождение
     operationId: profstart_sessions_post
-    description: 'Начинает прохождение активной версии solomin, holland или dellinger. Допускается одна in_progress сессия на пользователя. Завершённый тип нельзя пройти повторно, включая другую версию: 409. После abandoned можно начать новую попытку. Неактивная версия — 409; неподдерживаемый тип — 422.'
+    description: "Начинает прохождение активной версии любого типа. Допускается одна in_progress на пользователя; завершённый тип нельзя пройти повторно, включая новую версию: 409. После abandoned можно начать новую попытку. Неактивная версия — 409."
     x-implementation-status: implemented
     parameters: []
     responses:
@@ -1538,8 +1484,7 @@ result:
     - ПрофСтарт - Пользователь
     summary: Сохранённый результат своей сессии
     operationId: profstart_result_get
-    description: Результат своей завершённой сессии; до завершения и после abandoned — 409. Изменения в CMS не меняют
-        сохранённый результат. Список professions может быть пустым.
+    description: "Результат своей завершённой сессии: answers и scores для любого типа. До завершения и после abandoned — 409. Для любого типа создаётся источник с показателями групп и профессий; участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS."
     x-implementation-status: implemented
     parameters:
     - name: id
@@ -1672,8 +1617,7 @@ cms-type:
     summary: Изменить тип теста
     operationId: profstart_cms_type_patch
     description: Редактирование доступно при активном тесте. Коды solomin, holland и dellinger фиксированы; код дополнительного
-        типа можно менять только без связанных тестов (409). Дубликат code — 409. Сумма весов должна оставаться
-        100; иначе 422. Для перераспределения используйте PUT /cms/profstart/test-types/recommendation-weights.
+        типа можно менять только без связанных тестов (409). Дубликат code — 409.
     x-implementation-status: implemented
     security: []
     parameters:
@@ -1709,7 +1653,7 @@ cms-type:
     - ПрофСтарт - CMS
     summary: Удалить неиспользуемый тип
     operationId: profstart_cms_type_delete
-    description: 'Тип со связанными тестами или ненулевым весом удалить нельзя: 409.'
+    description: 'Системный тип или тип со связанными тестами удалить нельзя: 409.'
     x-implementation-status: implemented
     security: []
     parameters:
@@ -1763,60 +1707,87 @@ cms-archive:
       '422':
         description: Некорректные параметры, ссылки или состав теста.
 
-cms-recommendation-weights:
-  put:
-    tags:
-    - ПрофСтарт - CMS
-    summary: Настроить влияние тестов на общий подбор
-    operationId: profstart_cms_recommendation_weights_put
-    x-implementation-status: implemented
-    security: []
-    description: 'Сумма процентов должна равняться 100; иначе 422. Вес 0 исключает тип из подбора. По умолчанию:
-        solomin=40, holland=40, dellinger=20. Изменение влияет на общий подбор, сохраняя результаты отдельных
-        тестов.'
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProfStartRecommendationWeightsUpdate'
-    responses:
-      '200':
-        description: Обновлённые три типа тестов; порядок solomin, holland, dellinger
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/ProfStartTestType'
-              minItems: 3
-              maxItems: 3
-      '404':
-        description: Ресурс не найден или недоступен владельцу.
-      '409':
-        description: Конфликт состояния или уникальности.
-      '422':
-        description: Некорректные параметры, ссылки или состав теста.
-me-recommendations:
+cms-sessions:
   get:
     tags:
-    - ПрофСтарт - Пользователь
-    summary: Общий подбор профессий по результатам тестов
-    operationId: profstart_me_recommendations_get
+    - ПрофСтарт - CMS
+    summary: Список прохождений пользователей
+    operationId: profstart_cms_sessions_get
+    description: Сессии всех пользователей или указанного user_id; фильтр status и пагинация. Порядок started_at
+      DESC, id DESC. Неизвестный user_id даёт пустой список.
     x-implementation-status: implemented
-    description: 'Сохранённый общий профиль в совместимом формате ПрофСтарта: максимум три профессии, источники и текущие веса. Обновляется после завершения нового типа и изменения весов CMS. Каждый тип завершается один раз. Без результатов — пустые results и professions, is_complete=false. Основной общий маршрут — /users/me/recommendations.'
+    parameters:
+    - name: user_id
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+    - name: status
+      in: query
+      required: false
+      description: 'Статус прохождения: 1 — in_progress, 2 — completed, 3 — abandoned.'
+      schema:
+        type: integer
+        enum:
+        - 1
+        - 2
+        - 3
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
     responses:
       '200':
-        description: Общий рейтинг и использованные результаты/веса
+        description: Страница прохождений пользователей.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProfStartCombinedRecommendations'
-      '401':
-        description: Требуется авторизация.
-      '404':
-        description: Ресурс не найден или недоступен владельцу.
-      '409':
-        description: Конфликт состояния или уникальности.
+              $ref: '#/components/schemas/ProfStartSessionPage'
       '422':
         description: Некорректные параметры, ссылки или состав теста.
+    security: []
+cms-session-abandon:
+  post:
+    tags:
+    - ПрофСтарт - CMS
+    summary: Прервать прохождение пользователя
+    operationId: profstart_cms_session_abandon_post
+    description: 'Переводит in_progress в abandoned, сохраняя ответы. Повтор для abandoned допустим. Completed —
+      409; неизвестная сессия — 404. Пользователь может начать новую попытку. При конкуренции с последним ответом
+      применяется операция, первой получившая блокировку: завершённую сессию прервать нельзя.'
+    x-implementation-status: implemented
+    parameters:
+    - name: session_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartSession'
+      '404':
+        description: Прохождение не найдено.
+      '409':
+        description: Завершённое прохождение нельзя прервать.
+      '422':
+        description: Некорректные параметры, ссылки или состав теста.
+    security: []

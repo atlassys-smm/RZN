@@ -208,9 +208,10 @@ paths:
       - Рекомендации пользователя
       summary: Общий профиль рекомендаций текущего пользователя
       operationId: user_recommendations_get
-      description: Сохранённый профиль с максимум тремя профессиями и вкладами источников.
-        До первого завершённого теста — JSON null. Профиль обновляется после нового
-        результата и изменения весов CMS; GET только читает его.
+      description: Профиль с максимум тремя профессиями и вкладами источников. До
+        первого сохранённого источника — JSON null. В расчёте участвуют только источники
+        с положительным весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при каждом
+        запросе из снимков источников; веса заданы в коде, итог не сохраняется.
       security:
       - bearerAuth: []
       responses:
@@ -4246,8 +4247,9 @@ paths:
       - ПрофСтарт - CMS
       summary: Каталог типов тестов
       operationId: profstart_cms_types_get
-      description: Все типы, включая дополнительные; порядок id ASC. Прохождение доступно
-        только для solomin, holland и dellinger.
+      description: Все типы, включая дополнительные; порядок id ASC. Прохождение и
+        показатели групп доступны для всех типов; участие источника в итоговом рейтинге
+        определяется SOURCE_WEIGHTS.
       x-implementation-status: implemented
       security: []
       parameters: []
@@ -4272,7 +4274,7 @@ paths:
       summary: Создать тип теста
       operationId: profstart_cms_types_post
       description: 'Код должен быть уникальным: дубликат — 409. Дополнительные типы
-        имеют вес 0 и недоступны для пользовательского прохождения.'
+        недоступны для пользовательского прохождения.'
       x-implementation-status: implemented
       security: []
       parameters: []
@@ -4697,9 +4699,9 @@ paths:
       summary: Изменить группу
       operationId: profstart_cms_group_patch
       description: Редактирование доступно при любом статусе теста и не меняет сохранённые
-        результаты. У основных групп нельзя менять code и category; у дополнительных
-        — если группа используется в вопросах или результатах (409). Дубликат code
-        — 409.
+        результаты. У основных групп нельзя менять code и category (409). У дополнительных
+        типов защищён code используемой группы (409); category можно менять для новых
+        результатов. Дубликат code — 409.
       x-implementation-status: implemented
       security: []
       parameters:
@@ -4868,57 +4870,6 @@ paths:
             schema:
               $ref: '#/components/schemas/ProfStartGroupProfessionCreate'
   /cms/profstart/test-types/{test_code_type}/groups/{group_id}/professions/{profession_id}:
-    patch:
-      tags:
-      - ПрофСтарт - CMS
-      summary: Изменить коэффициент связи
-      operationId: profstart_cms_profession_patch
-      description: Доступно при любом статусе теста. Новый коэффициент применяется
-        только к новым результатам.
-      x-implementation-status: implemented
-      security: []
-      parameters:
-      - name: test_code_type
-        in: path
-        required: true
-        description: Код типа теста, например solomin, holland или dellinger
-        schema:
-          type: string
-      - name: group_id
-        in: path
-        required: true
-        description: Числовой идентификатор ресурса
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
-      - name: profession_id
-        in: path
-        required: true
-        description: Числовой идентификатор ресурса
-        schema:
-          type: integer
-          format: int64
-          minimum: 1
-      responses:
-        '200':
-          description: Успешный ответ
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProfStartGroupProfession'
-        '404':
-          description: Ресурс не найден или недоступен владельцу.
-        '409':
-          description: Конфликт состояния или уникальности.
-        '422':
-          description: Некорректные параметры, ссылки или состав теста.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartGroupProfessionPatch'
     delete:
       tags:
       - ПрофСтарт - CMS
@@ -4965,7 +4916,7 @@ paths:
     get:
       tags:
       - ПрофСтарт - CMS
-      summary: Вопросы с вариантами и их весами
+      summary: Вопросы с вариантами
       operationId: profstart_cms_questions_get
       description: Порядок order ASC, id ASC.
       x-implementation-status: implemented
@@ -5218,7 +5169,7 @@ paths:
     get:
       tags:
       - ПрофСтарт - CMS
-      summary: Варианты вопроса с весами
+      summary: Варианты вопроса
       operationId: profstart_cms_options_get
       description: Порядок order ASC, id ASC.
       x-implementation-status: implemented
@@ -5273,7 +5224,7 @@ paths:
     post:
       tags:
       - ПрофСтарт - CMS
-      summary: Создать вариант с группой и весом
+      summary: Создать вариант с группой и значением
       operationId: profstart_cms_options_post
       description: Только draft; active/archived — 409. group_id должен принадлежать
         тому же типу теста.
@@ -5364,7 +5315,7 @@ paths:
     patch:
       tags:
       - ПрофСтарт - CMS
-      summary: Изменить вариант, группу и вес
+      summary: Изменить вариант, группу и значение
       operationId: profstart_cms_option_patch
       description: Только draft; active/archived — 409. group_id должен принадлежать
         тому же типу теста.
@@ -5417,7 +5368,7 @@ paths:
     delete:
       tags:
       - ПрофСтарт - CMS
-      summary: Удалить вариант и его вес
+      summary: Удалить вариант
       operationId: profstart_cms_option_delete
       description: Только draft; active/archived — 409.
       x-implementation-status: implemented
@@ -5462,8 +5413,8 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Доступные активные тесты
       operationId: profstart_tests_get
-      description: Активные версии solomin, holland и dellinger, которые пользователь
-        ещё не завершил. Не более одной версии на тип; пустой список допустим.
+      description: Активные версии всех типов, которые пользователь ещё не завершил.
+        Не более одной версии на тип; пустой список допустим.
       x-implementation-status: implemented
       parameters:
       - name: age_group_id
@@ -5506,8 +5457,8 @@ paths:
       summary: Карточка теста для старта или своей истории
       operationId: profstart_test_get
       description: Активная версия доступна для просмотра. Архивная — только при наличии
-        своей сессии этой версии. Draft и архивная без своей сессии — 409; неподдерживаемый
-        тип — 422. Новую сессию можно начать только для active.
+        своей сессии этой версии. Draft и архивная без своей сессии — 409. Новую сессию
+        можно начать только для active.
       x-implementation-status: implemented
       parameters:
       - name: test_id
@@ -5539,10 +5490,10 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Начать отдельное прохождение
       operationId: profstart_sessions_post
-      description: 'Начинает прохождение активной версии solomin, holland или dellinger.
-        Допускается одна in_progress сессия на пользователя. Завершённый тип нельзя
-        пройти повторно, включая другую версию: 409. После abandoned можно начать
-        новую попытку. Неактивная версия — 409; неподдерживаемый тип — 422.'
+      description: 'Начинает прохождение активной версии любого типа. Допускается
+        одна in_progress на пользователя; завершённый тип нельзя пройти повторно,
+        включая новую версию: 409. После abandoned можно начать новую попытку. Неактивная
+        версия — 409.'
       x-implementation-status: implemented
       parameters: []
       responses:
@@ -5701,9 +5652,10 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Сохранённый результат своей сессии
       operationId: profstart_result_get
-      description: Результат своей завершённой сессии; до завершения и после abandoned
-        — 409. Изменения в CMS не меняют сохранённый результат. Список professions
-        может быть пустым.
+      description: 'Результат своей завершённой сессии: answers и scores для любого
+        типа. До завершения и после abandoned — 409. Для любого типа создаётся источник
+        с показателями групп и профессий; участие в итоговом рейтинге определяется
+        SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS.'
       x-implementation-status: implemented
       parameters:
       - name: id
@@ -5721,33 +5673,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProfStartResult'
-        '401':
-          description: Требуется авторизация.
-        '404':
-          description: Ресурс не найден или недоступен владельцу.
-        '409':
-          description: Конфликт состояния или уникальности.
-        '422':
-          description: Некорректные параметры, ссылки или состав теста.
-  /profstart/me/recommendations:
-    get:
-      tags:
-      - ПрофСтарт - Пользователь
-      summary: Общий подбор профессий по результатам тестов
-      operationId: profstart_me_recommendations_get
-      x-implementation-status: implemented
-      description: 'Сохранённый общий профиль в совместимом формате ПрофСтарта: максимум
-        три профессии, источники и текущие веса. Обновляется после завершения нового
-        типа и изменения весов CMS. Каждый тип завершается один раз. Без результатов
-        — пустые results и professions, is_complete=false. Основной общий маршрут
-        — /users/me/recommendations.'
-      responses:
-        '200':
-          description: Общий рейтинг и использованные результаты/веса
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProfStartCombinedRecommendations'
         '401':
           description: Требуется авторизация.
         '404':
@@ -5874,6 +5799,92 @@ paths:
           description: Требуется авторизация.
         '422':
           description: Некорректные параметры, ссылки или состав теста.
+  /cms/profstart/sessions:
+    get:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Список прохождений пользователей
+      operationId: profstart_cms_sessions_get
+      description: Сессии всех пользователей или указанного user_id; фильтр status
+        и пагинация. Порядок started_at DESC, id DESC. Неизвестный user_id даёт пустой
+        список.
+      x-implementation-status: implemented
+      parameters:
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: status
+        in: query
+        required: false
+        description: 'Статус прохождения: 1 — in_progress, 2 — completed, 3 — abandoned.'
+        schema:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Страница прохождений пользователей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartSessionPage'
+        '422':
+          description: Некорректные параметры, ссылки или состав теста.
+      security: []
+  /cms/profstart/sessions/{session_id}/abandon:
+    post:
+      tags:
+      - ПрофСтарт - CMS
+      summary: Прервать прохождение пользователя
+      operationId: profstart_cms_session_abandon_post
+      description: 'Переводит in_progress в abandoned, сохраняя ответы. Повтор для
+        abandoned допустим. Completed — 409; неизвестная сессия — 404. Пользователь
+        может начать новую попытку. При конкуренции с последним ответом применяется
+        операция, первой получившая блокировку: завершённую сессию прервать нельзя.'
+      x-implementation-status: implemented
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartSession'
+        '404':
+          description: Прохождение не найдено.
+        '409':
+          description: Завершённое прохождение нельзя прервать.
+        '422':
+          description: Некорректные параметры, ссылки или состав теста.
+      security: []
   /profstart/me/sessions/active:
     get:
       tags:
@@ -5894,40 +5905,6 @@ paths:
                 - type: 'null'
         '401':
           description: Требуется авторизация.
-  /cms/profstart/test-types/recommendation-weights:
-    put:
-      tags:
-      - ПрофСтарт - CMS
-      summary: Настроить влияние тестов на общий подбор
-      operationId: profstart_cms_recommendation_weights_put
-      x-implementation-status: implemented
-      security: []
-      description: 'Сумма процентов должна равняться 100; иначе 422. Вес 0 исключает
-        тип из подбора. По умолчанию: solomin=40, holland=40, dellinger=20. Изменение
-        влияет на общий подбор, сохраняя результаты отдельных тестов.'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProfStartRecommendationWeightsUpdate'
-      responses:
-        '200':
-          description: Обновлённые три типа тестов; порядок solomin, holland, dellinger
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProfStartTestType'
-                minItems: 3
-                maxItems: 3
-        '404':
-          description: Ресурс не найден или недоступен владельцу.
-        '409':
-          description: Конфликт состояния или уникальности.
-        '422':
-          description: Некорректные параметры, ссылки или состав теста.
   /cms/profstart/test-types/{test_type_id}:
     get:
       tags:
@@ -5965,8 +5942,7 @@ paths:
       operationId: profstart_cms_type_patch
       description: Редактирование доступно при активном тесте. Коды solomin, holland
         и dellinger фиксированы; код дополнительного типа можно менять только без
-        связанных тестов (409). Дубликат code — 409. Сумма весов должна оставаться
-        100; иначе 422. Для перераспределения используйте PUT /cms/profstart/test-types/recommendation-weights.
+        связанных тестов (409). Дубликат code — 409.
       x-implementation-status: implemented
       security: []
       parameters:
@@ -6002,8 +5978,7 @@ paths:
       - ПрофСтарт - CMS
       summary: Удалить неиспользуемый тип
       operationId: profstart_cms_type_delete
-      description: 'Тип со связанными тестами или ненулевым весом удалить нельзя:
-        409.'
+      description: 'Системный тип или тип со связанными тестами удалить нельзя: 409.'
       x-implementation-status: implemented
       security: []
       parameters:
@@ -9229,7 +9204,6 @@ components:
       - description
       - created_at
       - updated_at
-      - recommendation_weight_percent
       properties:
         id:
           type: integer
@@ -9252,11 +9226,6 @@ components:
         updated_at:
           type: string
           format: date-time
-        recommendation_weight_percent:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Влияние типа на общий подбор, %; 0 — не участвует.
     ProfStartTestCreate:
       type: object
       additionalProperties: false
@@ -9504,10 +9473,6 @@ components:
           minimum: 1
         test_code_type:
           type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
         status:
           type: integer
           format: int32
@@ -9552,7 +9517,6 @@ components:
       required:
       - code
       - name
-      - category
       properties:
         code:
           type: string
@@ -9567,11 +9531,13 @@ components:
           default: ''
         category:
           type: string
+          default: general
           enum:
           - subject
           - labor
           - riasec
           - geometry
+          - general
     ProfStartGroupPatch:
       type: object
       additionalProperties: false
@@ -9595,6 +9561,7 @@ components:
           - labor
           - riasec
           - geometry
+          - general
       minProperties: 1
     ProfStartGroup:
       type: object
@@ -9632,6 +9599,7 @@ components:
           - labor
           - riasec
           - geometry
+          - general
     ProfStartOptionCreate:
       type: object
       additionalProperties: false
@@ -9639,7 +9607,6 @@ components:
       - text
       - order
       - group_id
-      - weight
       properties:
         text:
           type: string
@@ -9650,19 +9617,14 @@ components:
           - 'null'
           minimum: 0
           maximum: 3
-          description: 'Соломин: 0–3. Для Голланда и Деллингера не передаётся; в ответе
-            null.'
+          description: 'Балл ответа: value, если задано, иначе 1. Соломин: 0–3; Голланд
+            и Деллингер: null.'
         order:
           type: integer
           minimum: 1
         group_id:
           type: integer
           format: int64
-        weight:
-          type: number
-          minimum: 0
-          maximum: 3
-          description: 'Соломин: 0–3, равно value; Голланд и Деллингер: 1.'
         file_title:
           type:
           - string
@@ -9710,11 +9672,6 @@ components:
         group_id:
           type: integer
           format: int64
-        weight:
-          type: number
-          minimum: 0
-          maximum: 3
-          description: 'Соломин: 0–3, равно value; Голланд и Деллингер: 1.'
         file_title:
           type:
           - string
@@ -9754,7 +9711,6 @@ components:
       - value
       - order
       - group_id
-      - weight
       properties:
         id:
           type: integer
@@ -9785,11 +9741,6 @@ components:
           type: integer
           format: int64
           minimum: 1
-        weight:
-          type: number
-          minimum: 0
-          maximum: 3
-          description: 'Соломин: 0–3, равно value; Голланд и Деллингер: 1.'
     ProfStartPublicOption:
       type: object
       additionalProperties: false
@@ -10034,22 +9985,6 @@ components:
         profession_id:
           type: integer
           format: int64
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-          default: 1
-    ProfStartGroupProfessionPatch:
-      type: object
-      additionalProperties: false
-      required: []
-      properties:
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-          default: 1
-      minProperties: 1
     ProfStartGroupProfession:
       type: object
       additionalProperties: false
@@ -10059,7 +9994,6 @@ components:
       - group_code
       - profession_id
       - profession_name
-      - coefficient
       properties:
         id:
           type: integer
@@ -10077,11 +10011,6 @@ components:
           minimum: 1
         profession_name:
           type: string
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-          default: 1
     ProfStartValidation:
       type: object
       additionalProperties: false
@@ -10155,13 +10084,6 @@ components:
         test_id:
           type: integer
           format: int64
-        age_group_id:
-          description: Обязателен, если у теста задан age_group_ids; должен входить
-            в этот список.
-          type:
-          - integer
-          - 'null'
-          format: int64
     ProfStartAnswerWrite:
       type: object
       additionalProperties: false
@@ -10208,14 +10130,12 @@ components:
       - test_code_type
       - test_version
       - user_id
-      - age_group_id
       - status
       - question_count
       - answered_count
       - next_question_id
       - started_at
       - completed_at
-      - result_id
       - answers
       properties:
         id:
@@ -10235,12 +10155,6 @@ components:
           minimum: 1
         user_id:
           type: integer
-          format: int64
-          minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
           format: int64
           minimum: 1
         status:
@@ -10271,22 +10185,12 @@ components:
           - string
           - 'null'
           format: date-time
-        result_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
         answers:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartSavedAnswer'
         test_code_type:
           type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
       allOf:
       - if:
           properties:
@@ -10443,8 +10347,6 @@ components:
           properties:
             completed_at:
               type: string
-            result_id:
-              type: integer
             next_question_id:
               type: 'null'
       - if:
@@ -10459,10 +10361,8 @@ components:
           properties:
             completed_at:
               type: 'null'
-            result_id:
-              type: 'null'
-      description: answers — принятые ответы. У completed заполнены completed_at и
-        result_id; у остальных статусов результата нет.
+      description: answers — принятые ответы. У completed заполнен completed_at; у
+        in_progress и abandoned он равен null. Результат доступен по ID сессии.
     ProfStartAnswerReceipt:
       type: object
       additionalProperties: false
@@ -10486,10 +10386,6 @@ components:
         question_count:
           type: integer
           minimum: 1
-          enum:
-          - 1
-          - 15
-          - 42
         next_question_id:
           type:
           - integer
@@ -10615,12 +10511,13 @@ components:
           - labor
           - riasec
           - geometry
+          - general
         raw_score:
           type: number
           minimum: 0
         max_score:
           type: number
-          exclusiveMinimum: 0
+          minimum: 0
           description: Соломин — 18, Голланд — 15, Деллингер — 1.
         normalized_score:
           type: number
@@ -10633,90 +10530,22 @@ components:
         is_leading:
           type: boolean
       description: Общий показатель группы; у Соломина объединяет want и can.
-    ProfStartReason:
-      type: object
-      additionalProperties: false
-      required:
-      - group_id
-      - group_code
-      - group_name
-      - normalized_score
-      - coefficient
-      - contribution
-      properties:
-        group_id:
-          type: integer
-          format: int64
-          minimum: 1
-        group_code:
-          type: string
-        group_name:
-          type: string
-        normalized_score:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Округлено до двух знаков.
-        coefficient:
-          type: number
-          exclusiveMinimum: 0
-          maximum: 1
-        contribution:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Вклад группы в рекомендацию, округлённый до двух знаков.
-    ProfStartRecommendation:
-      type: object
-      additionalProperties: false
-      required:
-      - profession_id
-      - profession_name
-      - score
-      - position
-      - reasons
-      properties:
-        profession_id:
-          type: integer
-          format: int64
-          minimum: 1
-        profession_name:
-          type: string
-        score:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Балл рекомендации, округлённый до двух знаков.
-        position:
-          type: integer
-          minimum: 1
-        reasons:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartReason'
-          minItems: 1
     ProfStartResult:
       type: object
       additionalProperties: false
       required:
-      - id
       - session_id
       - test_id
       - test_type_id
       - user_id
       - test_code_type
       - test_version
-      - age_group_id
       - answered_count
       - question_count
       - created_at
       - scores
-      - professions
+      - answers
       properties:
-        id:
-          type: integer
-          format: int64
-          minimum: 1
         session_id:
           type: integer
           format: int64
@@ -10736,12 +10565,6 @@ components:
         test_version:
           type: integer
           minimum: 1
-        age_group_id:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          minimum: 1
         answered_count:
           type: integer
           minimum: 1
@@ -10755,16 +10578,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartScore'
-        professions:
+        answers:
           type: array
           items:
-            $ref: '#/components/schemas/ProfStartRecommendation'
+            $ref: '#/components/schemas/ProfStartSavedAnswer'
         test_code_type:
           type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
       allOf:
       - if:
           properties:
@@ -10801,12 +10620,6 @@ components:
                     multipleOf: 1
                   max_score:
                     const: 18
-            professions:
-              items:
-                properties:
-                  reasons:
-                    minItems: 2
-                    maxItems: 2
       - if:
           properties:
             test_code_type:
@@ -10840,12 +10653,6 @@ components:
                     multipleOf: 1
                   max_score:
                     const: 15
-            professions:
-              items:
-                properties:
-                  reasons:
-                    minItems: 1
-                    maxItems: 1
       - if:
           properties:
             test_code_type:
@@ -10878,14 +10685,8 @@ components:
                     multipleOf: 1
                   max_score:
                     const: 1
-            professions:
-              items:
-                properties:
-                  reasons:
-                    minItems: 1
-                    maxItems: 1
-      description: Сохранённый результат завершённой сессии. Список professions может
-        быть пустым.
+      description: Сохранённые показатели групп завершённой сессии. Общие рекомендации
+        доступны через /users/me/recommendations.
     ProfStartTestPage:
       type: object
       additionalProperties: false
@@ -11066,12 +10867,6 @@ components:
         description:
           type: string
           default: ''
-        recommendation_weight_percent:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Целый процент; для дополнительных типов допустим только 0.
-          default: 0
     ProfStartTestTypePatch:
       type: object
       additionalProperties: false
@@ -11089,287 +10884,20 @@ components:
           minLength: 1
         description:
           type: string
-        recommendation_weight_percent:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Целый процент; для дополнительных типов допустим только 0.
-    ProfStartRecommendationWeightsUpdate:
-      type: object
-      additionalProperties: false
-      required:
-      - solomin
-      - holland
-      - dellinger
+    RecommendationSourceKey:
       properties:
-        solomin:
-          type: integer
-          minimum: 0
-          maximum: 100
-        holland:
-          type: integer
-          minimum: 0
-          maximum: 100
-        dellinger:
-          type: integer
-          minimum: 0
-          maximum: 100
-      description: Сумма трёх процентов должна равняться 100.
-      example:
-        solomin: 40
-        holland: 40
-        dellinger: 20
-    ProfStartCombinedWeight:
-      type: object
-      additionalProperties: false
+        source_module:
+          type: string
+        source_code:
+          type: string
       required:
-      - test_type_id
-      - test_code_type
-      - recommendation_weight_percent
-      properties:
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-        recommendation_weight_percent:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Влияние типа на общий подбор, %; 0 — не участвует.
-    ProfStartCombinedSource:
+      - source_module
+      - source_code
       type: object
-      additionalProperties: false
-      required:
-      - test_type_id
-      - test_code_type
-      - recommendation_weight_percent
-      - result_id
-      - test_id
-      - test_version
-      - result_created_at
-      - effective_weight_percent
-      properties:
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-        recommendation_weight_percent:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Влияние типа на общий подбор, %; 0 — не участвует.
-        result_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_version:
-          type: integer
-          minimum: 1
-        result_created_at:
-          type: string
-          format: date-time
-        effective_weight_percent:
-          type: number
-          minimum: 0
-          maximum: 100
-          exclusiveMinimum: 0
-          description: Доля типа среди доступных результатов, %; округлена до двух
-            знаков.
-      description: Завершённый результат типа с положительным текущим весом.
-    ProfStartCombinedContribution:
-      type: object
-      additionalProperties: false
-      required:
-      - test_type_id
-      - test_code_type
-      - recommendation_weight_percent
-      - result_id
-      - effective_weight_percent
-      - test_score
-      - contribution
-      properties:
-        test_type_id:
-          type: integer
-          format: int64
-          minimum: 1
-        test_code_type:
-          type: string
-          enum:
-          - solomin
-          - holland
-          - dellinger
-        recommendation_weight_percent:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Влияние типа на общий подбор, %; 0 — не участвует.
-        result_id:
-          type: integer
-          format: int64
-          minimum: 1
-        effective_weight_percent:
-          type: number
-          minimum: 0
-          maximum: 100
-          exclusiveMinimum: 0
-        test_score:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Сохранённый score профессии в результате этого теста; 0, если
-            профессии в нём нет.
-        contribution:
-          type: number
-          minimum: 0
-          maximum: 100
-          description: Вклад теста в общий балл профессии, округлённый до двух знаков.
-      description: По одной записи для каждого результата из results, включая нулевой
-        вклад. Порядок solomin, holland, dellinger.
-    ProfStartCombinedProfession:
-      type: object
-      additionalProperties: false
-      required:
-      - profession_id
-      - profession_name
-      - score
-      - position
-      - contributions
-      properties:
-        profession_id:
-          type: integer
-          format: int64
-          minimum: 1
-        profession_name:
-          type: string
-          description: Текущее название профессии.
-        score:
-          type: number
-          minimum: 0
-          exclusiveMinimum: 0
-          maximum: 100
-          description: Общий балл профессии, округлённый до двух знаков.
-        position:
-          type: integer
-          minimum: 1
-        contributions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartCombinedContribution'
-          minItems: 1
-          maxItems: 3
-    ProfStartCombinedRecommendations:
-      type: object
-      additionalProperties: false
-      required:
-      - calculated_at
-      - is_complete
-      - available_weight_percent
-      - weights
-      - results
-      - missing_test_types
-      - professions
-      properties:
-        calculated_at:
-          type: string
-          format: date-time
-        is_complete:
-          type: boolean
-        available_weight_percent:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Сумма настроенных весов типов, имеющих завершённый результат
-            у владельца.
-        weights:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartCombinedWeight'
-          minItems: 1
-          maxItems: 3
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartCombinedSource'
-          maxItems: 3
-        missing_test_types:
-          type: array
-          items:
-            type: string
-            enum:
-            - solomin
-            - holland
-            - dellinger
-          uniqueItems: true
-          maxItems: 3
-          description: Типы с положительным настроенным весом, для которых нет завершённого
-            результата.
-        professions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProfStartCombinedProfession'
-          maxItems: 3
-      description: Сохранённый общий профиль в формате ПрофСтарта, максимум три профессии.
-      allOf:
-      - if:
-          properties:
-            available_weight_percent:
-              const: 0
-          required:
-          - available_weight_percent
-        then:
-          properties:
-            is_complete:
-              const: false
-            results:
-              maxItems: 0
-            professions:
-              maxItems: 0
-            missing_test_types:
-              minItems: 1
-      - if:
-          properties:
-            is_complete:
-              const: true
-          required:
-          - is_complete
-        then:
-          properties:
-            available_weight_percent:
-              const: 100
-            results:
-              minItems: 1
-            missing_test_types:
-              maxItems: 0
-      - if:
-          properties:
-            is_complete:
-              const: false
-          required:
-          - is_complete
-        then:
-          properties:
-            available_weight_percent:
-              maximum: 99
-            missing_test_types:
-              minItems: 1
     RecommendationContribution:
       properties:
+        source_module:
+          type: string
         source_code:
           type: string
         weight:
@@ -11388,6 +10916,7 @@ components:
             type: object
           type: array
       required:
+      - source_module
       - source_code
       - weight
       - source_id
@@ -11398,6 +10927,8 @@ components:
       type: object
     RecommendationSource:
       properties:
+        source_module:
+          type: string
         source_code:
           type: string
         weight:
@@ -11410,6 +10941,7 @@ components:
         effective_weight_percent:
           type: number
       required:
+      - source_module
       - source_code
       - weight
       - id
@@ -11418,11 +10950,14 @@ components:
       type: object
     RecommendationWeight:
       properties:
+        source_module:
+          type: string
         source_code:
           type: string
         weight:
           type: number
       required:
+      - source_module
       - source_code
       - weight
       type: object
@@ -11469,7 +11004,7 @@ components:
           type: array
         missing_sources:
           items:
-            type: string
+            $ref: '#/components/schemas/RecommendationSourceKey'
           type: array
         sources:
           items:
