@@ -5,10 +5,15 @@ cms-age-groups:
     - ПрофСтарт - CMS
     summary: Справочник возрастных групп
     operationId: profstart_cms_age_groups_get
-    description: Возрастные границы включительно; порядок id ASC.
+    description: "Требуется staff access-токен: admin/content_editor/operator. Возрастные границы включительно; порядок id ASC."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Возрастные группы
         content:
@@ -23,7 +28,7 @@ age-groups:
     - ПрофСтарт - Пользователь
     summary: Справочник возрастных групп
     operationId: profstart_age_groups_get
-    description: Группы для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC.
+    description: "Требуется пользовательский access-токен или токен активного устройства. Группы для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -44,11 +49,16 @@ cms-types:
     - ПрофСтарт - CMS
     summary: Каталог типов тестов
     operationId: profstart_cms_types_get
-    description: "Все типы, включая дополнительные; порядок id ASC. Прохождение и показатели групп доступны для всех типов; участие источника в итоговом рейтинге определяется SOURCE_WEIGHTS."
+    description: "Требуется staff access-токен: admin/content_editor/operator. Все типы, включая дополнительные; порядок id ASC. Прохождение и показатели групп доступны для всех типов; участие источника в итоговом рейтинге определяется SOURCE_WEIGHTS."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters: []
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -68,11 +78,16 @@ cms-types:
     - ПрофСтарт - CMS
     summary: Создать тип теста
     operationId: profstart_cms_types_post
-    description: 'Код должен быть уникальным: дубликат — 409. Дополнительные типы недоступны для пользовательского прохождения.'
+    description: "Требуется staff access-токен: admin/content_editor. Код должен быть уникальным: дубликат — 409. Дополнительные типы недоступны для пользовательского прохождения."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters: []
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -97,9 +112,10 @@ cms-tests:
     - ПрофСтарт - CMS
     summary: Версии тестов
     operationId: profstart_cms_tests_get
-    description: Порядок created_at DESC, id DESC.
+    description: "Требуется staff access-токен: admin/content_editor/operator. Порядок created_at DESC, id DESC."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: limit
       in: query
@@ -135,6 +151,10 @@ cms-tests:
         format: int32
         enum: [1, 2, 3]
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -152,11 +172,16 @@ cms-tests:
     - ПрофСтарт - CMS
     summary: Создать черновик версии
     operationId: profstart_cms_tests_post
-    description: Создаёт draft (status=1). Номер версии назначается автоматически.
+    description: "Требуется staff access-токен: admin/content_editor. Создаёт draft (status=1). Номер версии назначается автоматически."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters: []
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -177,12 +202,14 @@ cms-tests:
             $ref: '#/components/schemas/ProfStartTestCreate'
 cms-test:
   get:
+    description: "Требуется staff access-токен: admin/content_editor/operator. "
     tags:
     - ПрофСтарт - CMS
     summary: Карточка версии
     operationId: profstart_cms_test_get
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -193,6 +220,10 @@ cms-test:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -210,9 +241,10 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Изменить черновик
     operationId: profstart_cms_test_patch
-    description: Только draft; active/archived — 409. Для смены статуса используйте /publish или /archive.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409. Для смены статуса используйте /publish или /archive."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -223,6 +255,10 @@ cms-test:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -246,10 +282,10 @@ cms-test:
     - ПрофСтарт - CMS
     summary: Удалить черновик
     operationId: profstart_cms_test_delete
-    description: Только draft без сессий; иначе 409. Вопросы и варианты удаляются вместе с версией. Группы типа и
-        связи профессий сохраняются.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft без сессий; иначе 409. Вопросы и варианты удаляются вместе с версией. Группы типа и связи профессий сохраняются."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -260,6 +296,10 @@ cms-test:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Удалено
       '404':
@@ -274,10 +314,10 @@ cms-copy:
     - ПрофСтарт - CMS
     summary: Копировать в новую версию
     operationId: profstart_cms_copy_post
-    description: Создаёт draft из любой версии. Вопросы и варианты получают новые ID; группы и связи профессий остаются
-        общими для типа.
+    description: "Требуется staff access-токен: admin/content_editor. Создаёт draft из любой версии. Вопросы и варианты получают новые ID; группы и связи профессий остаются общими для типа."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -288,6 +328,10 @@ cms-copy:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -306,10 +350,10 @@ cms-validate:
     - ПрофСтарт - CMS
     summary: Проверить готовность публикации
     operationId: profstart_cms_validate_post
-    description: Не меняет статус. Ошибки публикации возвращаются в ответе 200 с valid=false и errors. Для дополнительных
-        типов scale_maxima=[].
+    description: "Требуется staff access-токен: admin/content_editor. Не меняет статус. Ошибки публикации возвращаются в ответе 200 с valid=false и errors. Для дополнительных типов scale_maxima=[]."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -320,6 +364,10 @@ cms-validate:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -338,11 +386,10 @@ cms-publish:
     - ПрофСтарт - CMS
     summary: Опубликовать и активировать тест
     operationId: profstart_cms_publish_post
-    description: Публикует draft и архивирует предыдущую активную версию типа. Ошибки проверки — 422. Повтор для
-        active возвращает ту же запись; archived — 409 (используйте /copy). Начатые сессии продолжаются
-        на прежней версии. Дополнительные типы можно публиковать в CMS, но проходить нельзя.
+    description: "Требуется staff access-токен: admin/content_editor. Публикует draft и архивирует предыдущую активную версию типа. Ошибки проверки — 422. Повтор для active возвращает ту же запись; archived — 409 (используйте /copy). Начатые сессии продолжаются на прежней версии. Дополнительные типы можно публиковать в CMS, но проходить нельзя."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -353,6 +400,10 @@ cms-publish:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -371,9 +422,10 @@ cms-groups:
     - ПрофСтарт - CMS
     summary: Группы типа
     operationId: profstart_cms_groups_get
-    description: Группы общие для всех версий типа. Порядок id ASC.
+    description: "Требуется staff access-токен: admin/content_editor/operator. Группы общие для всех версий типа. Порядок id ASC."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -399,6 +451,10 @@ cms-groups:
         minimum: 0
         default: 0
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -416,10 +472,10 @@ cms-groups:
     - ПрофСтарт - CMS
     summary: Создать группу
     operationId: profstart_cms_groups_post
-    description: Дубликат code внутри типа — 409. Для solomin, holland и dellinger допустимы только предусмотренные
-        методикой коды и категории; иначе 422.
+    description: "Требуется staff access-токен: admin/content_editor. Дубликат code внутри типа — 409. Для solomin, holland и dellinger допустимы только предусмотренные методикой коды и категории; иначе 422."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -428,6 +484,10 @@ cms-groups:
       schema:
         type: string
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -448,12 +508,14 @@ cms-groups:
             $ref: '#/components/schemas/ProfStartGroupCreate'
 cms-group:
   get:
+    description: "Требуется staff access-токен: admin/content_editor/operator. "
     tags:
     - ПрофСтарт - CMS
     summary: Группа результата
     operationId: profstart_cms_group_get
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -470,6 +532,10 @@ cms-group:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -487,11 +553,10 @@ cms-group:
     - ПрофСтарт - CMS
     summary: Изменить группу
     operationId: profstart_cms_group_patch
-    description: Редактирование доступно при любом статусе теста и не меняет сохранённые результаты. У основных групп
-        нельзя менять code и category (409). У дополнительных типов защищён code используемой группы (409);
-        category можно менять для новых результатов. Дубликат code — 409.
+    description: "Требуется staff access-токен: admin/content_editor. Редактирование доступно при любом статусе теста и не меняет сохранённые результаты. У основных групп нельзя менять code и category (409). У дополнительных типов защищён code используемой группы (409); category можно менять для новых результатов. Дубликат code — 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -508,6 +573,10 @@ cms-group:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -531,10 +600,10 @@ cms-group:
     - ПрофСтарт - CMS
     summary: Удалить несвязанную группу
     operationId: profstart_cms_group_delete
-    description: 'Основные группы и группы с вариантами ответов, результатами или связями профессий удалить нельзя:
-        409.'
+    description: "Требуется staff access-токен: admin/content_editor. Основные группы и группы с вариантами ответов, результатами или связями профессий удалить нельзя: 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -551,6 +620,10 @@ cms-group:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Удалено
       '404':
@@ -565,9 +638,10 @@ cms-professions:
     - ПрофСтарт - CMS
     summary: Профессии группы
     operationId: profstart_cms_professions_get
-    description: Связи общие для всех версий типа.
+    description: "Требуется staff access-токен: admin/content_editor/operator. Связи общие для всех версий типа."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -601,6 +675,10 @@ cms-professions:
         minimum: 0
         default: 0
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -618,11 +696,10 @@ cms-professions:
     - ПрофСтарт - CMS
     summary: Привязать профессию
     operationId: profstart_cms_professions_post
-    description: 'Доступно при любом статусе теста; сохранённые рекомендации не меняются. Для Соломина профессии
-        нужна пара групп subject/labor: неполная пара исключает её из новых рекомендаций и вызывает ошибку
-        /validate и /publish.'
+    description: "Требуется staff access-токен: admin/content_editor. Доступно при любом статусе теста; сохранённые рекомендации не меняются. Для Соломина профессии нужна пара групп subject/labor: неполная пара исключает её из новых рекомендаций и вызывает ошибку /validate и /publish."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -639,6 +716,10 @@ cms-professions:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -663,10 +744,10 @@ cms-profession:
     - ПрофСтарт - CMS
     summary: Отвязать профессию
     operationId: profstart_cms_profession_delete
-    description: Доступно при любом статусе теста; сохранённые рекомендации не меняются. Неполная пара subject/labor
-        исключает профессию из новых рекомендаций Соломина и вызывает ошибку /validate и /publish.
+    description: "Требуется staff access-токен: admin/content_editor. Доступно при любом статусе теста; сохранённые рекомендации не меняются. Неполная пара subject/labor исключает профессию из новых рекомендаций Соломина и вызывает ошибку /validate и /publish."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_code_type
       in: path
@@ -691,6 +772,10 @@ cms-profession:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Удалено
       '404':
@@ -705,9 +790,10 @@ cms-questions:
     - ПрофСтарт - CMS
     summary: Вопросы с вариантами
     operationId: profstart_cms_questions_get
-    description: Порядок order ASC, id ASC.
+    description: "Требуется staff access-токен: admin/content_editor/operator. Порядок order ASC, id ASC."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -735,6 +821,10 @@ cms-questions:
         minimum: 0
         default: 0
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -752,9 +842,10 @@ cms-questions:
     - ПрофСтарт - CMS
     summary: Создать вопрос
     operationId: profstart_cms_questions_post
-    description: Только draft; active/archived — 409.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -765,6 +856,10 @@ cms-questions:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -785,12 +880,14 @@ cms-questions:
             $ref: '#/components/schemas/ProfStartQuestionCreate'
 cms-question:
   get:
+    description: "Требуется staff access-токен: admin/content_editor/operator. "
     tags:
     - ПрофСтарт - CMS
     summary: Вопрос с ключом
     operationId: profstart_cms_question_get
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -809,6 +906,10 @@ cms-question:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -826,9 +927,10 @@ cms-question:
     - ПрофСтарт - CMS
     summary: Изменить вопрос
     operationId: profstart_cms_question_patch
-    description: Только draft; active/archived — 409.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -847,6 +949,10 @@ cms-question:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -870,9 +976,10 @@ cms-question:
     - ПрофСтарт - CMS
     summary: Удалить вопрос с вариантами
     operationId: profstart_cms_question_delete
-    description: Только draft; active/archived — 409. Варианты удаляются вместе с вопросом.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409. Варианты удаляются вместе с вопросом."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -891,6 +998,10 @@ cms-question:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Удалено
       '404':
@@ -905,10 +1016,10 @@ cms-order:
     - ПрофСтарт - CMS
     summary: Задать порядок всех вопросов
     operationId: profstart_cms_order_put
-    description: Только draft; active/archived — 409. Передайте все question_ids теста без повторов в нужном порядке.
-        Неполный или чужой список — 422; order назначается от 1 до N.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409. Передайте все question_ids теста без повторов в нужном порядке. Неполный или чужой список — 422; order назначается от 1 до N."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -919,6 +1030,10 @@ cms-order:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -956,9 +1071,10 @@ cms-options:
     - ПрофСтарт - CMS
     summary: Варианты вопроса
     operationId: profstart_cms_options_get
-    description: Порядок order ASC, id ASC.
+    description: "Требуется staff access-токен: admin/content_editor/operator. Порядок order ASC, id ASC."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -994,6 +1110,10 @@ cms-options:
         minimum: 0
         default: 0
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1011,9 +1131,10 @@ cms-options:
     - ПрофСтарт - CMS
     summary: Создать вариант с группой и значением
     operationId: profstart_cms_options_post
-    description: Только draft; active/archived — 409. group_id должен принадлежать тому же типу теста.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409. group_id должен принадлежать тому же типу теста."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -1032,6 +1153,10 @@ cms-options:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '201':
         description: Ресурс создан
         content:
@@ -1052,12 +1177,14 @@ cms-options:
             $ref: '#/components/schemas/ProfStartOptionCreate'
 cms-option:
   get:
+    description: "Требуется staff access-токен: admin/content_editor/operator. "
     tags:
     - ПрофСтарт - CMS
     summary: Вариант и ключ
     operationId: profstart_cms_option_get
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -1084,6 +1211,10 @@ cms-option:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1101,9 +1232,10 @@ cms-option:
     - ПрофСтарт - CMS
     summary: Изменить вариант, группу и значение
     operationId: profstart_cms_option_patch
-    description: Только draft; active/archived — 409. group_id должен принадлежать тому же типу теста.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409. group_id должен принадлежать тому же типу теста."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -1130,6 +1262,10 @@ cms-option:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1153,9 +1289,10 @@ cms-option:
     - ПрофСтарт - CMS
     summary: Удалить вариант
     operationId: profstart_cms_option_delete
-    description: Только draft; active/archived — 409.
+    description: "Требуется staff access-токен: admin/content_editor. Только draft; active/archived — 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -1182,6 +1319,10 @@ cms-option:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Удалено
       '404':
@@ -1196,7 +1337,7 @@ tests:
     - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: 'Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим.'
+    description: "Требуется пользовательский access-токен или токен активного устройства. Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим. Для устройства каталог не персонализируется; для пользователя исключаются завершённые типы."
     x-implementation-status: implemented
     parameters:
     - name: age_group_id
@@ -1238,7 +1379,7 @@ test:
     - ПрофСтарт - Пользователь
     summary: Карточка теста для старта или своей истории
     operationId: profstart_test_get
-    description: "Активная версия доступна для просмотра. Архивная — только при наличии своей сессии этой версии. Draft и архивная без своей сессии — 409. Новую сессию можно начать только для active."
+    description: "Требуется пользовательский access-токен или токен активного устройства. Активная версия доступна для просмотра. Архивная — только при наличии своей сессии этой версии. Draft и архивная без своей сессии — 409. Новую сессию можно начать только для active. Устройство получает только активную версию; архивная версия доступна пользователю с собственной историей прохождения."
     x-implementation-status: implemented
     parameters:
     - name: test_id
@@ -1583,12 +1724,14 @@ me-results:
         description: Некорректные параметры, ссылки или состав теста.
 cms-type:
   get:
+    description: "Требуется staff access-токен: admin/content_editor/operator. "
     tags:
     - ПрофСтарт - CMS
     summary: Карточка типа теста
     operationId: profstart_cms_type_get
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_type_id
       in: path
@@ -1599,6 +1742,10 @@ cms-type:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1616,10 +1763,10 @@ cms-type:
     - ПрофСтарт - CMS
     summary: Изменить тип теста
     operationId: profstart_cms_type_patch
-    description: Редактирование доступно при активном тесте. Коды solomin, holland и dellinger фиксированы; код дополнительного
-        типа можно менять только без связанных тестов (409). Дубликат code — 409.
+    description: "Требуется staff access-токен: admin/content_editor. Редактирование доступно при активном тесте. Коды solomin, holland и dellinger фиксированы; код дополнительного типа можно менять только без связанных тестов (409). Дубликат code — 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_type_id
       in: path
@@ -1630,6 +1777,10 @@ cms-type:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1653,9 +1804,10 @@ cms-type:
     - ПрофСтарт - CMS
     summary: Удалить неиспользуемый тип
     operationId: profstart_cms_type_delete
-    description: 'Системный тип или тип со связанными тестами удалить нельзя: 409.'
+    description: "Требуется staff access-токен: admin/content_editor. Системный тип или тип со связанными тестами удалить нельзя: 409."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_type_id
       in: path
@@ -1666,6 +1818,10 @@ cms-type:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '204':
         description: Тип удалён
       '404':
@@ -1680,10 +1836,10 @@ cms-archive:
     - ПрофСтарт - CMS
     summary: Архивировать активный тест
     operationId: profstart_cms_archive_post
-    description: active → archived. Повтор для archived возвращает ту же запись; draft — 409. Новые сессии запрещены,
-        начатые можно продолжить.
+    description: "Требуется staff access-токен: admin/content_editor. active → archived. Повтор для archived возвращает ту же запись; draft — 409. Новые сессии запрещены, начатые можно продолжить."
     x-implementation-status: implemented
-    security: []
+    security:
+    - bearerAuth: []
     parameters:
     - name: test_id
       in: path
@@ -1694,6 +1850,10 @@ cms-archive:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1713,8 +1873,7 @@ cms-sessions:
     - ПрофСтарт - CMS
     summary: Список прохождений пользователей
     operationId: profstart_cms_sessions_get
-    description: Сессии всех пользователей или указанного user_id; фильтр status и пагинация. Порядок started_at
-      DESC, id DESC. Неизвестный user_id даёт пустой список.
+    description: "Требуется staff access-токен: admin/operator. Сессии всех пользователей или указанного user_id; фильтр status и пагинация. Порядок started_at DESC, id DESC. Неизвестный user_id даёт пустой список."
     x-implementation-status: implemented
     parameters:
     - name: user_id
@@ -1749,6 +1908,10 @@ cms-sessions:
         minimum: 0
         default: 0
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Страница прохождений пользователей.
         content:
@@ -1757,16 +1920,15 @@ cms-sessions:
               $ref: '#/components/schemas/ProfStartSessionPage'
       '422':
         description: Некорректные параметры, ссылки или состав теста.
-    security: []
+    security:
+    - bearerAuth: []
 cms-session-abandon:
   post:
     tags:
     - ПрофСтарт - CMS
     summary: Прервать прохождение пользователя
     operationId: profstart_cms_session_abandon_post
-    description: 'Переводит in_progress в abandoned, сохраняя ответы. Повтор для abandoned допустим. Completed —
-      409; неизвестная сессия — 404. Пользователь может начать новую попытку. При конкуренции с последним ответом
-      применяется операция, первой получившая блокировку: завершённую сессию прервать нельзя.'
+    description: "Требуется staff access-токен: admin/operator. Переводит in_progress в abandoned, сохраняя ответы. Повтор для abandoned допустим. Completed — 409; неизвестная сессия — 404. Пользователь может начать новую попытку. При конкуренции с последним ответом применяется операция, первой получившая блокировку: завершённую сессию прервать нельзя."
     x-implementation-status: implemented
     parameters:
     - name: session_id
@@ -1778,6 +1940,10 @@ cms-session-abandon:
         format: int64
         minimum: 1
     responses:
+      '401':
+        description: Отсутствующий или недействительный staff-токен.
+      '403':
+        description: Недостаточно прав.
       '200':
         description: Успешный ответ
         content:
@@ -1790,4 +1956,5 @@ cms-session-abandon:
         description: Завершённое прохождение нельзя прервать.
       '422':
         description: Некорректные параметры, ссылки или состав теста.
-    security: []
+    security:
+    - bearerAuth: []

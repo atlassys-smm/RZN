@@ -21,7 +21,7 @@ x-websocket-channels:
       Все сообщения содержат только type, без data. После каждого события клиент запрашивает
       GET /quiz/sessions/active?device_id=...; состав доступен с select=teams&select=participants.
       session_state уведомляет о смене вопроса, раскрытии ответа, изменении таймера и завершении сессии.
-      Ответы команды доступны капитану через REST с participant_id, не в общей рассылке.
+      Ответы команды доступны капитану через REST с его access-токеном, не в общей рассылке.
       Подключение к сокету не вызывает отправку session_state. Перед регистрацией
       проверяется существование сессии одним запросом её id; соединение с БД освобождается.
       Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
@@ -116,35 +116,6 @@ paths:
     $ref: './paths/auth.yaml#/logout'
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
-  /auth/{id}:
-    get:
-      tags: [auth]
-      summary: Временный тестовый JWT пользователя
-      description: Без авторизации выдаёт JWT существующего пользователя; удалить перед запуском в production.
-      x-implementation-status: implemented
-      security: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: JWT пользователя
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [token]
-                properties:
-                  token:
-                    type: string
-        '404':
-          description: Пользователь не найден
-        '422':
-          description: Некорректный идентификатор
-
   # ── Авторизация пользователя ─────────────────────
   /auth/user/guest:
     $ref: './paths/user-auth.yaml#/user-guest'
@@ -1651,7 +1622,7 @@ components:
                       type: integer
                     participant_answers:
                       type: array
-                      description: Предварительные ответы команды, возвращаются только если participant_id запроса указывает на капитана
+                      description: Предварительные ответы команды, возвращаются только авторизованному капитану
                       items:
                         type: object
                         properties:
@@ -1796,7 +1767,7 @@ components:
                   type: integer
                 participant_answers:
                   type: array
-                  description: Предварительные ответы команды, возвращаются только если participant_id запроса указывает на капитана
+                  description: Предварительные ответы команды, возвращаются только авторизованному капитану
                   items:
                     type: object
                     properties:
