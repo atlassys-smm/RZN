@@ -12,6 +12,34 @@ servers:
   - url: http://localhost:8000/api
     description: Локальная разработка
 
+x-websocket-channels:
+  quiz-session:
+    url: /api/quiz/sessions/{sessionId}/ws
+    description: |
+      Канал оператора, LED и игрока. После подключения и переподключения клиент сам
+      запрашивает актуальное состояние через GET /quiz/sessions/active с device_id.
+      Все сообщения содержат только type, без data. После каждого события клиент запрашивает
+      GET /quiz/sessions/active?device_id=...; состав доступен с select=teams&select=participants.
+      session_state уведомляет о смене вопроса, раскрытии ответа, изменении таймера и завершении сессии.
+      Ответы команды доступны капитану через REST с participant_id, не в общей рассылке.
+      Подключение к сокету не вызывает отправку session_state. Перед регистрацией
+      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
+      Истечение таймера проверяется вызовом POST /quiz/sessions/{id}/led/next.
+    message:
+      $ref: '#/components/schemas/QuizWebSocketEvent'
+  interactive-video-session:
+    url: /api/interactive-video/sessions/{sessionId}/ws
+    description: |
+      Канал LED, оператора и мобильного клиента видеосценариев. Перед регистрацией
+      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
+      После подключения и переподключения клиент сам запрашивает состояние через
+      GET /interactive-video/sessions/{id}/state или /voting?participant_id=... .
+      Начальное состояние сервер не отправляет. Все уведомления относятся к sessionId из URL.
+    message:
+      $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
+
 tags:
   - name: Авторизация пользователей
     description: Гостевой вход, OAuth и сессии посетителей
@@ -19,6 +47,10 @@ tags:
     description: Вход сотрудников, управление учётными записями и сессиями
   - name: Пользователь
     description: Данные и профиль текущего пользователя
+  - name: Рекомендации пользователя
+    description: Общий профиль рекомендаций текущего пользователя
+  - name: users
+    description: Пользователи и профили
   - name: LED-устройства
     description: Регистрация LED-устройств, управление ими и device-токенами
   - name: Профессии
@@ -55,8 +87,10 @@ tags:
     description: Получение состояния показа для LED-экрана
   - name: Профессии в действии - Зритель
     description: Мобильный клиент — подключение и голосование
-  - name: profstart
+  - name: ПрофСтарт - Пользователь
     description: ПрофСтарт — тестирование
+  - name: ПрофСтарт - CMS
+    description: Управление версиями, вопросами, весами и связями профессий
   - name: analytics
     description: Аналитика и события
   - name: cms
@@ -82,6 +116,34 @@ paths:
     $ref: './paths/auth.yaml#/logout'
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
+  /auth/{id}:
+    get:
+      tags: [auth]
+      summary: Временный тестовый JWT пользователя
+      description: Без авторизации выдаёт JWT существующего пользователя; удалить перед запуском в production.
+      x-implementation-status: implemented
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: JWT пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token]
+                properties:
+                  token:
+                    type: string
+        '404':
+          description: Пользователь не найден
+        '422':
+          description: Некорректный идентификатор
 
   # ── Авторизация пользователя ─────────────────────
   /auth/user/guest:
@@ -94,6 +156,11 @@ paths:
     $ref: './paths/user-auth.yaml#/user-oauth'
   /user/info:
     $ref: './paths/user-auth.yaml#/user-info'
+  # ── Пользователи ─────────────────────────────────
+  /users/me/recommendations:
+    $ref: './paths/user-recommendations.yaml#/me-recommendations'
+  /users/me:
+    $ref: './paths/users.yaml#/me'
 
   # ── Профессии ────────────────────────────────────
   /professions:
@@ -265,6 +332,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/session-stop'
   /interactive-video/sessions/{id}/state:
     $ref: './paths/interactive-video.yaml#/session-state'
+  /interactive-video/sessions/{id}/scenarios:
+    $ref: './paths/interactive-video.yaml#/session-scenarios'
   /interactive-video/sessions/{id}/advance:
     $ref: './paths/interactive-video.yaml#/session-advance'
   /interactive-video/sessions/{id}/voting:
@@ -276,13 +345,71 @@ paths:
   /interactive-video/sessions/{sessionId}/vote:
     $ref: './paths/interactive-video.yaml#/player-vote'
 
-  # ── ПрофСтарт ────────────────────────────────────
+  # ── ПрофСтарт ───────────
+  /cms/profstart/age-groups:
+    $ref: ./paths/profstart.yaml#/cms-age-groups
+  /profstart/age-groups:
+    $ref: ./paths/profstart.yaml#/age-groups
+  /cms/profstart/test-types:
+    $ref: ./paths/profstart.yaml#/cms-types
+  /cms/profstart/tests:
+    $ref: ./paths/profstart.yaml#/cms-tests
+  /cms/profstart/tests/{test_id}:
+    $ref: ./paths/profstart.yaml#/cms-test
+  /cms/profstart/tests/{test_id}/copy:
+    $ref: ./paths/profstart.yaml#/cms-copy
+  /cms/profstart/tests/{test_id}/validate:
+    $ref: ./paths/profstart.yaml#/cms-validate
+  /cms/profstart/tests/{test_id}/publish:
+    $ref: ./paths/profstart.yaml#/cms-publish
+  /cms/profstart/test-types/{test_code_type}/groups:
+    $ref: ./paths/profstart.yaml#/cms-groups
+  /cms/profstart/test-types/{test_code_type}/groups/{group_id}:
+    $ref: ./paths/profstart.yaml#/cms-group
+  /cms/profstart/test-types/{test_code_type}/groups/{group_id}/professions:
+    $ref: ./paths/profstart.yaml#/cms-professions
+  /cms/profstart/test-types/{test_code_type}/groups/{group_id}/professions/{profession_id}:
+    $ref: ./paths/profstart.yaml#/cms-profession
+  /cms/profstart/tests/{test_id}/questions:
+    $ref: ./paths/profstart.yaml#/cms-questions
+  /cms/profstart/tests/{test_id}/questions/{question_id}:
+    $ref: ./paths/profstart.yaml#/cms-question
+  /cms/profstart/tests/{test_id}/questions/order:
+    $ref: ./paths/profstart.yaml#/cms-order
+  /cms/profstart/tests/{test_id}/questions/{question_id}/options:
+    $ref: ./paths/profstart.yaml#/cms-options
+  /cms/profstart/tests/{test_id}/questions/{question_id}/options/{option_id}:
+    $ref: ./paths/profstart.yaml#/cms-option
+  /profstart/tests:
+    $ref: ./paths/profstart.yaml#/tests
+  /profstart/tests/{test_id}:
+    $ref: ./paths/profstart.yaml#/test
   /profstart/sessions:
-    $ref: './paths/profstart.yaml#/sessions'
-  /profstart/sessions/{id}/answer:
-    $ref: './paths/profstart.yaml#/answer'
+    $ref: ./paths/profstart.yaml#/sessions
+  /profstart/sessions/{id}:
+    $ref: ./paths/profstart.yaml#/session
+  /profstart/question:
+    $ref: ./paths/profstart.yaml#/question
+  /profstart/answer:
+    $ref: ./paths/profstart.yaml#/answer
+  /profstart/sessions/{id}/abandon:
+    $ref: ./paths/profstart.yaml#/abandon
   /profstart/sessions/{id}/result:
-    $ref: './paths/profstart.yaml#/result'
+    $ref: ./paths/profstart.yaml#/result
+  /profstart/me/results:
+    $ref: ./paths/profstart.yaml#/me-results
+  /profstart/me/sessions:
+    $ref: ./paths/profstart.yaml#/me-sessions
+  /cms/profstart/sessions:
+    $ref: ./paths/profstart.yaml#/cms-sessions
+  /cms/profstart/sessions/{session_id}/abandon:
+    $ref: ./paths/profstart.yaml#/cms-session-abandon
+  /profstart/me/sessions/active:
+    $ref: ./paths/profstart.yaml#/me-active-session
+  /cms/profstart/test-types/{test_type_id}:
+    $ref: ./paths/profstart.yaml#/cms-type
+  /cms/profstart/tests/{test_id}/archive:
+    $ref: ./paths/profstart.yaml#/cms-archive
 
   # ── Аналитика ────────────────────────────────────
   /analytics/events:
@@ -294,28 +421,26 @@ paths:
 
   # ── Обратная связь — CMS ─────────────────────────
   /cms/surveys:
-    $ref: './paths/cms.yaml#/surveys'
-  /cms/surveys/{survey_id}:
-    $ref: './paths/cms.yaml#/surveys-detail'
-  /cms/surveys/{survey_id}/copy:
-    $ref: './paths/cms.yaml#/surveys-copy'
-  /cms/surveys/{survey_id}/publish:
-    $ref: './paths/cms.yaml#/surveys-publish'
-  /cms/surveys/{survey_id}/questions:
-    $ref: './paths/cms.yaml#/surveys-questions-create'
-  /cms/surveys/{survey_id}/questions/reorder:
-    $ref: './paths/cms.yaml#/surveys-questions-reorder'
-  /cms/surveys/{survey_id}/questions/{question_id}:
-    put:
-      $ref: './paths/cms.yaml#/surveys-questions-update/put'
-    delete:
-      $ref: './paths/cms.yaml#/surveys-questions-delete/delete'
+    $ref: ./paths/surveys.yaml#/cms-surveys
   /cms/surveys/responses:
-    $ref: './paths/cms.yaml#/responses'
+    $ref: ./paths/surveys.yaml#/cms-survey-responses
+  /cms/surveys/{survey_id}:
+    $ref: ./paths/surveys.yaml#/cms-survey-detail
+  /cms/surveys/{survey_id}/copy:
+    $ref: ./paths/surveys.yaml#/cms-survey-copy
+  /cms/surveys/{survey_id}/publish:
+    $ref: ./paths/surveys.yaml#/cms-survey-publish
+  /cms/surveys/{survey_id}/questions:
+    $ref: ./paths/surveys.yaml#/cms-survey-questions
+  /cms/surveys/{survey_id}/questions/reorder:
+    $ref: ./paths/surveys.yaml#/cms-survey-questions-reorder
+  /cms/surveys/{survey_id}/questions/{question_id}:
+    $ref: ./paths/surveys.yaml#/cms-survey-question-detail
+  # ── Обратная связь — LED ────────────────────────
+  /feedback/surveys/{external_id}:
+    $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь — Пользователь ────────────────
-  /feedback/surveys/{external_id}:
-    $ref: './paths/feedback.yaml#/survey-by-external-id'
   /feedback/surveys/{survey_id}/respond:
     $ref: './paths/feedback.yaml#/respond'
 
@@ -361,6 +486,703 @@ components:
         expires_in:
           type: integer
           description: Оставшийся срок access в секундах
+    QuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        question_type:
+          title: Question Type
+          type: integer
+        difficulty:
+          title: Difficulty
+          type: integer
+        time_limit:
+          title: Time Limit
+          type: integer
+        points:
+          title: Points
+          type: integer
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        answer_options:
+          items:
+            $ref: '#/components/schemas/AnswerOptionCreate'
+          title: Answer Options
+          type: array
+      required:
+      - text
+      - question_type
+      - difficulty
+      - time_limit
+      - points
+      - answer_options
+      title: QuestionCreateRequest
+      type: object
+    QuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        question_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Question Type
+        difficulty:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Difficulty
+        time_limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Time Limit
+        points:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Points
+        age_group:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Age Group
+        explanation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Explanation
+        round_type:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Round Type
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          default: null
+          title: Tags
+        answer_key:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Answer Key
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: QuestionUpdateRequest
+      type: object
+    AnswerOptionCreate:
+      additionalProperties: false
+      properties:
+        text:
+          title: Text
+          type: string
+        is_correct:
+          default: false
+          title: Is Correct
+          type: boolean
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        order:
+          default: 0
+          title: Order
+          type: integer
+        side:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Side
+      required:
+      - text
+      title: AnswerOptionCreate
+      type: object
+    SurveyQuestionCreateRequest:
+      additionalProperties: false
+      properties:
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          title: Text
+          type: string
+        order:
+          title: Order
+          type: integer
+        required:
+          default: false
+          title: Required
+          type: boolean
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Parent Id
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+      required:
+      - type
+      - text
+      - order
+      title: SurveyQuestionCreateRequest
+      type: object
+    SurveyQuestionUpdateRequest:
+      additionalProperties: false
+      properties:
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        required:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Required
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          default: null
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: null
+          title: Scale Max
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: SurveyQuestionUpdateRequest
+      type: object
+    FeedbackQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: FeedbackQuestionResponse
+    FeedbackSurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        questions:
+          items:
+            $ref: '#/components/schemas/FeedbackQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      title: FeedbackSurveyResponse
+    FileResponse:
+      properties:
+        url:
+          type: string
+          title: Url
+        preview_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Preview Url
+        mime_type:
+          type: string
+          title: Mime Type
+        title:
+          type: string
+          title: Title
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - url
+      - mime_type
+      - title
+      - description
+      title: FileResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PaginatedResponse_SurveyResponseItem_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponseItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponseItem]
+    PaginatedResponse_SurveyResponse_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SurveyResponse'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[SurveyResponse]
+    ReorderRequest:
+      properties:
+        question_ids:
+          items:
+            type: integer
+          type: array
+          title: Question Ids
+      type: object
+      required:
+      - question_ids
+      title: ReorderRequest
+    SurveyAnswerResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        question_id:
+          type: integer
+          title: Question Id
+        value:
+          type: string
+          title: Value
+      type: object
+      required:
+      - id
+      - question_id
+      - value
+      title: SurveyAnswerResponse
+    SurveyCreateRequest:
+      properties:
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - external_id
+      - name
+      title: SurveyCreateRequest
+    SurveyQuestionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        type:
+          $ref: '#/components/schemas/SurveyQuestionType'
+        text:
+          type: string
+          title: Text
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        required:
+          type: boolean
+          title: Required
+        order:
+          type: integer
+          title: Order
+        condition:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Condition
+        scale_min:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Min
+        scale_max:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scale Max
+      type: object
+      required:
+      - id
+      - survey_id
+      - parent_id
+      - type
+      - text
+      - file
+      - required
+      - order
+      - condition
+      - scale_min
+      - scale_max
+      title: SurveyQuestionResponse
+    SurveyQuestionType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      title: SurveyQuestionType
+    SurveyResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        external_id:
+          type: string
+          title: External Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        is_active:
+          type: boolean
+          title: Is Active
+        copied_from_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Copied From Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        questions:
+          items:
+            $ref: '#/components/schemas/SurveyQuestionResponse'
+          type: array
+          title: Questions
+          default: []
+      type: object
+      required:
+      - id
+      - external_id
+      - name
+      - description
+      - is_active
+      - copied_from_id
+      - created_at
+      - updated_at
+      title: SurveyResponse
+    SurveyResponseItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        survey_id:
+          type: integer
+          title: Survey Id
+        source_id:
+          type: string
+          title: Source Id
+        user_id:
+          type: integer
+          title: User Id
+        consent_version_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Consent Version Id
+        completed_at:
+          type: string
+          format: date-time
+          title: Completed At
+        duration:
+          type: integer
+          title: Duration
+        answers:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerResponse'
+          type: array
+          title: Answers
+          default: []
+        survey:
+          anyOf:
+          - $ref: '#/components/schemas/SurveyResponse'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - survey_id
+      - source_id
+      - user_id
+      - consent_version_id
+      - completed_at
+      - duration
+      title: SurveyResponseItem
+    SurveyUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      title: SurveyUpdateRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     # ── Справочники ────────────────────────────────
     Industry:
       description: Отрасль экономики
@@ -552,14 +1374,14 @@ components:
         profession_id:
           type: integer
           format: int64
-        male_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото мужчины
-        female_photo_file_id:
-          type: integer
-          format: int64
-          description: ID файла — фото женщины
+        male_file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
+        female_file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         created_at:
           type: string
           format: date-time
@@ -580,9 +1402,10 @@ components:
         profession_id:
           type: integer
           format: int64
-        image_url:
-          type: string
-          description: Подписанный URL для скачивания (TTL 24ч)
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         qr_token:
           type: string
           description: Токен для доступа по QR-коду
@@ -669,9 +1492,10 @@ components:
           type: array
           items:
             type: string
-        media_url:
-          type: string
-          nullable: true
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         answer_options:
           type: array
           items:
@@ -685,9 +1509,10 @@ components:
               is_correct:
                 type: boolean
                 description: Не передаётся игроку до reveal
-              media_url:
-                type: string
-                nullable: true
+              file:
+                anyOf:
+                  - $ref: '#/components/schemas/FileResponse'
+                  - type: 'null'
               order:
                 type: integer
               side:
@@ -772,10 +1597,19 @@ components:
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от параметра select.
       type: object
+      required: [round_count, current_round_question_count]
       allOf:
         - $ref: '#/components/schemas/QuizSession'
         - type: object
           properties:
+            round_count:
+              type: integer
+              minimum: 0
+              description: Общее количество раундов в сессии.
+            current_round_question_count:
+              type: integer
+              minimum: 0
+              description: Количество вопросов в текущем раунде; до старта — в первом раунде, 0 при отсутствии раунда.
             current_round:
               type: object
               nullable: true
@@ -885,8 +1719,10 @@ components:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
     QuizSessionState:
-      description: Текущее состояние игры викторины (для next, reveal)
+      description: Текущее состояние игры викторины для REST-запросов. По WebSocket передаются только уведомления.
       type: object
+      allOf:
+        - $ref: '#/components/schemas/QuizSessionFull'
       properties:
         status:
           type: integer
@@ -918,9 +1754,10 @@ components:
                 question_type:
                   type: integer
                   enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-                media_url:
-                  type: string
-                  nullable: true
+                file:
+                  anyOf:
+                    - $ref: '#/components/schemas/FileResponse'
+                    - type: 'null'
                 time_limit:
                   type: integer
                 answer_options:
@@ -933,9 +1770,10 @@ components:
                         format: int64
                       text:
                         type: string
-                      media_url:
-                        type: string
-                        nullable: true
+                      file:
+                        anyOf:
+                          - $ref: '#/components/schemas/FileResponse'
+                          - type: 'null'
             correct_answer:
               type: object
               nullable: true
@@ -1006,10 +1844,46 @@ components:
         remaining_at_pause:
           type: integer
           nullable: true
-          description: Секунд осталось на момент паузы. Заполняется если running=false.
+          description: Секунд осталось на момент паузы. Null при работающем или закрытом таймере.
         running:
           type: boolean
-          description: true — таймер идёт, false — на паузе
+          description: true — таймер идёт, false — на паузе или приём ответов закрыт
+    QuizWebSocketEvent:
+      type: object
+      required: [type]
+      additionalProperties: false
+      description: |
+        Уведомление канала викторины, содержащее только тип события.
+        Сессия определяется URL подключения. После события клиент запрашивает
+        GET /quiz/sessions/active?device_id=...; состояние игры в сокете не передаётся.
+      properties:
+        type:
+          type: string
+          enum:
+            - session_state
+            - participant_joined
+            - participant_team_changed
+            - captain_changed
+            - team_renamed
+            - answers_update
+            - question_started
+            - question_revealed
+            - timer_paused
+            - timer_resumed
+            - timer_updated
+            - timer_stopped
+            - timer_expired
+            - round_finished
+            - session_finished
+      example:
+        type: answers_update
+    InteractiveVideoWebSocketEvent:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [phase_changed, votes_updated, scenario_finished, session_finished]
     QuizScoredEntry:
       description: Запись с баллами. id — team_id для mode=2 (team), participant_id для mode=1 (individual).
       type: object
@@ -1126,15 +2000,10 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID видеофайла
-        media_url:
-          type: string
-          nullable: true
-          description: URL видеофайла
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
         text:
           type: string
           nullable: true
@@ -1148,6 +2017,71 @@ components:
           description: Дочерние ветки (варианты выбора после этого видео)
           items:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+
+    InteractiveVideoSessionScenario:
+      properties:
+        id:
+          title: Id
+          type: integer
+        title:
+          title: Title
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        first_branch:
+          anyOf:
+          - $ref: '#/components/schemas/InteractiveVideoSessionFirstBranch'
+          - type: 'null'
+      required:
+      - id
+      - title
+      - description
+      - profession_id
+      - first_branch
+      type: object
+    InteractiveVideoSessionFirstBranch:
+      properties:
+        id:
+          title: Id
+          type: integer
+        scenario_id:
+          title: Scenario Id
+          type: integer
+        parent_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Parent Id
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Text
+        prompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prompt
+      required:
+      - id
+      - scenario_id
+      - parent_id
+      - file
+      - text
+      - prompt
+      type: object
 
     InteractiveVideoSession:
       description: Сессия показа «Профессии в действии»
@@ -1237,9 +2171,10 @@ components:
             id:
               type: integer
               format: int64
-            media_url:
-              type: string
-              nullable: true
+            file:
+              anyOf:
+                - $ref: '#/components/schemas/FileResponse'
+                - type: 'null'
             prompt:
               type: string
               nullable: true
@@ -1633,6 +2568,1846 @@ components:
         completed_at:
           type: string
           format: date-time
+
+    # ── ПрофСтарт: схемы ─────────────
+    ProfStartAgeGroup:
+      type: object
+      additionalProperties: false
+      required: [id, name, min_age, max_age]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        min_age:
+          type: [integer, 'null']
+          description: Нижняя граница возраста в полных годах, включительно; null — без нижней границы.
+        max_age:
+          type: [integer, 'null']
+          description: Верхняя граница возраста в полных годах, включительно; null — без верхней границы.
+    ProfStartTestType:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - code
+      - name
+      - description
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: Уникальный код типа.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ProfStartTestCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - test_type_id
+      - name
+      properties:
+        test_type_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        instructions:
+          type: string
+          default: ''
+        age_group_ids:
+          type: array
+          description: ID возрастных групп; пустой массив — без ограничений.
+          items:
+            type: integer
+            format: int64
+          uniqueItems: true
+          default: []
+    ProfStartTestPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        instructions:
+          type: string
+          default: ''
+        age_group_ids:
+          type: array
+          description: ID возрастных групп; пустой массив снимает ограничения.
+          items:
+            type: integer
+            format: int64
+          uniqueItems: true
+          default: []
+      minProperties: 1
+    ProfStartTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - group_count
+      - published_at
+      - created_at
+      - updated_at
+      - status
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        instructions:
+          type: string
+          default: ''
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+          default: []
+        question_count:
+          type: integer
+          minimum: 0
+        group_count:
+          type: integer
+          minimum: 0
+        published_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Дата первой публикации; null у draft.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        test_code_type:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: Код типа теста.
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 1 — draft, 2 — active, 3 — archived.
+      allOf:
+      - if:
+          properties:
+            status:
+              const: 1
+          required:
+          - status
+        then:
+          properties:
+            published_at:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              enum:
+              - 2
+              - 3
+          required:
+          - status
+        then:
+          properties:
+            published_at:
+              type: string
+      - if:
+          properties:
+            status:
+              enum:
+              - 2
+              - 3
+            test_code_type:
+              const: solomin
+          required:
+          - status
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            group_count:
+              const: 7
+      - if:
+          properties:
+            status:
+              enum:
+              - 2
+              - 3
+            test_code_type:
+              const: holland
+          required:
+          - status
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            group_count:
+              const: 6
+      - if:
+          properties:
+            status:
+              enum:
+              - 2
+              - 3
+            test_code_type:
+              const: dellinger
+          required:
+          - status
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            group_count:
+              const: 5
+    ProfStartPublicTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - status
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+        question_count:
+          type: integer
+          minimum: 1
+        test_code_type:
+          type: string
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 2
+          - 3
+          description: 2 — active, 3 — archived.
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+    ProfStartGroupCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Код группы, уникальный внутри типа.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        category:
+          type: string
+          default: general
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+          - general
+    ProfStartGroupPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Код группы, уникальный внутри типа.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+          - general
+      minProperties: 1
+    ProfStartGroup:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_code_type
+      - code
+      - name
+      - description
+      - category
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_code_type:
+          type: string
+          description: Код типа теста.
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Код группы, уникальный внутри типа.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+          - general
+    ProfStartOptionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - text
+      - order
+      - group_id
+      properties:
+        text:
+          type: string
+          minLength: 1
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+          description: 'Балл ответа: value, если задано, иначе 1. Соломин: 0–3; Голланд и Деллингер: null.'
+        order:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+        file:
+          type: string
+          format: binary
+          description: Новое вложение.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file, иначе 422.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
+    ProfStartOptionPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        text:
+          type: string
+          minLength: 1
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+          description: 'Соломин: 0–3; Голланд и Деллингер: null. Для очистки передайте строку null. Пропущенное поле
+              сохраняет значение.'
+        order:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+        file:
+          type: string
+          format: binary
+          description: Новое вложение.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file, иначе 422.
+      minProperties: 1
+      description: Без file прежнее вложение сохраняется. file_title и file_description применяются только к новому
+          файлу.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
+    ProfStartOption:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - question_id
+      - text
+      - file
+      - value
+      - order
+      - group_id
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        question_id:
+          type: integer
+          format: int64
+          minimum: 1
+        text:
+          type: string
+          minLength: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Вложение; null, если отсутствует.
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+        order:
+          type: integer
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+    ProfStartPublicOption:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - text
+      - file
+      - value
+      - order
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        text:
+          type: string
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Вложение; null, если отсутствует.
+        value:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 3
+        order:
+          type: integer
+          minimum: 1
+    ProfStartQuestionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - axis
+      - text
+      - order
+      properties:
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+          description: want/can у Соломина, general у остальных типов.
+        text:
+          type: string
+          minLength: 1
+        order:
+          type: integer
+          minimum: 1
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+        file:
+          type: string
+          format: binary
+          description: Новое вложение.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file, иначе 422.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
+    ProfStartQuestionPatch:
+      type: object
+      additionalProperties: false
+      required: []
+      properties:
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+          description: want/can у Соломина, general у остальных типов.
+        text:
+          type: string
+          minLength: 1
+        order:
+          type: integer
+          minimum: 1
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+        file:
+          type: string
+          format: binary
+          description: Новое вложение.
+        file_preview:
+          type: string
+          format: binary
+          description: JPEG, PNG, WebP или GIF; только вместе с новым file, иначе 422.
+      minProperties: 1
+      description: Без file прежнее вложение сохраняется. file_title и file_description применяются только к новому
+          файлу.
+      allOf:
+      - if:
+          required:
+          - file_preview
+        then:
+          required:
+          - file
+    ProfStartQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - type
+      - axis
+      - text
+      - file
+      - order
+      - options
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+          description: want/can у Соломина, general у остальных типов.
+        text:
+          type: string
+          minLength: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Вложение; null, если отсутствует.
+        order:
+          type: integer
+          minimum: 1
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartOption'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ProfStartPublicQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - type
+      - axis
+      - text
+      - file
+      - order
+      - options
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        type:
+          type: string
+          enum:
+          - single_choice
+        axis:
+          type: string
+          enum:
+          - want
+          - can
+          - general
+          description: want/can у Соломина, general у остальных типов.
+        text:
+          type: string
+          minLength: 1
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Вложение; null, если отсутствует.
+        order:
+          type: integer
+          minimum: 1
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartPublicOption'
+          minItems: 4
+          maxItems: 6
+    ProfStartGroupProfessionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - profession_id
+      properties:
+        profession_id:
+          type: integer
+          format: int64
+    ProfStartGroupProfession:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_code_type
+      - group_code
+      - profession_id
+      - profession_name
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_code_type:
+          type: string
+          description: Код типа теста.
+        group_code:
+          type: string
+          description: Код группы внутри типа.
+        profession_id:
+          type: integer
+          format: int64
+          minimum: 1
+        profession_name:
+          type: string
+    ProfStartValidation:
+      type: object
+      additionalProperties: false
+      required:
+      - valid
+      - errors
+      - question_count
+      - group_count
+      - scale_maxima
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - code
+            - entity
+            - entity_id
+            - field
+            - message
+            properties:
+              code:
+                type: string
+              entity:
+                type: string
+              entity_id:
+                type:
+                - integer
+                - 'null'
+                format: int64
+                minimum: 1
+              field:
+                type:
+                - string
+                - 'null'
+              message:
+                type: string
+        question_count:
+          type: integer
+          minimum: 0
+        group_count:
+          type: integer
+          minimum: 0
+        scale_maxima:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - group_id
+            - max_score
+            properties:
+              group_id:
+                type: integer
+                format: int64
+                minimum: 1
+              max_score:
+                type: number
+                minimum: 0
+          description: 'Максимальный балл группы: Соломин — 18, Голланд — 15, Деллингер — 1.'
+    ProfStartSessionCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - test_id
+      properties:
+        test_id:
+          type: integer
+          format: int64
+    ProfStartAnswerWrite:
+      type: object
+      additionalProperties: false
+      required:
+      - answer_option_id
+      properties:
+        question_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          default: null
+          description: Если отсутствует или null, выбирается следующий неотвеченный вопрос.
+        answer_option_id:
+          type: integer
+          format: int64
+    ProfStartSavedAnswer:
+      type: object
+      additionalProperties: false
+      required:
+      - question_id
+      - answer_option_id
+      - answered_at
+      properties:
+        question_id:
+          type: integer
+          format: int64
+          minimum: 1
+        answer_option_id:
+          type: integer
+          format: int64
+          minimum: 1
+        answered_at:
+          type: string
+          format: date-time
+    ProfStartSession:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_id
+      - test_type_id
+      - test_code_type
+      - test_version
+      - user_id
+      - status
+      - question_count
+      - answered_count
+      - next_question_id
+      - started_at
+      - completed_at
+      - answers
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_version:
+          type: integer
+          minimum: 1
+        user_id:
+          type: integer
+          format: int64
+          minimum: 1
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 1 — in_progress, 2 — completed, 3 — abandoned.
+        question_count:
+          type: integer
+          minimum: 1
+        answered_count:
+          type: integer
+          minimum: 0
+        next_question_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartSavedAnswer'
+        test_code_type:
+          type: string
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            answered_count:
+              maximum: 42
+            answers:
+              maxItems: 42
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 42
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answers:
+                  minItems: 42
+          - if:
+              properties:
+                answered_count:
+                  const: 42
+              required:
+              - answered_count
+            then:
+              properties:
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            answered_count:
+              maximum: 15
+            answers:
+              maxItems: 15
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 15
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answers:
+                  minItems: 15
+          - if:
+              properties:
+                answered_count:
+                  const: 15
+              required:
+              - answered_count
+            then:
+              properties:
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            answered_count:
+              maximum: 1
+            answers:
+              maxItems: 1
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 1
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answers:
+                  minItems: 1
+          - if:
+              properties:
+                answered_count:
+                  const: 1
+              required:
+              - answered_count
+            then:
+              properties:
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            status:
+              const: 3
+          required:
+          - status
+        then:
+          properties:
+            next_question_id:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              const: 2
+          required:
+          - status
+        then:
+          properties:
+            completed_at:
+              type: string
+            next_question_id:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              enum:
+              - 1
+              - 3
+          required:
+          - status
+        then:
+          properties:
+            completed_at:
+              type: 'null'
+      description: answers — принятые ответы. У completed заполнен completed_at; у in_progress и abandoned он равен null. Результат доступен по ID сессии.
+    ProfStartAnswerReceipt:
+      type: object
+      additionalProperties: false
+      required:
+      - session_id
+      - answer
+      - answered_count
+      - question_count
+      - next_question_id
+      - status
+      properties:
+        session_id:
+          type: integer
+          format: int64
+          minimum: 1
+        answer:
+          $ref: '#/components/schemas/ProfStartSavedAnswer'
+        answered_count:
+          type: integer
+          minimum: 1
+        question_count:
+          type: integer
+          minimum: 1
+        next_question_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          minimum: 1
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 1
+          - 2
+          description: 1 — in_progress, 2 — completed.
+      allOf:
+      - if:
+          properties:
+            question_count:
+              const: 1
+          required:
+          - question_count
+        then:
+          properties:
+            answered_count:
+              maximum: 1
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 1
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            question_count:
+              const: 15
+          required:
+          - question_count
+        then:
+          properties:
+            answered_count:
+              maximum: 15
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 15
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            question_count:
+              const: 42
+          required:
+          - question_count
+        then:
+          properties:
+            answered_count:
+              maximum: 42
+          allOf:
+          - if:
+              properties:
+                status:
+                  const: 2
+              required:
+              - status
+            then:
+              properties:
+                answered_count:
+                  const: 42
+                next_question_id:
+                  type: 'null'
+      - if:
+          properties:
+            status:
+              enum:
+              - 2
+          required:
+          - status
+        then:
+          properties:
+            next_question_id:
+              type: 'null'
+      description: Принятый ответ и текущий прогресс; next_question_id=null после завершения.
+    ProfStartScore:
+      type: object
+      additionalProperties: false
+      required:
+      - group_id
+      - group_code
+      - group_name
+      - category
+      - raw_score
+      - max_score
+      - normalized_score
+      - rank
+      - is_leading
+      properties:
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+        group_code:
+          type: string
+        group_name:
+          type: string
+        category:
+          type: string
+          enum:
+          - subject
+          - labor
+          - riasec
+          - geometry
+          - general
+        raw_score:
+          type: number
+          minimum: 0
+        max_score:
+          type: number
+          minimum: 0
+          description: Соломин — 18, Голланд — 15, Деллингер — 1.
+        normalized_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Округлено до двух знаков.
+        rank:
+          type: integer
+          minimum: 1
+        is_leading:
+          type: boolean
+      description: Общий показатель группы; у Соломина объединяет want и can.
+    ProfStartResult:
+      type: object
+      additionalProperties: false
+      required:
+      - session_id
+      - test_id
+      - test_type_id
+      - user_id
+      - test_code_type
+      - test_version
+      - answered_count
+      - question_count
+      - created_at
+      - scores
+      - answers
+      properties:
+        session_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        user_id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_version:
+          type: integer
+          minimum: 1
+        answered_count:
+          type: integer
+          minimum: 1
+        question_count:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartScore'
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartSavedAnswer'
+        test_code_type:
+          type: string
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+            answered_count:
+              const: 42
+            scores:
+              minItems: 7
+              maxItems: 7
+              items:
+                properties:
+                  group_code:
+                    enum:
+                    - human_human
+                    - human_technology
+                    - human_sign
+                    - human_art
+                    - human_nature
+                    - executive
+                    - creative
+                  category:
+                    enum:
+                    - subject
+                    - labor
+                  raw_score:
+                    maximum: 18
+                    multipleOf: 1
+                  max_score:
+                    const: 18
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+            answered_count:
+              const: 15
+            scores:
+              minItems: 6
+              maxItems: 6
+              items:
+                properties:
+                  group_code:
+                    enum:
+                    - R
+                    - I
+                    - S
+                    - E
+                    - C
+                    - A
+                  category:
+                    enum:
+                    - riasec
+                  raw_score:
+                    maximum: 15
+                    multipleOf: 1
+                  max_score:
+                    const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+            answered_count:
+              const: 1
+            scores:
+              minItems: 5
+              maxItems: 5
+              items:
+                properties:
+                  group_code:
+                    enum:
+                    - square
+                    - triangle
+                    - circle
+                    - zigzag
+                    - rectangle
+                  category:
+                    enum:
+                    - geometry
+                  raw_score:
+                    maximum: 1
+                    multipleOf: 1
+                  max_score:
+                    const: 1
+      description: Сохранённые показатели групп завершённой сессии. Общие рекомендации доступны через /users/me/recommendations.
+    ProfStartTestPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartTest'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartGroupPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartGroup'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartQuestionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartQuestion'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartOptionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartOption'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartGroupProfessionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartGroupProfession'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartSessionPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartSession'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartResultPage:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartResult'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+    ProfStartTestTypeCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - name
+      properties:
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: Уникальный код дополнительного типа.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          default: ''
+    ProfStartTestTypePatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        code:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          minLength: 1
+          maxLength: 64
+          description: Только для дополнительного типа без связанных тестов; иначе 409.
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+    RecommendationSourceKey:
+      properties:
+        source_module:
+          type: string
+        source_code:
+          type: string
+      required:
+      - source_module
+      - source_code
+      type: object
+    RecommendationContribution:
+      properties:
+        source_module:
+          type: string
+        source_code:
+          type: string
+        weight:
+          type: number
+        source_id:
+          type: integer
+        effective_weight_percent:
+          type: number
+        test_score:
+          type: number
+        contribution:
+          type: number
+        reasons:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+      required:
+      - source_module
+      - source_code
+      - weight
+      - source_id
+      - effective_weight_percent
+      - test_score
+      - contribution
+      - reasons
+      type: object
+    RecommendationSource:
+      properties:
+        source_module:
+          type: string
+        source_code:
+          type: string
+        weight:
+          type: number
+        id:
+          type: integer
+        source_reference:
+          additionalProperties: true
+          type: object
+        effective_weight_percent:
+          type: number
+      required:
+      - source_module
+      - source_code
+      - weight
+      - id
+      - source_reference
+      - effective_weight_percent
+      type: object
+    RecommendationWeight:
+      properties:
+        source_module:
+          type: string
+        source_code:
+          type: string
+        weight:
+          type: number
+      required:
+      - source_module
+      - source_code
+      - weight
+      type: object
+    RecommendedProfession:
+      properties:
+        profession_id:
+          type: integer
+        profession_name:
+          type: string
+        score:
+          type: number
+        position:
+          type: integer
+        contributions:
+          items:
+            $ref: '#/components/schemas/RecommendationContribution'
+          type: array
+      required:
+      - profession_id
+      - profession_name
+      - score
+      - position
+      - contributions
+      type: object
+    UserRecommendations:
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        is_complete:
+          type: boolean
+        available_weight:
+          type: number
+        weights:
+          items:
+            $ref: '#/components/schemas/RecommendationWeight'
+          type: array
+        missing_sources:
+          items:
+            $ref: '#/components/schemas/RecommendationSourceKey'
+          type: array
+        sources:
+          items:
+            $ref: '#/components/schemas/RecommendationSource'
+          type: array
+        professions:
+          items:
+            $ref: '#/components/schemas/RecommendedProfession'
+          type: array
+          maxItems: 3
+      required:
+      - id
+      - user_id
+      - created_at
+      - updated_at
+      - is_complete
+      - available_weight
+      - weights
+      - missing_sources
+      - sources
+      - professions
+      type: object
 
 security:
   - bearerAuth: []

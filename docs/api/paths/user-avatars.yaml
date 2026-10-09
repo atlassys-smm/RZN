@@ -25,11 +25,25 @@ user-avatars-create:
       content:
         multipart/form-data:
           schema:
-            type: object
             properties:
               photo:
                 type: string
-                format: binary
+                contentMediaType: application/octet-stream
+                title: Photo
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: File Description
+            type: object
+            required:
+            - photo
+            title: Body_create_user_avatar_api_users__user_id__avatars_post
     responses:
       '201':
         description: Аватар сохранён
