@@ -1,6 +1,6 @@
 events:
   post:
-    tags: [analytics]
+    tags: [Аналитика]
     summary: Отправить событие
     description: Зарегистрировать аналитическое событие
     requestBody:
@@ -13,7 +13,7 @@ events:
       '201':
         description: Событие зарегистрировано
   get:
-    tags: [analytics]
+    tags: [Аналитика]
     summary: Список событий
     description: Получить список аналитических событий с фильтрацией
     parameters:

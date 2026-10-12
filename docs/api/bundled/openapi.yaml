@@ -90,73 +90,76 @@ x-websocket-channels:
     message:
       $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
 tags:
-- name: Авторизация устройства
-  description: Временное подключение пользователя с телефона через QR
 - name: Авторизация пользователей
-  description: Гостевой вход, OAuth и сессии посетителей
+  description: Гостевой вход, Яндекс ID/VK ID, refresh и logout
+  x-displayName: Авторизация - Пользователь
 - name: Авторизация сотрудников
-  description: Вход сотрудников, управление учётными записями и сессиями
+  description: Вход сотрудников, создание учётных записей и сессии
+  x-displayName: Авторизация - Сотрудник
+- name: Авторизация устройства
+  description: Подключение пользователя к устройству через QR
+  x-displayName: Авторизация - Устройство
+- name: Устройства
+  description: Регистрация устройств, роли и device-токены
 - name: Пользователь
-  description: Данные и профиль текущего пользователя
+  description: Данные текущего пользователя
+  x-displayName: Пользователь - Профиль
 - name: Рекомендации пользователя
-  description: Общий профиль рекомендаций текущего пользователя
-- name: users
-  description: Пользователи и профили
-- name: LED-устройства
-  description: Регистрация LED-устройств, управление ими и device-токенами
+  description: Общий рейтинг профессий текущего пользователя
+  x-displayName: Пользователь - Рекомендации
+- name: Аватары профессий
+  description: Эталонные образы профессий
+  x-displayName: Аватары - Профессии
+- name: Аватары пользователей
+  description: Создание и получение аватаров пользователя
+  x-displayName: Аватары - Пользователь
+- name: Викторина - LED
+  description: Проверка таймера и автоматическое продвижение игры
+- name: Викторина - CMS
+  description: Управление вопросами, шаблонами и настройками викторины
+- name: Викторина - Оператор
+  description: Создание сессий, управление игрой и результаты
+- name: Викторина - Игрок
+  description: Подключение к игре, выбор команды и ответы
+- name: Викторина
+  description: Общее состояние сессии для разрешённых участников
+  x-displayName: Викторина - Состояние
+- name: ПрофСтарт - CMS
+  description: Типы и версии тестов, вопросы, группы, связи профессий и управление
+    сессиями
+- name: ПрофСтарт - Пользователь
+  description: Каталог, прохождение тестов, результаты и история
+- name: Профессии в действии - LED
+  description: Сценарии, состояние и продвижение показа
+- name: Профессии в действии - CMS
+  description: Управление видеосценариями и ветками
+- name: Профессии в действии - Оператор
+  description: Запуск и остановка показа
+- name: Профессии в действии - Зритель
+  description: Подключение к показу и голосование
+- name: Профессии в действии
+  description: Получение активного показа
+  x-displayName: Профессии в действии - Состояние
+- name: Обратная связь - LED
+  description: Получение активной анкеты для устройства
+- name: Обратная связь - CMS
+  description: Управление анкетами, вопросами и просмотр ответов
+- name: Обратная связь - Пользователь
+  description: Отправка ответов на анкету
 - name: Профессии
-  description: Справочник профессий, отраслей и направлений
+  description: Профессии, отрасли и направления
 - name: Компетенции
   description: Справочник компетенций
 - name: Организации
   description: Учебные заведения и работодатели
 - name: Согласия
-  description: Версионируемые юридические согласия на обработку персональных данных
-- name: Аватары профессий
-  description: Эталонные образы профессий для генерации аватаров
-- name: Аватары пользователей
-  description: Сгенерированные аватары пользователей
+  description: Версии согласий и история принятия пользователем
 - name: Файлы
-  description: Скачивание файлов по подписанным URL
-- name: Викторина
-  description: Общие методы — получение состояния сессии (используются оператором
-    и игроками)
-- name: Викторина - CMS
-  description: Управление вопросами и шаблонами сценариев викторины
-- name: Викторина - Оператор
-  description: Игровая сессия — создание, управление ходом, результаты
-- name: Викторина - Игрок
-  description: Мобильный клиент — подключение к сессии и ответы
-- name: Викторина - LED
-  description: LED-экран — проверка таймера и автоматическое продвижение сессии
-- name: Профессии в действии
-  description: Общие методы — получение состояния показа (используется LED-экраном)
-- name: Профессии в действии - CMS
-  description: Управление видеосценариями и ветками
-- name: Профессии в действии - Оператор
-  description: Показ — запуск и остановка
-- name: Профессии в действии - LED
-  description: Получение состояния показа для LED-экрана
-- name: Профессии в действии - Зритель
-  description: Мобильный клиент — подключение и голосование
-- name: ПрофСтарт - Пользователь
-  description: ПрофСтарт — тестирование
-- name: ПрофСтарт - CMS
-  description: Управление версиями, вопросами, весами и связями профессий
-- name: analytics
-  description: Аналитика и события
-- name: cms
-  description: CMS — управление контентом
-- name: feedback
-  description: Обратная связь и анкеты
-- name: Обратная связь - CMS
-  description: Управление анкетами и вопросами обратной связи
-- name: Обратная связь - LED
-  description: Получение анкет для LED-плееров
-- name: Обратная связь - Пользователь
-  description: Прохождение анкет обратной связи
-- name: files
-  description: Загрузка и управление файлами
+  description: Получение файлов по подписанному URL
+- name: Аналитика
+  description: Отправка и получение аналитических событий
+- name: Справочники
+  description: Общие справочные данные CMS
 paths:
   /device/auth/qr:
     post:
@@ -168,9 +171,11 @@ paths:
 
         неподтверждённый код этого устройства; при подключённом пользователе — 409.
 
-        qr_url ведёт на мобильный фронтенд; код находится в fragment #code=... .
+        API возвращает только code и expires_at. Фронтенд формирует ссылку мобильной
 
-        Фронтенд сохраняет код на время входа и отправляет его в /device/auth/confirm.
+        страницы с кодом и отображает QR. Мобильный фронтенд сохраняет код на время
+
+        входа и отправляет его в /device/auth/confirm.
 
         '
       security:
@@ -4192,11 +4197,11 @@ paths:
   /cms/devices:
     post:
       tags:
-      - LED-устройства
+      - Устройства
       summary: Зарегистрировать устройство
       description: 'Требуется staff access-токен оператора.
 
-        Зарегистрировать новое LED-устройство и выпустить для него device-токен (JWT,
+        Зарегистрировать новое устройство и выпустить для него device-токен (JWT,
         привязан к `device_id`).
 
         Токен возвращается только один раз, в ответе на регистрацию — сохраните его
@@ -4239,10 +4244,10 @@ paths:
                 $ref: '#/components/schemas/DeviceWithToken'
     get:
       tags:
-      - LED-устройства
+      - Устройства
       summary: Список устройств
       description: Требуется staff access-токен оператора. Получить список зарегистрированных
-        LED-устройств
+        устройств
       responses:
         '403':
           description: Недостаточно прав
@@ -4259,7 +4264,7 @@ paths:
   /cms/devices/{id}:
     get:
       tags:
-      - LED-устройства
+      - Устройства
       summary: Получить устройство
       description: Требуется staff access-токен оператора.
       parameters:
@@ -4284,7 +4289,7 @@ paths:
           description: Устройство не найдено
     delete:
       tags:
-      - LED-устройства
+      - Устройства
       summary: Отозвать устройство
       description: Требуется staff access-токен оператора. Отзывает device-токен устройства
         (`is_active = false`). Существующий токен перестаёт приниматься сервером.
@@ -4307,7 +4312,7 @@ paths:
   /cms/devices/{device_id}/refresh-token:
     post:
       tags:
-      - LED-устройства
+      - Устройства
       summary: Обновить JWT устройства
       description: Требуется staff access-токен оператора. Выпустить новый device
         JWT по идентификатору активного устройства.
@@ -4336,7 +4341,7 @@ paths:
   /cms/devices/{device_id}/roles:
     put:
       tags:
-      - LED-устройства
+      - Устройства
       summary: Заменить роли устройства
       description: Требуется staff access-токен admin/operator. Полностью заменяет
         список ролей устройства; нужен хотя бы один элемент, дубли и неизвестные роли
@@ -7197,7 +7202,7 @@ paths:
   /analytics/events:
     post:
       tags:
-      - analytics
+      - Аналитика
       summary: Отправить событие
       description: Зарегистрировать аналитическое событие
       requestBody:
@@ -7211,7 +7216,7 @@ paths:
           description: Событие зарегистрировано
     get:
       tags:
-      - analytics
+      - Аналитика
       summary: Список событий
       description: Получить список аналитических событий с фильтрацией
       parameters:
@@ -7236,7 +7241,7 @@ paths:
   /cms/references:
     get:
       tags:
-      - cms
+      - Справочники
       summary: Справочники
       description: Получить список справочников CMS
       responses:
@@ -7245,7 +7250,7 @@ paths:
   /cms/surveys:
     get:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Список анкет
       operationId: list_surveys_api_cms_surveys_get
       parameters:
@@ -7290,7 +7295,7 @@ paths:
           description: Анкета или вопрос не найдены
     post:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Создать анкету
       operationId: create_survey_api_cms_surveys_post
       requestBody:
@@ -7315,7 +7320,7 @@ paths:
   /cms/surveys/responses:
     get:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Список ответов на анкеты
       operationId: list_responses_api_cms_surveys_responses_get
       parameters:
@@ -7403,7 +7408,7 @@ paths:
   /cms/surveys/{survey_id}:
     get:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Получить анкету с вопросами
       operationId: get_survey_api_cms_surveys__survey_id__get
       parameters:
@@ -7430,7 +7435,7 @@ paths:
           description: Анкета или вопрос не найдены
     put:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Обновить анкету
       operationId: update_survey_api_cms_surveys__survey_id__put
       parameters:
@@ -7463,7 +7468,7 @@ paths:
           description: Анкета или вопрос не найдены
     delete:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Удалить анкету
       operationId: delete_survey_api_cms_surveys__survey_id__delete
       parameters:
@@ -7487,7 +7492,7 @@ paths:
   /cms/surveys/{survey_id}/copy:
     post:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Копировать анкету
       operationId: copy_survey_api_cms_surveys__survey_id__copy_post
       parameters:
@@ -7515,7 +7520,7 @@ paths:
   /cms/surveys/{survey_id}/publish:
     post:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Опубликовать анкету
       operationId: publish_survey_api_cms_surveys__survey_id__publish_post
       parameters:
@@ -7543,7 +7548,7 @@ paths:
   /cms/surveys/{survey_id}/questions:
     post:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Добавить вопрос анкеты
       operationId: add_question_api_cms_surveys__survey_id__questions_post
       parameters:
@@ -7660,7 +7665,7 @@ paths:
   /cms/surveys/{survey_id}/questions/reorder:
     put:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Изменить порядок вопросов
       operationId: reorder_questions_api_cms_surveys__survey_id__questions_reorder_put
       parameters:
@@ -7698,7 +7703,7 @@ paths:
   /cms/surveys/{survey_id}/questions/{question_id}:
     put:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Обновить вопрос анкеты
       operationId: update_question_api_cms_surveys__survey_id__questions__question_id__put
       parameters:
@@ -7803,7 +7808,7 @@ paths:
         передаётся JSON в одноимённом поле. ID файла не принимается.
     delete:
       tags:
-      - Обратная связь — CMS
+      - Обратная связь - CMS
       summary: Удалить вопрос анкеты
       operationId: delete_question_api_cms_surveys__survey_id__questions__question_id__delete
       parameters:
@@ -12290,14 +12295,10 @@ components:
       type: object
       required:
       - code
-      - qr_url
       - expires_at
       properties:
         code:
           type: string
-        qr_url:
-          type: string
-          format: uri
         expires_at:
           type: string
           format: date-time

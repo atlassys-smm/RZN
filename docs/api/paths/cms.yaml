@@ -1,10 +1,10 @@
 cms-devices:
   post:
-    tags: [LED-устройства]
+    tags: [Устройства]
     summary: Зарегистрировать устройство
     description: |
       Требуется staff access-токен оператора.
-      Зарегистрировать новое LED-устройство и выпустить для него device-токен (JWT, привязан к `device_id`).
+      Зарегистрировать новое устройство и выпустить для него device-токен (JWT, привязан к `device_id`).
       Токен возвращается только один раз, в ответе на регистрацию — сохраните его в конфигурации плеера.
     requestBody:
       required: true
@@ -39,9 +39,9 @@ cms-devices:
             schema:
               $ref: '#/components/schemas/DeviceWithToken'
   get:
-    tags: [LED-устройства]
+    tags: [Устройства]
     summary: Список устройств
-    description: Требуется staff access-токен оператора. Получить список зарегистрированных LED-устройств
+    description: Требуется staff access-токен оператора. Получить список зарегистрированных устройств
     responses:
       '403':
         description: Недостаточно прав
@@ -58,7 +58,7 @@ cms-devices:
 
 cms-devices-detail:
   get:
-    tags: [LED-устройства]
+    tags: [Устройства]
     summary: Получить устройство
     description: Требуется staff access-токен оператора.
     parameters:
@@ -82,7 +82,7 @@ cms-devices-detail:
       '404':
         description: Устройство не найдено
   delete:
-    tags: [LED-устройства]
+    tags: [Устройства]
     summary: Отозвать устройство
     description: Требуется staff access-токен оператора. Отзывает device-токен устройства (`is_active = false`). Существующий токен перестаёт приниматься сервером.
     parameters:
@@ -104,7 +104,7 @@ cms-devices-detail:
 
 cms-device-refresh-token:
   post:
-    tags: [LED-устройства]
+    tags: [Устройства]
     summary: Обновить JWT устройства
     description: Требуется staff access-токен оператора. Выпустить новый device JWT по идентификатору активного устройства.
     parameters:
@@ -132,7 +132,7 @@ cms-device-refresh-token:
 
 references:
   get:
-    tags: [cms]
+    tags: [Справочники]
     summary: Справочники
     description: Получить список справочников CMS
     responses:
@@ -141,14 +141,14 @@ references:
 
 quiz-questions:
   get:
-    tags: [cms]
+    tags: [Справочники]
     summary: Вопросы викторины
     description: Получить список вопросов викторины (CMS)
     responses:
       '200':
         description: Список вопросов
   post:
-    tags: [cms]
+    tags: [Справочники]
     summary: Создать вопрос
     description: Добавить новый вопрос викторины
     requestBody:
@@ -578,7 +578,7 @@ responses:
 
 cms-device-roles:
   put:
-    tags: [LED-устройства]
+    tags: [Устройства]
     summary: Заменить роли устройства
     description: 'Требуется staff access-токен admin/operator. Полностью заменяет список ролей устройства; нужен хотя бы один элемент, дубли и неизвестные роли запрещены. Изменение действует сразу для существующего device-токена; активность устройства не меняется.'
     security:
