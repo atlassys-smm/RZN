@@ -6,7 +6,7 @@ survey-by-external-id:
   get:
     tags: [Обратная связь - LED]
     summary: Активная анкета по external_id
-    description: Получить активную анкету по символьному идентификатору. Требуется device-токен активного LED-устройства.
+    description: "Получить активную анкету по external_id. Требуется device-токен активного устройства с ролью 4. QR-привязка для чтения состава анкеты не требуется."
     security:
       - bearerAuth: []
     parameters:
@@ -17,6 +17,8 @@ survey-by-external-id:
           type: string
         description: Символьный идентификатор анкеты (например, videoresume_feedback)
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Активная анкета с вопросами
         content:
@@ -32,8 +34,9 @@ respond:
   post:
     tags: [Обратная связь - Пользователь]
     summary: Ответить на анкету
-    description: Отправить ответы от текущего пользователя из user access-токена.
+    description: "Отправить ответы по User JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства обязателен X-Device-Connection-Id; пользователь определяется по связи в Redis. При User JWT владелец определяется по токену. user_id в JSON не принимается."
     parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: survey_id
         in: path
         required: true
@@ -48,6 +51,8 @@ respond:
           schema:
             $ref: '#/components/schemas/FeedbackSubmitRequest'
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '401':
         description: Недействительный или отсутствующий user access-токен
       '201':

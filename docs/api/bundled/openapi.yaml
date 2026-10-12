@@ -15,55 +15,83 @@ servers:
   description: Локальная разработка
 x-websocket-channels:
   quiz-session:
-    url: /api/quiz/sessions/{sessionId}/ws
-    description: 'Канал оператора, LED и игрока. После подключения и переподключения
-      клиент сам
+    url: /api/quiz/sessions/{sessionId}/ws?token={jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: User/Staff access JWT или Device JWT без префикса Bearer.
+    description: 'Канал сотрудника, устройства и игрока. До accept проверяются JWT
+      и доступ к сессии.
 
-      запрашивает актуальное состояние через GET /quiz/sessions/active с device_id.
+      User должен быть участником викторины; активный StaffUser имеет доступ к чтению;
 
-      Все сообщения содержат только type, без data. После каждого события клиент запрашивает
+      Device требуется роль 1 и принадлежность сессии устройству.
 
-      GET /quiz/sessions/active?device_id=...; состав доступен с select=teams&select=participants.
+      Если Origin передан, он должен входить в AUTH_ALLOWED_ORIGINS.
 
-      session_state уведомляет о смене вопроса, раскрытии ответа, изменении таймера
-      и завершении сессии.
+      Ошибки токена, Origin, доступа или отсутствующая сессия — close 1008 до accept
 
-      Ответы команды доступны капитану через REST с его access-токеном, не в общей
-      рассылке.
+      (HTTP 403 при handshake). БД освобождается до ожидания сообщений.
 
-      Подключение к сокету не вызывает отправку session_state. Перед регистрацией
+      Авторизация проверяется только при подключении; открытый сокет не перепроверяется.
 
-      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+      При переподключении клиент передаёт актуальный JWT.
 
-      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI,
-      HTTP 403 при handshake).
+      Сообщения содержат только type, без data; начальное состояние не отправляется.
 
-      Истечение таймера проверяется вызовом POST /quiz/sessions/{id}/led/next.
+      После подключения и каждого события клиент сам запрашивает состояние через REST.
+
+      Для игры используется GET /quiz/sessions/active?device_id=...;
+
+      состав доступен с select=teams&select=participants, ответы команды — капитану
+      по access.
+
+      Истечение игрового таймера проверяет POST /quiz/sessions/{id}/led/next.
 
       '
     message:
       $ref: '#/components/schemas/QuizWebSocketEvent'
   interactive-video-session:
-    url: /api/interactive-video/sessions/{sessionId}/ws
-    description: 'Канал LED, оператора и мобильного клиента видеосценариев. Перед
-      регистрацией
+    url: /api/interactive-video/sessions/{sessionId}/ws?token={jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: User/Staff access JWT или Device JWT без префикса Bearer.
+    description: 'Канал устройства, сотрудника и мобильного клиента. До accept проверяются
+      JWT
 
-      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
+      и существование сессии; StaffUser требуется admin/operator, Device — роль 1
 
-      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI,
-      HTTP 403 при handshake).
+      и принадлежность сессии устройству. User допускается по действующему access:
 
-      После подключения и переподключения клиент сам запрашивает состояние через
+      video join не сохраняет членство, поэтому факт join отдельно не проверяется.
 
-      GET /interactive-video/sessions/{id}/state или /voting?participant_id=... .
+      Если Origin передан, он должен входить в AUTH_ALLOWED_ORIGINS.
 
-      Начальное состояние сервер не отправляет. Все уведомления относятся к sessionId
-      из URL.
+      Ошибки токена, Origin, доступа или отсутствующая сессия — close 1008 до accept
+
+      (HTTP 403 при handshake). БД освобождается до ожидания сообщений.
+
+      Авторизация проверяется только при подключении; открытый сокет не перепроверяется.
+
+      После подключения клиент сам запрашивает состояние через /state или /voting
+
+      с предусмотренной для REST авторизацией. Начальное состояние по сокету не отправляется.
+
+      Все уведомления содержат только type и относятся к sessionId из URL.
 
       '
     message:
       $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
 tags:
+- name: Авторизация устройства
+  description: Временное подключение пользователя с телефона через QR
 - name: Авторизация пользователей
   description: Гостевой вход, OAuth и сессии посетителей
 - name: Авторизация сотрудников
@@ -130,6 +158,143 @@ tags:
 - name: files
   description: Загрузка и управление файлами
 paths:
+  /device/auth/qr:
+    post:
+      tags:
+      - Авторизация устройства
+      summary: Создать QR для подключения пользователя
+      description: 'Требуется device-токен. QR действует 2 минуты. Новый QR заменяет
+        предыдущий
+
+        неподтверждённый код этого устройства; при подключённом пользователе — 409.
+
+        qr_url ведёт на мобильный фронтенд; код находится в fragment #code=... .
+
+        Фронтенд сохраняет код на время входа и отправляет его в /device/auth/confirm.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Одноразовый QR создан; Cache-Control no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceQrResponse'
+        '401':
+          description: Нет действующего device-токена
+        '409':
+          description: Устройство уже подключено к пользователю
+  /device/auth/confirm:
+    post:
+      tags:
+      - Авторизация устройства
+      summary: Подтвердить подключение с телефона
+      description: 'Требуется user access-токен; гостевой вход тоже поддерживается.
+
+        Пользователь определяется по токену, устройство — по одноразовому code.
+
+        Код погашается при успешном подтверждении. Подключение действует до часа
+
+        с момента подтверждения, но не дольше пользовательской сессии и срока гостя.
+
+        При каждом подтверждении создаётся новый connection_id, включая повторное
+        подключение
+
+        того же User. Пользовательский JWT на устройство не передаётся.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceConfirmRequest'
+      responses:
+        '200':
+          description: Подключение подтверждено; Cache-Control no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceUserResponse'
+        '401':
+          description: Нет действующего user access-токена
+        '403':
+          description: Устройство недоступно
+        '409':
+          description: Устройство уже подключено к пользователю
+        '410':
+          description: Код неизвестен, истёк, заменён или уже использован
+        '422':
+          description: Некорректное тело запроса
+  /device/auth/user:
+    get:
+      tags:
+      - Авторизация устройства
+      summary: Получить подключённого пользователя
+      description: 'Требуется device-токен. Пока подключения нет, возвращает user,
+        expires_at и connection_id со значением null.
+
+        Устройство может опрашивать маршрут каждые две секунды в ожидании подтверждения.
+
+        Опрос не продлевает подключение. После истечения TTL, выхода на телефоне,
+
+        истечения пользовательской сессии или деактивации пользователя — user: null.
+
+        Ответ содержит connection_id текущего подключения. Для личных действий устройство
+
+        передаёт его в X-Device-Connection-Id вместе с Device JWT; user_id не передаётся.
+
+        Сервер определяет пользователя по Redis и отдельно проверяет роль модуля.
+
+        Старый идентификатор после переподключения отклоняется.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Текущее подключение; Cache-Control no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceUserResponse'
+        '401':
+          description: Нет действующего device-токена
+    delete:
+      tags:
+      - Авторизация устройства
+      summary: Завершить подключение пользователя
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      description: 'Требуется device-токен. При действующем подключении обязателен
+
+        X-Device-Connection-Id: без него — 422, несовпадение с текущим — 403.
+
+        Удаляет только текущее подключение и его ожидающий QR. Повтор со старым идентификатором
+
+        при отсутствии подключения возвращает 204 и не отменяет новый неподтверждённый
+        QR.
+
+        Без заголовка и без подключения можно отменить ожидающий QR.
+
+        Авторизация на телефоне сохраняется.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '403':
+          description: Идентификатор не соответствует текущему подключению
+        '422':
+          description: Для завершения текущего подключения требуется X-Device-Connection-Id
+        '204':
+          description: Подключение завершено или уже отсутствует
+        '401':
+          description: Нет действующего device-токена
   /auth/login:
     post:
       tags:
@@ -416,7 +581,8 @@ paths:
         и доверенный Origin/Referer. Access текущего гостя необязателен; он позволяет
         сохранить его ID при авторизации. При существующем OAuth-аккаунте выполняется
         вход в него без объединения истории. Access возвращается в JSON, refresh —
-        в HttpOnly cookie. Аватар из OAuth не сохраняется.
+        в HttpOnly cookie. Ссылка аватара сохраняется в avatar_url и обновляется при
+        входе, если отличается. Отсутствующий аватар не стирает прежнюю ссылку.
       security:
       - {}
       - bearerAuth: []
@@ -558,13 +724,22 @@ paths:
       - Рекомендации пользователя
       summary: Общий профиль рекомендаций текущего пользователя
       operationId: user_recommendations_get
-      description: Профиль с максимум тремя профессиями и вкладами источников. До
-        первого сохранённого источника — JSON null. В расчёте участвуют только источники
-        с положительным весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при каждом
-        запросе из снимков источников; веса заданы в коде, итог не сохраняется.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Профиль с максимум тремя профессиями
+        и вкладами источников. До первого сохранённого источника — JSON null. В расчёте
+        участвуют только источники с положительным весом в SOURCE_WEIGHTS. Рейтинг
+        рассчитывается при каждом запросе из снимков источников; веса заданы в коде,
+        итог не сохраняется.
       security:
       - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
+        '422':
+          description: Некорректные параметры; для Device JWT обязателен X-Device-Connection-Id.
         '200':
           description: Профиль рекомендаций или null
           content:
@@ -1719,7 +1894,8 @@ paths:
   /avatars:
     get:
       description: Требуется действующий токен пользователя, сотрудника или активного
-        устройства.
+        устройства. Для device-токена требуется роль 2; другая группа устройства —
+        403.
       tags:
       - Аватары профессий
       summary: Список аватаров профессий
@@ -1737,6 +1913,8 @@ paths:
           type: integer
           default: 0
       responses:
+        '403':
+          description: Недостаточно прав устройства или сотрудника.
         '401':
           description: Отсутствующий или недействительный токен.
         '200':
@@ -1822,7 +2000,8 @@ paths:
       - Аватары профессий
       summary: Аватар профессии
       description: Требуется действующий токен пользователя, сотрудника или активного
-        устройства. Получить аватар по ID профессии
+        устройства. Получить аватар по ID профессии Для device-токена требуется роль
+        2; другая группа устройства — 403.
       security:
       - bearerAuth: []
       parameters:
@@ -1833,6 +2012,8 @@ paths:
           type: integer
           format: int64
       responses:
+        '403':
+          description: Недостаточно прав устройства или сотрудника.
         '401':
           description: Отсутствующий или недействительный токен.
         '200':
@@ -3236,23 +3417,16 @@ paths:
       tags:
       - Викторина
       summary: Получить активную сессию
-      description: 'Возвращает текущую незавершённую сессию (status=1, waiting или
-        status=2, active) для указанного LED-устройства.
-
-        Оператор использует запрос для отображения сессии, уже запущенной на этом
-        устройстве.
-
-        Всегда возвращает `round_count` — общее количество раундов и `current_round_question_count`
-        — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов
-        относится к первому раунду.
-
-        Во время active также возвращает текущий раунд, вопрос и таймер. `select=teams`
-        и `select=participants` добавляют состав команд и участников; несколько значений
-        select передаются повторяющимися параметрами запроса.
-
-        Если активной сессии нет — возвращает 404.
-
-        '
+      description: "Возвращает текущую незавершённую сессию (status=1, waiting или\
+        \ status=2, active) для указанного LED-устройства.\nОператор использует запрос\
+        \ для отображения сессии, уже запущенной на этом устройстве.\nВсегда возвращает\
+        \ `round_count` — общее количество раундов и `current_round_question_count`\
+        \ — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов\
+        \ относится к первому раунду.\nВо время active также возвращает текущий раунд,\
+        \ вопрос и таймер. `select=teams` и `select=participants` добавляют состав\
+        \ команд и участников; несколько значений select передаются повторяющимися\
+        \ параметрами запроса.\nЕсли активной сессии нет — возвращает 404.\n Для device-токена\
+        \ требуется роль 1; другая группа устройства — 403."
       parameters:
       - name: device_id
         in: query
@@ -3297,16 +3471,14 @@ paths:
       tags:
       - Викторина
       summary: Получить сессию
-      description: 'Возвращает базовые поля сессии и счётчики round_count/current_round_question_count;
-        во время active также текущий раунд, вопрос и таймер.
-
-        `select=teams` и `select=participants` добавляют состав команд и участников.
-        Несколько значений select передаются повторяющимися параметрами запроса. Для
-        авторизованного капитана `answer_submissions` текущего вопроса содержит ответы
-        его команды; участник определяется по access-токену. До раскрытия правильного
-        ответа поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.
-
-        '
+      description: "Возвращает базовые поля сессии и счётчики round_count/current_round_question_count;\
+        \ во время active также текущий раунд, вопрос и таймер.\n`select=teams` и\
+        \ `select=participants` добавляют состав команд и участников. Несколько значений\
+        \ select передаются повторяющимися параметрами запроса. Для авторизованного\
+        \ капитана `answer_submissions` текущего вопроса содержит ответы его команды;\
+        \ участник определяется по access-токену. До раскрытия правильного ответа\
+        \ поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.\n\
+        \ Для device-токена требуется роль 1; другая группа устройства — 403."
       parameters:
       - name: id
         in: path
@@ -3763,14 +3935,11 @@ paths:
       tags:
       - Викторина - LED
       summary: Следующий вопрос (LED)
-      description: 'LED-экран вызывает этот endpoint после окончания таймера.
-
-        Если время вышло и `auto_reveal = true` — автоматически показывает правильный
-        ответ и начисляет баллы.
-
-        Если ответ уже показан — переходит к следующему вопросу.
-
-        '
+      description: "LED-экран вызывает этот endpoint после окончания таймера.\nЕсли\
+        \ время вышло и `auto_reveal = true` — автоматически показывает правильный\
+        \ ответ и начисляет баллы.\nЕсли ответ уже показан — переходит к следующему\
+        \ вопросу.\n Для device-токена требуется роль 1; другая группа устройства\
+        \ — 403."
       parameters:
       - name: id
         in: path
@@ -3794,10 +3963,9 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Текущий результат
-      description: 'Актуальный рейтинг на текущий момент. Можно запрашивать в любой
-        момент — между раундами или после завершения сессии.
-
-        '
+      description: "Актуальный рейтинг на текущий момент. Можно запрашивать в любой\
+        \ момент — между раундами или после завершения сессии.\n Для device-токена\
+        \ требуется роль 1; другая группа устройства — 403."
       parameters:
       - name: id
         in: path
@@ -4043,13 +4211,22 @@ paths:
               type: object
               required:
               - name
+              - roles
               properties:
                 name:
                   type: string
                 location:
                   type: string
                   nullable: true
+                roles:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    $ref: '#/components/schemas/DeviceRole'
       responses:
+        '422':
+          description: Нужен непустой список известных неповторяющихся ролей.
         '403':
           description: Недостаточно прав
         '401':
@@ -4156,6 +4333,45 @@ paths:
           description: Устройство не найдено
         '409':
           description: Устройство неактивно
+  /cms/devices/{device_id}/roles:
+    put:
+      tags:
+      - LED-устройства
+      summary: Заменить роли устройства
+      description: Требуется staff access-токен admin/operator. Полностью заменяет
+        список ролей устройства; нужен хотя бы один элемент, дубли и неизвестные роли
+        запрещены. Изменение действует сразу для существующего device-токена; активность
+        устройства не меняется.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: device_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRolesRequest'
+      responses:
+        '200':
+          description: Устройство с новым списком ролей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '401':
+          description: Недействительный или отсутствующий токен
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Устройство не найдено
+        '422':
+          description: Нужен непустой список известных неповторяющихся ролей
   /cms/video-scenarios:
     get:
       tags:
@@ -4578,22 +4794,15 @@ paths:
       tags:
       - Профессии в действии
       summary: Получить активную сессию
-      description: 'Доступ для оператора/администратора со staff access-токеном или
-        LED с device-токеном. Для LED используется устройство из токена.
-
-        Возвращает текущую активную сессию показа с полным состоянием.
-
-        Если указан `device_id` — возвращает сессию для этого устройства.
-
-        Если `device_id` не указан — возвращает любую активную сессию (для оператора).
-
-        Используется LED-экраном при переподключении для восстановления состояния.
-
-        Используется оператором при перезапуске планшета для возможности остановки.
-
-        Если активной сессии нет — возвращает 404.
-
-        '
+      description: "Доступ для оператора/администратора со staff access-токеном или\
+        \ LED с device-токеном. Для LED используется устройство из токена.\nВозвращает\
+        \ текущую активную сессию показа с полным состоянием.\nЕсли указан `device_id`\
+        \ — возвращает сессию для этого устройства.\nЕсли `device_id` не указан —\
+        \ возвращает любую активную сессию (для оператора).\nИспользуется LED-экраном\
+        \ при переподключении для восстановления состояния.\nИспользуется оператором\
+        \ при перезапуске планшета для возможности остановки.\nЕсли активной сессии\
+        \ нет — возвращает 404.\n Для device-токена требуется роль 1; другая группа\
+        \ устройства — 403."
       parameters:
       - name: device_id
         in: query
@@ -4644,7 +4853,8 @@ paths:
       - Профессии в действии - LED
       summary: Получить состояние показа
       description: 'Доступен с device-токеном устройства этой сессии либо staff access-токеном
-        оператора. Возвращает состояние показа: текущее видео, голосование и результаты.'
+        оператора. Возвращает состояние показа: текущее видео, голосование и результаты.
+        Для device-токена требуется роль 1; другая группа устройства — 403.'
       parameters:
       - name: id
         in: path
@@ -4684,7 +4894,8 @@ paths:
 
         Если стартовой ветки нет, first_branch равен null. Удалённые сценарии пропускаются.
 
-        Доступно для активных и завершённых сессий; не меняет состояние показа.'
+        Доступно для активных и завершённых сессий; не меняет состояние показа. Для
+        device-токена требуется роль 1; другая группа устройства — 403.'
       parameters:
       - name: id
         in: path
@@ -4712,26 +4923,16 @@ paths:
       tags:
       - Профессии в действии - LED
       summary: Сигнал окончания видео
-      description: 'Вызывается LED-плеером, когда воспроизведение текущего видеофрагмента
-        (`current_branch`) завершилось.
-
-        Сервер не хранит длительность видео — момент перехода к точке голосования
-        (или к следующему сценарию/завершению показа)
-
-        определяется именно этим сигналом, а не таймером.
-
-        Требует device-токен (`Authorization: Bearer <device token>`), полученный
-        при регистрации устройства.
-
-        - Если у `current_branch` есть дочерние ветки — показ переходит в фазу `voting`
-        (голосование).
-
-        - Если дочерних веток нет и в очереди остались сценарии — переход к следующему
-        сценарию (`scenario_finished`).
-
-        - Если дочерних веток нет и сценариев больше нет — показ завершается (`session_finished`).
-
-        '
+      description: "Вызывается LED-плеером, когда воспроизведение текущего видеофрагмента\
+        \ (`current_branch`) завершилось.\nСервер не хранит длительность видео — момент\
+        \ перехода к точке голосования (или к следующему сценарию/завершению показа)\n\
+        определяется именно этим сигналом, а не таймером.\nТребует device-токен (`Authorization:\
+        \ Bearer <device token>`), полученный при регистрации устройства.\n- Если\
+        \ у `current_branch` есть дочерние ветки — показ переходит в фазу `voting`\
+        \ (голосование).\n- Если дочерних веток нет и в очереди остались сценарии\
+        \ — переход к следующему сценарию (`scenario_finished`).\n- Если дочерних\
+        \ веток нет и сценариев больше нет — показ завершается (`session_finished`).\n\
+        \ Для device-токена требуется роль 1; другая группа устройства — 403."
       parameters:
       - name: id
         in: path
@@ -4922,11 +5123,13 @@ paths:
       operationId: profstart_age_groups_get
       description: Требуется пользовательский access-токен или токен активного устройства.
         Группы для выбора возраста и фильтра каталога. Границы включительно; порядок
-        id ASC.
+        id ASC. Для device-токена требуется роль 3; другая группа устройства — 403.
       x-implementation-status: implemented
       security:
       - bearerAuth: []
       responses:
+        '403':
+          description: Недостаточно прав устройства или сотрудника.
         '200':
           description: Возрастные группы
           content:
@@ -6278,12 +6481,14 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Доступные активные тесты
       operationId: profstart_tests_get
-      description: Требуется пользовательский access-токен или токен активного устройства.
-        Активные версии всех типов, которые пользователь ещё не завершил. Не более
-        одной версии на тип; пустой список допустим. Для устройства каталог не персонализируется;
-        для пользователя исключаются завершённые типы.
+      description: User JWT или Device JWT с ролью 3. Активные версии всех типов,
+        которые пользователь ещё не завершил. Не более одной версии на тип; пустой
+        список допустим. Без X-Device-Connection-Id каталог устройства не персонализируется.
+        С заголовком требуется действующая QR-привязка; завершённые типы подключённого
+        пользователя исключаются.
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceCatalogConnectionId'
       - name: age_group_id
         in: query
         required: false
@@ -6301,6 +6506,8 @@ paths:
           format: int64
           minimum: 1
       responses:
+        '403':
+          description: Недостаточно прав устройства или сотрудника.
         '200':
           description: Успешный ответ
           content:
@@ -6323,13 +6530,14 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Карточка теста для старта или своей истории
       operationId: profstart_test_get
-      description: Требуется пользовательский access-токен или токен активного устройства.
-        Активная версия доступна для просмотра. Архивная — только при наличии своей
-        сессии этой версии. Draft и архивная без своей сессии — 409. Новую сессию
-        можно начать только для active. Устройство получает только активную версию;
-        архивная версия доступна пользователю с собственной историей прохождения.
+      description: User JWT или Device JWT с ролью 3. Активная версия доступна для
+        просмотра. Архивная — только при наличии своей сессии этой версии; draft и
+        архивная без своей сессии — 409. Устройство без X-Device-Connection-Id получает
+        только активную версию; с заголовком получает также свою архивную версию по
+        QR-привязке. Новую сессию можно начать только для active.
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceCatalogConnectionId'
       - name: test_id
         in: path
         required: true
@@ -6339,6 +6547,8 @@ paths:
           format: int64
           minimum: 1
       responses:
+        '403':
+          description: Недостаточно прав устройства или сотрудника.
         '200':
           description: Успешный ответ
           content:
@@ -6359,13 +6569,18 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Начать отдельное прохождение
       operationId: profstart_sessions_post
-      description: 'Начинает прохождение активной версии любого типа. Допускается
-        одна in_progress на пользователя; завершённый тип нельзя пройти повторно,
-        включая новую версию: 409. После abandoned можно начать новую попытку. Неактивная
-        версия — 409.'
+      description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
+        для устройства обязателен X-Device-Connection-Id. Начинает прохождение активной
+        версии любого типа. Допускается одна in_progress на пользователя; завершённый
+        тип нельзя пройти повторно, включая новую версию: 409. После abandoned можно
+        начать новую попытку. Неактивная версия — 409.'
       x-implementation-status: implemented
-      parameters: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '201':
           description: Ресурс создан
           content:
@@ -6392,10 +6607,12 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Состояние своего прохождения
       operationId: profstart_session_get
-      description: Своя сессия с прогрессом и принятыми ответами для восстановления
-        прохождения.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Своя сессия с прогрессом и принятыми
+        ответами для восстановления прохождения.
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: id
         in: path
         required: true
@@ -6405,6 +6622,9 @@ paths:
           format: int64
           minimum: 1
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Успешный ответ
           content:
@@ -6425,12 +6645,17 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Следующий неотвеченный вопрос сессии
       operationId: profstart_question_get
-      description: Следующий неотвеченный вопрос текущей in_progress сессии. Повтор
-        GET возвращает тот же вопрос до сохранения ответа. Архивную версию можно продолжать.
-        Если текущей сессии нет — 409.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Следующий неотвеченный вопрос
+        текущей in_progress сессии. Повтор GET возвращает тот же вопрос до сохранения
+        ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409.
       x-implementation-status: implemented
-      parameters: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Успешный ответ
           content:
@@ -6451,13 +6676,18 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Сохранить ответ и рассчитать результат после последнего вопроса
       operationId: profstart_answer_post
-      description: Ответ в текущую in_progress сессию. При отсутствии question_id
-        или при null выбирается следующий неотвеченный вопрос. Повтор принятого варианта
-        не меняет прогресс. Последний ответ завершает сессию; результат получите через
-        GET /profstart/sessions/{id}/result.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Ответ в текущую in_progress
+        сессию. При отсутствии question_id или при null выбирается следующий неотвеченный
+        вопрос. Повтор принятого варианта не меняет прогресс. Последний ответ завершает
+        сессию; результат получите через GET /profstart/sessions/{id}/result.
       x-implementation-status: implemented
-      parameters: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Успешный ответ
           content:
@@ -6488,10 +6718,12 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Прервать без результата
       operationId: profstart_abandon_post
-      description: in_progress → abandoned. Повтор для abandoned возвращает ту же
-        запись; completed — 409.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. in_progress → abandoned. Повтор
+        для abandoned возвращает ту же запись; completed — 409.
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: id
         in: path
         required: true
@@ -6501,6 +6733,9 @@ paths:
           format: int64
           minimum: 1
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Успешный ответ
           content:
@@ -6521,12 +6756,15 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Сохранённый результат своей сессии
       operationId: profstart_result_get
-      description: 'Результат своей завершённой сессии: answers и scores для любого
-        типа. До завершения и после abandoned — 409. Для любого типа создаётся источник
-        с показателями групп и профессий; участие в итоговом рейтинге определяется
-        SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS.'
+      description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
+        для устройства обязателен X-Device-Connection-Id. Результат своей завершённой
+        сессии: answers и scores для любого типа. До завершения и после abandoned
+        — 409. Для любого типа создаётся источник с показателями групп и профессий;
+        участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели
+        не меняются при редактировании CMS.'
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: id
         in: path
         required: true
@@ -6536,6 +6774,9 @@ paths:
           format: int64
           minimum: 1
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Успешный ответ
           content:
@@ -6556,10 +6797,12 @@ paths:
       - ПрофСтарт - Пользователь
       summary: История своих результатов
       operationId: profstart_me_results_get
-      description: Порядок created_at DESC, id DESC; фильтр периода применяется ко
-        времени результата.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Порядок created_at DESC, id
+        DESC; фильтр периода применяется ко времени результата.
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: limit
         in: query
         required: false
@@ -6608,6 +6851,9 @@ paths:
           type: string
           format: date-time
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Успешный ответ
           content:
@@ -6628,10 +6874,12 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Список своих прохождений
       operationId: profstart_me_sessions_get
-      description: Свои сессии; без фильтра возвращаются все статусы. Порядок started_at
-        DESC, id DESC.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Свои сессии; без фильтра возвращаются
+        все статусы. Порядок started_at DESC, id DESC.
       x-implementation-status: implemented
       parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: status
         in: query
         required: false
@@ -6658,6 +6906,9 @@ paths:
           minimum: 0
           default: 0
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '200':
           description: Страница своих прохождений; пустой список при отсутствии записей.
           content:
@@ -6771,10 +7022,18 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Текущее незавершённое прохождение
       operationId: profstart_me_active_session_get
-      description: Своя in_progress сессия, включая архивную версию теста. Если такой
-        сессии нет — 200 с JSON null.
+      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
+        устройства обязателен X-Device-Connection-Id. Своя in_progress сессия, включая
+        архивную версию теста. Если такой сессии нет — 200 с JSON null.
       x-implementation-status: implemented
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
+        '422':
+          description: Некорректные параметры; для Device JWT обязателен user_id.
         '200':
           description: Текущая сессия или null.
           content:
@@ -7573,6 +7832,8 @@ paths:
           description: Анкета или вопрос не найдены
   /feedback/surveys/{external_id}:
     get:
+      description: Для device-токена требуется роль 4; другая группа устройства —
+        403.
       tags:
       - Обратная связь - LED
       summary: Получить активную анкету с вопросами
@@ -7585,6 +7846,8 @@ paths:
           type: string
           title: External Id
       responses:
+        '403':
+          description: Недостаточно прав устройства или сотрудника.
         '200':
           description: Успешный ответ
           content:
@@ -7604,8 +7867,12 @@ paths:
       tags:
       - Обратная связь - Пользователь
       summary: Ответить на анкету
-      description: Отправить ответы от текущего пользователя из user access-токена.
+      description: Отправить ответы по User JWT либо Device JWT с ролью 4 и действующей
+        QR-привязкой. Для устройства обязателен X-Device-Connection-Id; пользователь
+        определяется по связи в Redis. При User JWT владелец определяется по токену.
+        user_id в JSON не принимается.
       parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
       - name: survey_id
         in: path
         required: true
@@ -7620,6 +7887,9 @@ paths:
             schema:
               $ref: '#/components/schemas/FeedbackSubmitRequest'
       responses:
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '401':
           description: Недействительный или отсутствующий user access-токен
         '201':
@@ -7748,22 +8018,27 @@ paths:
           description: Аватар удалён
         '404':
           description: Не найден
-  /users/{user_id}/avatars:
+  /users/avatars:
     post:
       security:
       - bearerAuth: []
       tags:
       - Аватары пользователей
       summary: Сохранить аватар пользователя
-      description: Требуется device-токен активного устройства; user_id передаётся
-        в пути. Терминал сохраняет сгенерированный аватар для пользователя
+      description: 'Требуется device-токен активного устройства с ролью 2 и действующее
+        QR-подключение
+
+        пользователя. Передайте X-Device-Connection-Id из /device/auth/user;
+
+        пользователь определяется по Redis-привязке, user_id не передаётся.
+
+        Отсутствие подключения, другой идентификатор или недостаточная роль — 403.
+
+        Терминал сохраняет сгенерированный аватар для подключённого пользователя.
+
+        '
       parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/RequiredDeviceConnectionId'
       - name: profession_id
         in: query
         required: true
@@ -7793,8 +8068,13 @@ paths:
               type: object
               required:
               - photo
-              title: Body_create_user_avatar_api_users__user_id__avatars_post
+              title: Body_create_user_avatar_api_users_avatars_post
       responses:
+        '422':
+          description: Некорректные поля формы или отсутствующий X-Device-Connection-Id.
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+            к этому устройству.
         '401':
           description: Отсутствующий или недействительный токен.
         '201':
@@ -7825,6 +8105,33 @@ paths:
         '404':
           description: Не найден
 components:
+  parameters:
+    DeviceConnectionId:
+      name: X-Device-Connection-Id
+      in: header
+      required: false
+      description: Обязателен для личных операций по Device JWT. Возьмите connection_id
+        из /device/auth/user; пользователь определяется по Redis-привязке. При User
+        JWT заголовок не требуется.
+      schema:
+        type: string
+    RequiredDeviceConnectionId:
+      name: X-Device-Connection-Id
+      in: header
+      required: true
+      description: connection_id текущего подключения из /device/auth/user; требуется
+        вместе с Device JWT.
+      schema:
+        type: string
+    DeviceCatalogConnectionId:
+      name: X-Device-Connection-Id
+      in: header
+      required: false
+      description: Для персонализации каталога по Device JWT передайте connection_id
+        текущего подключения. Без заголовка устройство читает общий каталог. При User
+        JWT используется владелец токена.
+      schema:
+        type: string
   securitySchemes:
     bearerAuth:
       type: http
@@ -8783,8 +9090,34 @@ components:
           type: string
         message:
           type: string
+    DeviceRole:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      description: 1 — викторина и профессии в действии; 2 — аватар; 3 — ПрофСтарт;
+        4 — обратная связь.
+    DeviceRolesRequest:
+      type: object
+      required:
+      - roles
+      properties:
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/DeviceRole'
     Device:
       type: object
+      required:
+      - id
+      - name
+      - location
+      - is_active
+      - roles
       properties:
         id:
           type: integer
@@ -8796,6 +9129,12 @@ components:
           nullable: true
         is_active:
           type: boolean
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/DeviceRole'
     DeviceWithToken:
       allOf:
       - $ref: '#/components/schemas/Device'
@@ -11947,5 +12286,78 @@ components:
       - sources
       - professions
       type: object
+    DeviceQrResponse:
+      type: object
+      required:
+      - code
+      - qr_url
+      - expires_at
+      properties:
+        code:
+          type: string
+        qr_url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+    DeviceConfirmRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+    DeviceUser:
+      type: object
+      required:
+      - id
+      - is_guest
+      - first_name
+      - last_name
+      - avatar_url
+      properties:
+        id:
+          type: integer
+          format: int64
+        is_guest:
+          type: boolean
+        first_name:
+          type:
+          - string
+          - 'null'
+        last_name:
+          type:
+          - string
+          - 'null'
+        avatar_url:
+          type:
+          - string
+          - 'null'
+    DeviceUserResponse:
+      type: object
+      required:
+      - user
+      - expires_at
+      - connection_id
+      properties:
+        user:
+          anyOf:
+          - $ref: '#/components/schemas/DeviceUser'
+          - type: 'null'
+        expires_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        connection_id:
+          type:
+          - string
+          - 'null'
+          description: Идентификатор текущего подключения; null, если пользователя
+            нет.
 security:
 - bearerAuth: []

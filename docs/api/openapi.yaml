@@ -14,33 +14,57 @@ servers:
 
 x-websocket-channels:
   quiz-session:
-    url: /api/quiz/sessions/{sessionId}/ws
+    url: /api/quiz/sessions/{sessionId}/ws?token={jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: User/Staff access JWT или Device JWT без префикса Bearer.
     description: |
-      Канал оператора, LED и игрока. После подключения и переподключения клиент сам
-      запрашивает актуальное состояние через GET /quiz/sessions/active с device_id.
-      Все сообщения содержат только type, без data. После каждого события клиент запрашивает
-      GET /quiz/sessions/active?device_id=...; состав доступен с select=teams&select=participants.
-      session_state уведомляет о смене вопроса, раскрытии ответа, изменении таймера и завершении сессии.
-      Ответы команды доступны капитану через REST с его access-токеном, не в общей рассылке.
-      Подключение к сокету не вызывает отправку session_state. Перед регистрацией
-      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
-      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
-      Истечение таймера проверяется вызовом POST /quiz/sessions/{id}/led/next.
+      Канал сотрудника, устройства и игрока. До accept проверяются JWT и доступ к сессии.
+      User должен быть участником викторины; активный StaffUser имеет доступ к чтению;
+      Device требуется роль 1 и принадлежность сессии устройству.
+      Если Origin передан, он должен входить в AUTH_ALLOWED_ORIGINS.
+      Ошибки токена, Origin, доступа или отсутствующая сессия — close 1008 до accept
+      (HTTP 403 при handshake). БД освобождается до ожидания сообщений.
+      Авторизация проверяется только при подключении; открытый сокет не перепроверяется.
+      При переподключении клиент передаёт актуальный JWT.
+      Сообщения содержат только type, без data; начальное состояние не отправляется.
+      После подключения и каждого события клиент сам запрашивает состояние через REST.
+      Для игры используется GET /quiz/sessions/active?device_id=...;
+      состав доступен с select=teams&select=participants, ответы команды — капитану по access.
+      Истечение игрового таймера проверяет POST /quiz/sessions/{id}/led/next.
     message:
       $ref: '#/components/schemas/QuizWebSocketEvent'
   interactive-video-session:
-    url: /api/interactive-video/sessions/{sessionId}/ws
+    url: /api/interactive-video/sessions/{sessionId}/ws?token={jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: User/Staff access JWT или Device JWT без префикса Bearer.
     description: |
-      Канал LED, оператора и мобильного клиента видеосценариев. Перед регистрацией
-      проверяется существование сессии одним запросом её id; соединение с БД освобождается.
-      Несуществующая сессия отклоняется до принятия WebSocket (close 1008 в ASGI, HTTP 403 при handshake).
-      После подключения и переподключения клиент сам запрашивает состояние через
-      GET /interactive-video/sessions/{id}/state или /voting?participant_id=... .
-      Начальное состояние сервер не отправляет. Все уведомления относятся к sessionId из URL.
+      Канал устройства, сотрудника и мобильного клиента. До accept проверяются JWT
+      и существование сессии; StaffUser требуется admin/operator, Device — роль 1
+      и принадлежность сессии устройству. User допускается по действующему access:
+      video join не сохраняет членство, поэтому факт join отдельно не проверяется.
+      Если Origin передан, он должен входить в AUTH_ALLOWED_ORIGINS.
+      Ошибки токена, Origin, доступа или отсутствующая сессия — close 1008 до accept
+      (HTTP 403 при handshake). БД освобождается до ожидания сообщений.
+      Авторизация проверяется только при подключении; открытый сокет не перепроверяется.
+      После подключения клиент сам запрашивает состояние через /state или /voting
+      с предусмотренной для REST авторизацией. Начальное состояние по сокету не отправляется.
+      Все уведомления содержат только type и относятся к sessionId из URL.
     message:
       $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
 
 tags:
+  - name: Авторизация устройства
+    description: Временное подключение пользователя с телефона через QR
   - name: Авторизация пользователей
     description: Гостевой вход, OAuth и сессии посетителей
   - name: Авторизация сотрудников
@@ -107,6 +131,12 @@ tags:
     description: Загрузка и управление файлами
 
 paths:
+  /device/auth/qr:
+    $ref: './paths/device-auth.yaml#/qr'
+  /device/auth/confirm:
+    $ref: './paths/device-auth.yaml#/confirm'
+  /device/auth/user:
+    $ref: './paths/device-auth.yaml#/user'
   # ── Авторизация ──────────────────────────────────
   /auth/login:
     $ref: './paths/auth.yaml#/login'
@@ -283,6 +313,8 @@ paths:
     $ref: './paths/cms.yaml#/cms-devices-detail'
   /cms/devices/{device_id}/refresh-token:
     $ref: './paths/cms.yaml#/cms-device-refresh-token'
+  /cms/devices/{device_id}/roles:
+    $ref: './paths/cms.yaml#/cms-device-roles'
 
   # ── CMS: Профессии в действии — Видеосценарии ───
   /cms/video-scenarios:
@@ -424,12 +456,34 @@ paths:
     $ref: './paths/user-avatars.yaml#/user-avatars-list'
   /me/avatars/{avatar_id}:
     $ref: './paths/user-avatars.yaml#/user-avatars-detail'
-  /users/{user_id}/avatars:
+  /users/avatars:
     $ref: './paths/user-avatars.yaml#/user-avatars-create'
   /avatars/qr/{qr_token}:
     $ref: './paths/user-avatars.yaml#/user-avatars-qr'
 
 components:
+  parameters:
+    DeviceConnectionId:
+      name: X-Device-Connection-Id
+      in: header
+      required: false
+      description: Обязателен для личных операций по Device JWT. Возьмите connection_id из /device/auth/user; пользователь определяется по Redis-привязке. При User JWT заголовок не требуется.
+      schema:
+        type: string
+    RequiredDeviceConnectionId:
+      name: X-Device-Connection-Id
+      in: header
+      required: true
+      description: connection_id текущего подключения из /device/auth/user; требуется вместе с Device JWT.
+      schema:
+        type: string
+    DeviceCatalogConnectionId:
+      name: X-Device-Connection-Id
+      in: header
+      required: false
+      description: Для персонализации каталога по Device JWT передайте connection_id текущего подключения. Без заголовка устройство читает общий каталог. При User JWT используется владелец токена.
+      schema:
+        type: string
   securitySchemes:
     bearerAuth:
       type: http
@@ -1392,8 +1446,23 @@ components:
           type: string
         message:
           type: string
+    DeviceRole:
+      type: integer
+      enum: [1, 2, 3, 4]
+      description: '1 — викторина и профессии в действии; 2 — аватар; 3 — ПрофСтарт; 4 — обратная связь.'
+    DeviceRolesRequest:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/DeviceRole'
     Device:
       type: object
+      required: [id, name, location, is_active, roles]
       properties:
         id:
           type: integer
@@ -1405,6 +1474,12 @@ components:
           nullable: true
         is_active:
           type: boolean
+        roles:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/DeviceRole'
     DeviceWithToken:
       allOf:
         - $ref: '#/components/schemas/Device'
@@ -4380,5 +4455,77 @@ components:
       - professions
       type: object
 
+    DeviceQrResponse:
+      type: object
+      required:
+      - code
+      - qr_url
+      - expires_at
+      properties:
+        code:
+          type: string
+        qr_url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+    DeviceConfirmRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+    DeviceUser:
+      type: object
+      required:
+      - id
+      - is_guest
+      - first_name
+      - last_name
+      - avatar_url
+      properties:
+        id:
+          type: integer
+          format: int64
+        is_guest:
+          type: boolean
+        first_name:
+          type:
+          - string
+          - 'null'
+        last_name:
+          type:
+          - string
+          - 'null'
+        avatar_url:
+          type:
+          - string
+          - 'null'
+    DeviceUserResponse:
+      type: object
+      required:
+      - user
+      - expires_at
+      - connection_id
+      properties:
+        user:
+          anyOf:
+          - $ref: '#/components/schemas/DeviceUser'
+          - type: 'null'
+        expires_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        connection_id:
+          type:
+          - string
+          - 'null'
+          description: Идентификатор текущего подключения; null, если пользователя нет.
 security:
   - bearerAuth: []

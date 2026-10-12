@@ -28,11 +28,13 @@ age-groups:
     - ПрофСтарт - Пользователь
     summary: Справочник возрастных групп
     operationId: profstart_age_groups_get
-    description: "Требуется пользовательский access-токен или токен активного устройства. Группы для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC."
+    description: "Требуется пользовательский access-токен или токен активного устройства. Группы для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC. Для device-токена требуется роль 3; другая группа устройства — 403."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
     responses:
+      '403':
+        description: Недостаточно прав устройства или сотрудника.
       '200':
         description: Возрастные группы
         content:
@@ -1337,9 +1339,10 @@ tests:
     - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: "Требуется пользовательский access-токен или токен активного устройства. Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим. Для устройства каталог не персонализируется; для пользователя исключаются завершённые типы."
+    description: "User JWT или Device JWT с ролью 3. Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим. Без X-Device-Connection-Id каталог устройства не персонализируется. С заголовком требуется действующая QR-привязка; завершённые типы подключённого пользователя исключаются."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceCatalogConnectionId'
     - name: age_group_id
       in: query
       required: false
@@ -1357,6 +1360,8 @@ tests:
         format: int64
         minimum: 1
     responses:
+      '403':
+        description: Недостаточно прав устройства или сотрудника.
       '200':
         description: Успешный ответ
         content:
@@ -1379,9 +1384,10 @@ test:
     - ПрофСтарт - Пользователь
     summary: Карточка теста для старта или своей истории
     operationId: profstart_test_get
-    description: "Требуется пользовательский access-токен или токен активного устройства. Активная версия доступна для просмотра. Архивная — только при наличии своей сессии этой версии. Draft и архивная без своей сессии — 409. Новую сессию можно начать только для active. Устройство получает только активную версию; архивная версия доступна пользователю с собственной историей прохождения."
+    description: "User JWT или Device JWT с ролью 3. Активная версия доступна для просмотра. Архивная — только при наличии своей сессии этой версии; draft и архивная без своей сессии — 409. Устройство без X-Device-Connection-Id получает только активную версию; с заголовком получает также свою архивную версию по QR-привязке. Новую сессию можно начать только для active."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceCatalogConnectionId'
     - name: test_id
       in: path
       required: true
@@ -1391,6 +1397,8 @@ test:
         format: int64
         minimum: 1
     responses:
+      '403':
+        description: Недостаточно прав устройства или сотрудника.
       '200':
         description: Успешный ответ
         content:
@@ -1411,10 +1419,13 @@ sessions:
     - ПрофСтарт - Пользователь
     summary: Начать отдельное прохождение
     operationId: profstart_sessions_post
-    description: "Начинает прохождение активной версии любого типа. Допускается одна in_progress на пользователя; завершённый тип нельзя пройти повторно, включая новую версию: 409. После abandoned можно начать новую попытку. Неактивная версия — 409."
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Начинает прохождение активной версии любого типа. Допускается одна in_progress на пользователя; завершённый тип нельзя пройти повторно, включая новую версию: 409. После abandoned можно начать новую попытку. Неактивная версия — 409."
     x-implementation-status: implemented
-    parameters: []
+    parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '201':
         description: Ресурс создан
         content:
@@ -1441,9 +1452,10 @@ session:
     - ПрофСтарт - Пользователь
     summary: Состояние своего прохождения
     operationId: profstart_session_get
-    description: Своя сессия с прогрессом и принятыми ответами для восстановления прохождения.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Своя сессия с прогрессом и принятыми ответами для восстановления прохождения."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     - name: id
       in: path
       required: true
@@ -1453,6 +1465,8 @@ session:
         format: int64
         minimum: 1
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Успешный ответ
         content:
@@ -1473,11 +1487,13 @@ question:
     - ПрофСтарт - Пользователь
     summary: Следующий неотвеченный вопрос сессии
     operationId: profstart_question_get
-    description: Следующий неотвеченный вопрос текущей in_progress сессии. Повтор GET возвращает тот же вопрос до
-        сохранения ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Следующий неотвеченный вопрос текущей in_progress сессии. Повтор GET возвращает тот же вопрос до сохранения ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409."
     x-implementation-status: implemented
-    parameters: []
+    parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Успешный ответ
         content:
@@ -1498,9 +1514,10 @@ me-sessions:
     - ПрофСтарт - Пользователь
     summary: Список своих прохождений
     operationId: profstart_me_sessions_get
-    description: Свои сессии; без фильтра возвращаются все статусы. Порядок started_at DESC, id DESC.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Свои сессии; без фильтра возвращаются все статусы. Порядок started_at DESC, id DESC."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     - name: status
       in: query
       required: false
@@ -1524,6 +1541,8 @@ me-sessions:
         minimum: 0
         default: 0
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Страница своих прохождений; пустой список при отсутствии записей.
         content:
@@ -1540,9 +1559,15 @@ me-active-session:
     - ПрофСтарт - Пользователь
     summary: Текущее незавершённое прохождение
     operationId: profstart_me_active_session_get
-    description: Своя in_progress сессия, включая архивную версию теста. Если такой сессии нет — 200 с JSON null.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Своя in_progress сессия, включая архивную версию теста. Если такой сессии нет — 200 с JSON null."
     x-implementation-status: implemented
+    parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
+      '422':
+        description: Некорректные параметры; для Device JWT обязателен user_id.
       '200':
         description: Текущая сессия или null.
         content:
@@ -1559,12 +1584,13 @@ answer:
     - ПрофСтарт - Пользователь
     summary: Сохранить ответ и рассчитать результат после последнего вопроса
     operationId: profstart_answer_post
-    description: Ответ в текущую in_progress сессию. При отсутствии question_id или при null выбирается следующий
-        неотвеченный вопрос. Повтор принятого варианта не меняет прогресс. Последний ответ завершает сессию;
-        результат получите через GET /profstart/sessions/{id}/result.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Ответ в текущую in_progress сессию. При отсутствии question_id или при null выбирается следующий неотвеченный вопрос. Повтор принятого варианта не меняет прогресс. Последний ответ завершает сессию; результат получите через GET /profstart/sessions/{id}/result."
     x-implementation-status: implemented
-    parameters: []
+    parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Успешный ответ
         content:
@@ -1593,9 +1619,10 @@ abandon:
     - ПрофСтарт - Пользователь
     summary: Прервать без результата
     operationId: profstart_abandon_post
-    description: in_progress → abandoned. Повтор для abandoned возвращает ту же запись; completed — 409.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. in_progress → abandoned. Повтор для abandoned возвращает ту же запись; completed — 409."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     - name: id
       in: path
       required: true
@@ -1605,6 +1632,8 @@ abandon:
         format: int64
         minimum: 1
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Успешный ответ
         content:
@@ -1625,9 +1654,10 @@ result:
     - ПрофСтарт - Пользователь
     summary: Сохранённый результат своей сессии
     operationId: profstart_result_get
-    description: "Результат своей завершённой сессии: answers и scores для любого типа. До завершения и после abandoned — 409. Для любого типа создаётся источник с показателями групп и профессий; участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS."
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Результат своей завершённой сессии: answers и scores для любого типа. До завершения и после abandoned — 409. Для любого типа создаётся источник с показателями групп и профессий; участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     - name: id
       in: path
       required: true
@@ -1637,6 +1667,8 @@ result:
         format: int64
         minimum: 1
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Успешный ответ
         content:
@@ -1657,9 +1689,10 @@ me-results:
     - ПрофСтарт - Пользователь
     summary: История своих результатов
     operationId: profstart_me_results_get
-    description: Порядок created_at DESC, id DESC; фильтр периода применяется ко времени результата.
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Порядок created_at DESC, id DESC; фильтр периода применяется ко времени результата."
     x-implementation-status: implemented
     parameters:
+    - $ref: '#/components/parameters/DeviceConnectionId'
     - name: limit
       in: query
       required: false
@@ -1708,6 +1741,8 @@ me-results:
         type: string
         format: date-time
     responses:
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '200':
         description: Успешный ответ
         content:

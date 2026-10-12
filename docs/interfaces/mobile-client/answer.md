@@ -96,8 +96,8 @@ https://app.example.com/join?session_id={sessionId}&device_id={deviceId}
 ## Получение обновлений
 
 Мобильный клиент подключается к WebSocket для получения уведомлений об изменениях:
-- **Викторина:** `ws://host/api/quiz/sessions/{id}/ws` — обновление таймера, результаты
-- **Профессии в действии:** `ws://host/api/interactive-video/sessions/{id}/ws` — смена фазы, обновление голосов
+- **Викторина:** `ws://host/api/quiz/sessions/{id}/ws?token=<jwt>` — обновление таймера, результаты
+- **Профессии в действии:** `ws://host/api/interactive-video/sessions/{id}/ws?token=<jwt>` — смена фазы, обновление голосов
 
 При получении события клиент загружает актуальное состояние через REST API:
 - **Викторина:** `GET /quiz/sessions/{id}`
@@ -139,3 +139,6 @@ https://app.example.com/join?session_id={sessionId}&device_id={deviceId}
 
 - **LED-экран:** [Викторина](../led-screen/quiz.md), [Профессии в действии](../led-screen/professions-active.md)
 - **Панель оператора:** [Управление раундом](../operator-tablet/round-control.md), [Профессии в действии](../operator-tablet/professions.md)
+
+
+Передавайте пользовательский access JWT в token; в викторине сначала выполните join. Авторизация сокета проверяется только при подключении.

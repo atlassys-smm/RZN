@@ -12,14 +12,22 @@ cms-devices:
         application/json:
           schema:
             type: object
-            required: [name]
+            required: [name, roles]
             properties:
               name:
                 type: string
               location:
                 type: string
                 nullable: true
+              roles:
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/DeviceRole'
     responses:
+      '422':
+        description: Нужен непустой список известных неповторяющихся ролей.
       '403':
         description: Недостаточно прав
       '401':
@@ -566,3 +574,40 @@ responses:
                     $ref: '#/components/schemas/CmsSurveyResponse'
                 total:
                   type: integer
+
+
+cms-device-roles:
+  put:
+    tags: [LED-устройства]
+    summary: Заменить роли устройства
+    description: 'Требуется staff access-токен admin/operator. Полностью заменяет список ролей устройства; нужен хотя бы один элемент, дубли и неизвестные роли запрещены. Изменение действует сразу для существующего device-токена; активность устройства не меняется.'
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: device_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceRolesRequest'
+    responses:
+      '200':
+        description: Устройство с новым списком ролей
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+      '401':
+        description: Недействительный или отсутствующий токен
+      '403':
+        description: Недостаточно прав
+      '404':
+        description: Устройство не найдено
+      '422':
+        description: Нужен непустой список известных неповторяющихся ролей

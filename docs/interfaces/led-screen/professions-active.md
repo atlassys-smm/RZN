@@ -6,7 +6,7 @@
 
 ## Получение состояния
 
-LED-экран подключается к WebSocket `ws://host/api/v1/interactive-video/sessions/{id}/ws` для получения уведомлений об изменениях:
+LED-экран подключается к WebSocket `ws://host/api/interactive-video/sessions/{id}/ws?token=<jwt>` для получения уведомлений об изменениях:
 - `phase_changed` — сменилась фаза (playing → voting → playing)
 - `votes_updated` — поступил новый голос
 - `scenario_finished` — сценарий завершён
@@ -130,3 +130,6 @@ https://app.example.com/join?session_id={sessionId}&device_id={deviceId}
 - **Панель оператора:** [Профессии в действии](../operator-tablet/professions.md)
 - **Мобильный клиент:** Голосование
 - **CMS:** [Управление видеосценариями](../../subsystems/cms/video-scenarios.md)
+
+
+Передавайте Device JWT в token. Устройство должно иметь роль 1 и владеть видеосессией; проверка выполняется только при подключении.

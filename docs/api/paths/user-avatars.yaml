@@ -8,14 +8,14 @@ user-avatars-create:
     - bearerAuth: []
     tags: [Аватары пользователей]
     summary: Сохранить аватар пользователя
-    description: "Требуется device-токен активного устройства; user_id передаётся в пути. Терминал сохраняет сгенерированный аватар для пользователя"
+    description: |
+      Требуется device-токен активного устройства с ролью 2 и действующее QR-подключение
+      пользователя. Передайте X-Device-Connection-Id из /device/auth/user;
+      пользователь определяется по Redis-привязке, user_id не передаётся.
+      Отсутствие подключения, другой идентификатор или недостаточная роль — 403.
+      Терминал сохраняет сгенерированный аватар для подключённого пользователя.
     parameters:
-      - name: user_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+      - $ref: '#/components/parameters/RequiredDeviceConnectionId'
       - name: profession_id
         in: query
         required: true
@@ -45,8 +45,12 @@ user-avatars-create:
             type: object
             required:
             - photo
-            title: Body_create_user_avatar_api_users__user_id__avatars_post
+            title: Body_create_user_avatar_api_users_avatars_post
     responses:
+      '422':
+        description: Некорректные поля формы или отсутствующий X-Device-Connection-Id.
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
       '401':
         description: Отсутствующий или недействительный токен.
       '201':

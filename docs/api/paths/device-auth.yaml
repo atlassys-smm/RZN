@@ -1,0 +1,105 @@
+qr:
+  post:
+    tags: [Авторизация устройства]
+    summary: Создать QR для подключения пользователя
+    description: |
+      Требуется device-токен. QR действует 2 минуты. Новый QR заменяет предыдущий
+      неподтверждённый код этого устройства; при подключённом пользователе — 409.
+      qr_url ведёт на мобильный фронтенд; код находится в fragment #code=... .
+      Фронтенд сохраняет код на время входа и отправляет его в /device/auth/confirm.
+    security:
+      - bearerAuth: []
+    responses:
+      '201':
+        description: Одноразовый QR создан; Cache-Control no-store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceQrResponse'
+      '401':
+        description: Нет действующего device-токена
+      '409':
+        description: Устройство уже подключено к пользователю
+confirm:
+  post:
+    tags: [Авторизация устройства]
+    summary: Подтвердить подключение с телефона
+    description: |
+      Требуется user access-токен; гостевой вход тоже поддерживается.
+      Пользователь определяется по токену, устройство — по одноразовому code.
+      Код погашается при успешном подтверждении. Подключение действует до часа
+      с момента подтверждения, но не дольше пользовательской сессии и срока гостя.
+      При каждом подтверждении создаётся новый connection_id, включая повторное подключение
+      того же User. Пользовательский JWT на устройство не передаётся.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeviceConfirmRequest'
+    responses:
+      '200':
+        description: Подключение подтверждено; Cache-Control no-store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUserResponse'
+      '401':
+        description: Нет действующего user access-токена
+      '403':
+        description: Устройство недоступно
+      '409':
+        description: Устройство уже подключено к пользователю
+      '410':
+        description: Код неизвестен, истёк, заменён или уже использован
+      '422':
+        description: Некорректное тело запроса
+user:
+  get:
+    tags: [Авторизация устройства]
+    summary: Получить подключённого пользователя
+    description: |
+      Требуется device-токен. Пока подключения нет, возвращает user, expires_at и connection_id со значением null.
+      Устройство может опрашивать маршрут каждые две секунды в ожидании подтверждения.
+      Опрос не продлевает подключение. После истечения TTL, выхода на телефоне,
+      истечения пользовательской сессии или деактивации пользователя — user: null.
+      Ответ содержит connection_id текущего подключения. Для личных действий устройство
+      передаёт его в X-Device-Connection-Id вместе с Device JWT; user_id не передаётся.
+      Сервер определяет пользователя по Redis и отдельно проверяет роль модуля.
+      Старый идентификатор после переподключения отклоняется.
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Текущее подключение; Cache-Control no-store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUserResponse'
+      '401':
+        description: Нет действующего device-токена
+  delete:
+    tags: [Авторизация устройства]
+    summary: Завершить подключение пользователя
+    parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+    description: |
+      Требуется device-токен. При действующем подключении обязателен
+      X-Device-Connection-Id: без него — 422, несовпадение с текущим — 403.
+      Удаляет только текущее подключение и его ожидающий QR. Повтор со старым идентификатором
+      при отсутствии подключения возвращает 204 и не отменяет новый неподтверждённый QR.
+      Без заголовка и без подключения можно отменить ожидающий QR.
+      Авторизация на телефоне сохраняется.
+    security:
+      - bearerAuth: []
+    responses:
+      '403':
+        description: Идентификатор не соответствует текущему подключению
+      '422':
+        description: Для завершения текущего подключения требуется X-Device-Connection-Id
+      '204':
+        description: Подключение завершено или уже отсутствует
+      '401':
+        description: Нет действующего device-токена
