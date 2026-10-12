@@ -14,6 +14,24 @@ servers:
 - url: http://localhost:8000/api
   description: Локальная разработка
 x-websocket-channels:
+  device-auth:
+    url: /api/device/auth/ws?token={device_jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: JWT активного устройства без префикса Bearer.
+    description: Устройство определяется по Device JWT; User и StaffUser не допускаются.
+      Проверка токена и Origin выполняется только при подключении. Событие qr_opened
+      отправляется при открытии действующей backend QR-ссылки, user_connected — после
+      успешного /device/auth/confirm. В событиях передаётся code для сопоставления
+      с текущим QR; профиль и connection_id запрашиваются через GET /device/auth/user.
+      Уведомления отправляются через ConnectionManager в текущем процессе API и не
+      воспроизводятся после переподключения.
+    message:
+      $ref: '#/components/schemas/DeviceAuthWebSocketEvent'
   quiz-session:
     url: /api/quiz/sessions/{sessionId}/ws?token={jwt}
     parameters:
@@ -171,11 +189,15 @@ paths:
 
         неподтверждённый код этого устройства; при подключённом пользователе — 409.
 
-        API возвращает только code и expires_at. Фронтенд формирует ссылку мобильной
+        API возвращает code и expires_at. Фронтенд устройства собирает ссылку
 
-        страницы с кодом и отображает QR. Мобильный фронтенд сохраняет код на время
+        /api/device/auth/qr/{code} на backend и отображает её QR. При открытии ссылки
+        сервер отправляет qr_opened
 
-        входа и отправляет его в /device/auth/confirm.
+        в сокет устройства и перенаправляет на мобильный фронтенд с fragment #code=...
+        .
+
+        Мобильный фронтенд сохраняет код на время входа и отправляет его в /device/auth/confirm.
 
         '
       security:
@@ -191,6 +213,43 @@ paths:
           description: Нет действующего device-токена
         '409':
           description: Устройство уже подключено к пользователю
+  /device/auth/qr/{code}:
+    get:
+      tags:
+      - Авторизация устройства
+      summary: Открыть QR и перейти на фронтенд
+      description: 'Публичный переход с телефона по одноразовому code. Для действующего
+        QR отправляет событие qr_opened устройству, затем перенаправляет на настроенный
+        мобильный фронтенд с #code=... . Открытие не погашает код и не продлевает
+        его срок: повторный переход снова отправляет событие. Код погашается только
+        после успешного confirm. Ответ не кешируется.'
+      security: []
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '302':
+          description: Переход на мобильный фронтенд
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+            Referrer-Policy:
+              schema:
+                type: string
+                example: no-referrer
+        '403':
+          description: Устройство недоступно
+        '410':
+          description: Код неизвестен, истёк, заменён или уже использован
+        '422':
+          description: Некорректный код
   /device/auth/confirm:
     post:
       tags:
@@ -207,7 +266,10 @@ paths:
         При каждом подтверждении создаётся новый connection_id, включая повторное
         подключение
 
-        того же User. Пользовательский JWT на устройство не передаётся.
+        того же User. После успешной привязки отправляется user_connected в сокет
+        устройства.
+
+        Пользовательский JWT на устройство не передаётся.
 
         '
       security:
@@ -243,9 +305,18 @@ paths:
       description: 'Требуется device-токен. Пока подключения нет, возвращает user,
         expires_at и connection_id со значением null.
 
-        Устройство может опрашивать маршрут каждые две секунды в ожидании подтверждения.
+        Фронтенд подключается к /api/device/auth/ws и ожидает события без периодического
+        опроса.
 
-        Опрос не продлевает подключение. После истечения TTL, выхода на телефоне,
+        qr_opened сообщает об открытии QR; после user_connected фронтенд вызывает
+        этот маршрут
+
+        для получения профиля и connection_id. Маршрут также вызывается при подключении
+
+        и переподключении сокета, чтобы восстановить текущее состояние.
+
+        Чтение состояния не продлевает подключение. После истечения TTL, выхода на
+        телефоне,
 
         истечения пользовательской сессии или деактивации пользователя — user: null.
 
@@ -12291,6 +12362,20 @@ components:
       - sources
       - professions
       type: object
+    DeviceAuthWebSocketEvent:
+      type: object
+      required:
+      - type
+      - code
+      properties:
+        type:
+          type: string
+          enum:
+          - qr_opened
+          - user_connected
+        code:
+          type: string
+          description: Код QR, к которому относится событие
     DeviceQrResponse:
       type: object
       required:
