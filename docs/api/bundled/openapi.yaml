@@ -64,8 +64,8 @@ x-websocket-channels:
 
       Для игры используется GET /quiz/sessions/active?device_id=...;
 
-      состав доступен с select=teams&select=participants, ответы команды — капитану
-      по access.
+      состав доступен с select=teams&select=participants; select=answers добавляет
+      голосование в корневое поле answers.
 
       Истечение игрового таймера проверяет POST /quiz/sessions/{id}/led/next.
 
@@ -554,6 +554,87 @@ paths:
           description: Недействительная сессия; cookie удаляется
         '403':
           description: Недопустимый или отсутствующий Origin/Referer
+  /auth/{id}:
+    get:
+      tags:
+      - Авторизация пользователей
+      summary: Тестовый вход по ID пользователя
+      description: 'Временный вход без пароля и действующего токена.
+
+        '
+      security: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID существующего активного пользователя; нечисловой сегмент не
+          соответствует маршруту (404).
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      responses:
+        '200':
+          description: Access JWT пользователя; создана серверная сессия и установлена
+            refresh cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: user_refresh; HttpOnly; Path=/api/auth/user. Secure и SameSite
+                определяются AUTH_COOKIE_SECURE и AUTH_COOKIE_SAMESITE.
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - token
+                properties:
+                  token:
+                    type: string
+                    description: Штатный access JWT; имя поля сохранено для тестового
+                      маршрута.
+        '401':
+          description: Пользователь деактивирован либо срок гостя отсутствует или
+            истёк
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - detail
+                properties:
+                  detail:
+                    type: string
+              example:
+                detail: Недействительная сессия
+        '404':
+          description: Тестовый вход выключен, пользователь не найден или URL не соответствует
+            числовому ID
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - detail
+                properties:
+                  detail:
+                    type: string
+              examples:
+                disabled:
+                  value:
+                    detail: Тестовый вход отключён
+                missing-user:
+                  value:
+                    detail: Пользователь не найден
+                invalid-path:
+                  value:
+                    detail: Not Found
   /auth/user/guest:
     post:
       tags:
@@ -3499,10 +3580,14 @@ paths:
         \ `round_count` — общее количество раундов и `current_round_question_count`\
         \ — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов\
         \ относится к первому раунду.\nВо время active также возвращает текущий раунд,\
-        \ вопрос и таймер. `select=teams` и `select=participants` добавляют состав\
-        \ команд и участников; несколько значений select передаются повторяющимися\
-        \ параметрами запроса.\nЕсли активной сессии нет — возвращает 404.\n Для device-токена\
-        \ требуется роль 1; другая группа устройства — 403."
+        \ вопрос и таймер. `select=answers` добавляет корневое поле `answers` с голосами\
+        \ участников, решающими ответами и статусами команд, счётчиками по вариантам;\
+        \ без параметра поле отсутствует. До начала и после завершения игры `answers=null`.\
+        \ User в командной игре видит свою команду, StaffUser — все команды, Device\
+        \ — общие счётчики и статусы без содержимого ответов. `select=teams` и `select=participants`\
+        \ добавляют состав команд и участников; несколько значений select передаются\
+        \ повторяющимися параметрами запроса.\nЕсли активной сессии нет — возвращает\
+        \ 404.\n Для device-токена требуется роль 1; другая группа устройства — 403."
       parameters:
       - name: device_id
         in: query
@@ -3512,7 +3597,8 @@ paths:
           format: int64
       - name: select
         in: query
-        description: Связанные данные для включения
+        description: Связанные данные для включения; answers добавляет голосование
+          текущего вопроса в корневое поле answers.
         style: form
         explode: true
         schema:
@@ -3522,6 +3608,7 @@ paths:
             enum:
             - teams
             - participants
+            - answers
             - current_question
             - current_round
             - timer
@@ -3548,13 +3635,18 @@ paths:
       - Викторина
       summary: Получить сессию
       description: "Возвращает базовые поля сессии и счётчики round_count/current_round_question_count;\
-        \ во время active также текущий раунд, вопрос и таймер.\n`select=teams` и\
-        \ `select=participants` добавляют состав команд и участников. Несколько значений\
-        \ select передаются повторяющимися параметрами запроса. Для авторизованного\
-        \ капитана `answer_submissions` текущего вопроса содержит ответы его команды;\
-        \ участник определяется по access-токену. До раскрытия правильного ответа\
-        \ поля `is_correct` у вариантов и `answer_key` вопроса не возвращаются.\n\
-        \ Для device-токена требуется роль 1; другая группа устройства — 403."
+        \ во время active также текущий раунд, вопрос и таймер.\n`select=answers`\
+        \ добавляет корневое поле `answers` с голосами участников, решающими ответами\
+        \ и статусами команд, счётчиками по вариантам; без параметра поле отсутствует.\
+        \ До начала и после завершения игры `answers=null`. User в командной игре\
+        \ видит свою команду, StaffUser — все команды, Device — общие счётчики и статусы\
+        \ без содержимого ответов. `select=teams` и `select=participants` добавляют\
+        \ состав команд и участников. Несколько значений select передаются повторяющимися\
+        \ параметрами запроса. Для авторизованного капитана `answer_submissions` текущего\
+        \ вопроса содержит ответы его команды; участник определяется по access-токену.\
+        \ До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key`\
+        \ вопроса не возвращаются.\n Для device-токена требуется роль 1; другая группа\
+        \ устройства — 403."
       parameters:
       - name: id
         in: path
@@ -3564,7 +3656,8 @@ paths:
           format: int64
       - name: select
         in: query
-        description: Связанные данные для включения
+        description: Связанные данные для включения; answers добавляет голосование
+          текущего вопроса в корневое поле answers.
         style: form
         explode: true
         schema:
@@ -3574,6 +3667,7 @@ paths:
             enum:
             - teams
             - participants
+            - answers
             - current_question
             - current_round
             - timer
@@ -3583,8 +3677,8 @@ paths:
         '403':
           description: Нет доступа к сессии или операция недоступна роли
         '200':
-          description: Состояние сессии; select добавляет запрошенные списки команд
-            и участников.
+          description: Состояние сессии; select добавляет состав команд, участников
+            и блок answers.
           content:
             application/json:
               schema:
@@ -9387,6 +9481,23 @@ components:
                       format: int64
                     order:
                       type: integer
+                    text:
+                      type: string
+                      description: Текст вопроса из банка вопросов
+                    difficulty:
+                      type: integer
+                      nullable: true
+                      enum:
+                      - 1
+                      - 2
+                      - 3
+                    age_group:
+                      type: integer
+                      nullable: true
+                      description: ID возрастной группы или null
+                    points:
+                      type: integer
+                      description: Баллы за правильный ответ
         created_at:
           type: string
           format: date-time
@@ -9488,11 +9599,12 @@ components:
               answer_submissions:
                 type: object
                 description: Счётчики принятых ответов; для капитана команды также
-                  содержит предварительные ответы участников до отправки решающего
-                  ответа
+                  содержит предварительные ответы участников на текущий вопрос
                 properties:
                   submitted_count:
                     type: integer
+                    description: Число текущих ответов участников, включая капитанов;
+                      ответ капитана не хранится отдельно.
                   eligible_count:
                     type: integer
                   participant_answers:
@@ -9512,6 +9624,12 @@ components:
                           additionalProperties: true
           timer:
             $ref: '#/components/schemas/QuizTimerState'
+          answers:
+            description: Возвращается только при select=answers; null до начала и
+              после завершения игры.
+            anyOf:
+            - $ref: '#/components/schemas/QuizAnswers'
+            - type: 'null'
           teams:
             type: array
             nullable: true
@@ -9524,6 +9642,136 @@ components:
             description: Заполняется при select=participants
             items:
               $ref: '#/components/schemas/QuizParticipant'
+    QuizAnswers:
+      type: object
+      required:
+      - participant_answers
+      - team_answers
+      - option_counts
+      description: 'Голосование текущего вопроса, только при select=answers.
+
+        User в командной игре видит свою команду; в индивидуальной — всех участников.
+
+        StaffUser видит все команды. Device получает общие счётчики и статусы команд,
+
+        с пустым participant_answers и null в team_answers[].answer.
+
+        Ответ команды берётся из текущего голоса капитана. Хранение ответов и начисление
+        баллов не изменены.
+
+        '
+      properties:
+        participant_answers:
+          type: array
+          description: Участники, отправившие ответ, включая капитанов; для индивидуальной
+            игры — принятый ответ.
+          items:
+            type: object
+            required:
+            - participant_id
+            - participant_name
+            - team_id
+            - answer
+            properties:
+              participant_id:
+                type: integer
+                format: int64
+              participant_name:
+                type: string
+              team_id:
+                type:
+                - integer
+                - 'null'
+                format: int64
+              answer:
+                type: object
+                additionalProperties: true
+                description: Исходный JSON ответа согласно типу вопроса.
+        team_answers:
+          type: array
+          description: Все доступные клиенту команды; ответ команды совпадает с текущим
+            ответом капитана. Пусто в индивидуальной игре.
+          items:
+            type: object
+            required:
+            - team_id
+            - captain_id
+            - submitted
+            - answer
+            properties:
+              team_id:
+                type: integer
+                format: int64
+              captain_id:
+                type:
+                - integer
+                - 'null'
+                format: int64
+                description: Текущий капитан команды, чей голос используется как ответ
+                  команды.
+              submitted:
+                type: boolean
+                description: true, если у текущего капитана есть ответ на текущий
+                  вопрос; не зависит от is_final.
+              answer:
+                type:
+                - object
+                - 'null'
+                additionalProperties: true
+                description: Текущий ответ капитана; null при отсутствии ответа и
+                  для Device.
+        option_counts:
+          type: array
+          description: 'Число текущих голосов участников и голосов капитанов команд
+            за вариант.
+
+            Нулевые значения включены. User в командной игре получает счётчики своей
+            команды,
+
+            StaffUser и Device — всей сессии. При множественном выборе каждый участник/команда
+
+            учитывается один раз на выбранный вариант. Для текста, сопоставления,
+            порядка
+
+            и распределения ролей возвращается пустой массив.
+
+            '
+          items:
+            type: object
+            required:
+            - option_id
+            - participant_count
+            - team_count
+            properties:
+              option_id:
+                type: integer
+                format: int64
+              participant_count:
+                type: integer
+                minimum: 0
+              team_count:
+                type: integer
+                minimum: 0
+      example:
+        participant_answers:
+        - participant_id: 34
+          participant_name: Участник 34
+          team_id: 2
+          answer:
+            option_id: 12
+        team_answers:
+        - team_id: 2
+          captain_id: 34
+          submitted: true
+          answer:
+            option_id: 12
+        option_counts:
+        - option_id: 12
+          participant_count: 1
+          team_count: 1
+        - option_id: 14
+          participant_count: 0
+          team_count: 0
     QuizTeam:
       description: Команда в сессии викторины
       type: object
@@ -9667,10 +9915,12 @@ components:
             answer_submissions:
               type: object
               description: Счётчики принятых ответов; для капитана команды также содержит
-                предварительные ответы участников до отправки решающего ответа
+                предварительные ответы участников на текущий вопрос
               properties:
                 submitted_count:
                   type: integer
+                  description: Число текущих ответов участников, включая капитанов;
+                    ответ капитана не хранится отдельно.
                 eligible_count:
                   type: integer
                 participant_answers:

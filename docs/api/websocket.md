@@ -108,9 +108,17 @@ ws://host/api/quiz/sessions/{sessionId}/ws?token=<jwt>
 После завершения сессии `/quiz/sessions/active` возвращает `404`, если другой
 незавершённой сессии нет. Состояние завершённой игры и итоговые результаты доступны
 по сохранённому ID через `GET /quiz/sessions/{id}` и `GET /quiz/sessions/{id}/results`.
-Ответы своей команды капитан получает через
-`GET /quiz/sessions/{id}?participant_id={captainParticipantId}`;
-состояние остальных участников не содержит `participant_answers`.
+Голосование текущего вопроса запрашивается через `select=answers`:
+`GET /quiz/sessions/active?device_id=...&select=answers` или
+`GET /quiz/sessions/{id}?select=answers`. Корневое поле `answers` содержит
+`participant_answers`, `team_answers` и `option_counts`. User в командной игре
+видит голоса своей команды и решающий ответ капитана, StaffUser — все команды,
+Device — общие счётчики и статусы команд без содержимого ответов.
+Без `select=answers` поле отсутствует; до начала и после завершения игры оно `null`.
+Ответ команды берётся из текущего голоса капитана;
+`team_answers[].submitted` становится `true`, когда капитан ответил, независимо от `is_final`.
+Отправка с `is_final=true` заменяет его предыдущий ответ согласно исходной логике.
+Уведомление `answers_update` остаётся без данных.
 
 Уведомления отправляются после сохранения соответствующего изменения.
 `session_state` отправляется после смены вопроса, раскрытия ответа,

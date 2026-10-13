@@ -51,7 +51,7 @@ x-websocket-channels:
       Сообщения содержат только type, без data; начальное состояние не отправляется.
       После подключения и каждого события клиент сам запрашивает состояние через REST.
       Для игры используется GET /quiz/sessions/active?device_id=...;
-      состав доступен с select=teams&select=participants, ответы команды — капитану по access.
+      состав доступен с select=teams&select=participants; select=answers добавляет голосование в корневое поле answers.
       Истечение игрового таймера проверяет POST /quiz/sessions/{id}/led/next.
     message:
       $ref: '#/components/schemas/QuizWebSocketEvent'
@@ -170,6 +170,8 @@ paths:
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
   # ── Авторизация пользователя ─────────────────────
+  /auth/{id}:
+    $ref: './paths/user-auth.yaml#/user-test-login'
   /auth/user/guest:
     $ref: './paths/user-auth.yaml#/user-guest'
   /auth/user/refresh:
@@ -1632,6 +1634,20 @@ components:
                       format: int64
                     order:
                       type: integer
+                    text:
+                      type: string
+                      description: Текст вопроса из банка вопросов
+                    difficulty:
+                      type: integer
+                      nullable: true
+                      enum: [1, 2, 3]
+                    age_group:
+                      type: integer
+                      nullable: true
+                      description: ID возрастной группы или null
+                    points:
+                      type: integer
+                      description: Баллы за правильный ответ
         created_at:
           type: string
           format: date-time
@@ -1712,10 +1728,11 @@ components:
                       nullable: true
                 answer_submissions:
                   type: object
-                  description: Счётчики принятых ответов; для капитана команды также содержит предварительные ответы участников до отправки решающего ответа
+                  description: Счётчики принятых ответов; для капитана команды также содержит предварительные ответы участников на текущий вопрос
                   properties:
                     submitted_count:
                       type: integer
+                      description: Число текущих ответов участников, включая капитанов; ответ капитана не хранится отдельно.
                     eligible_count:
                       type: integer
                     participant_answers:
@@ -1734,6 +1751,11 @@ components:
                             additionalProperties: true
             timer:
               $ref: '#/components/schemas/QuizTimerState'
+            answers:
+              description: Возвращается только при select=answers; null до начала и после завершения игры.
+              anyOf:
+                - $ref: '#/components/schemas/QuizAnswers'
+                - type: 'null'
             teams:
               type: array
               nullable: true
@@ -1746,6 +1768,91 @@ components:
               description: Заполняется при select=participants
               items:
                 $ref: '#/components/schemas/QuizParticipant'
+    QuizAnswers:
+      type: object
+      required: [participant_answers, team_answers, option_counts]
+      description: |
+        Голосование текущего вопроса, только при select=answers.
+        User в командной игре видит свою команду; в индивидуальной — всех участников.
+        StaffUser видит все команды. Device получает общие счётчики и статусы команд,
+        с пустым participant_answers и null в team_answers[].answer.
+        Ответ команды берётся из текущего голоса капитана. Хранение ответов и начисление баллов не изменены.
+      properties:
+        participant_answers:
+          type: array
+          description: Участники, отправившие ответ, включая капитанов; для индивидуальной игры — принятый ответ.
+          items:
+            type: object
+            required: [participant_id, participant_name, team_id, answer]
+            properties:
+              participant_id:
+                type: integer
+                format: int64
+              participant_name:
+                type: string
+              team_id:
+                type: [integer, 'null']
+                format: int64
+              answer:
+                type: object
+                additionalProperties: true
+                description: Исходный JSON ответа согласно типу вопроса.
+        team_answers:
+          type: array
+          description: Все доступные клиенту команды; ответ команды совпадает с текущим ответом капитана. Пусто в индивидуальной игре.
+          items:
+            type: object
+            required: [team_id, captain_id, submitted, answer]
+            properties:
+              team_id:
+                type: integer
+                format: int64
+              captain_id:
+                type: [integer, 'null']
+                format: int64
+                description: Текущий капитан команды, чей голос используется как ответ команды.
+              submitted:
+                type: boolean
+                description: true, если у текущего капитана есть ответ на текущий вопрос; не зависит от is_final.
+              answer:
+                type: [object, 'null']
+                additionalProperties: true
+                description: Текущий ответ капитана; null при отсутствии ответа и для Device.
+        option_counts:
+          type: array
+          description: |
+            Число текущих голосов участников и голосов капитанов команд за вариант.
+            Нулевые значения включены. User в командной игре получает счётчики своей команды,
+            StaffUser и Device — всей сессии. При множественном выборе каждый участник/команда
+            учитывается один раз на выбранный вариант. Для текста, сопоставления, порядка
+            и распределения ролей возвращается пустой массив.
+          items:
+            type: object
+            required: [option_id, participant_count, team_count]
+            properties:
+              option_id:
+                type: integer
+                format: int64
+              participant_count:
+                type: integer
+                minimum: 0
+              team_count:
+                type: integer
+                minimum: 0
+      example:
+        participant_answers:
+          - participant_id: 34
+            participant_name: Участник 34
+            team_id: 2
+            answer: {option_id: 12}
+        team_answers:
+          - team_id: 2
+            captain_id: 34
+            submitted: true
+            answer: {option_id: 12}
+        option_counts:
+          - {option_id: 12, participant_count: 1, team_count: 1}
+          - {option_id: 14, participant_count: 0, team_count: 0}
     QuizTeam:
       description: Команда в сессии викторины
       type: object
@@ -1857,10 +1964,11 @@ components:
                   nullable: true
             answer_submissions:
               type: object
-              description: Счётчики принятых ответов; для капитана команды также содержит предварительные ответы участников до отправки решающего ответа
+              description: Счётчики принятых ответов; для капитана команды также содержит предварительные ответы участников на текущий вопрос
               properties:
                 submitted_count:
                   type: integer
+                  description: Число текущих ответов участников, включая капитанов; ответ капитана не хранится отдельно.
                 eligible_count:
                   type: integer
                 participant_answers:

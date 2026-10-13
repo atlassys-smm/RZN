@@ -1,3 +1,74 @@
+user-test-login:
+  get:
+    tags:
+    - Авторизация пользователей
+    summary: Тестовый вход по ID пользователя
+    description: |
+      Временный вход без пароля и действующего токена.
+    security: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: ID существующего активного пользователя; нечисловой сегмент не соответствует маршруту (404).
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    responses:
+      '200':
+        description: Access JWT пользователя; создана серверная сессия и установлена refresh cookie
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+            description: user_refresh; HttpOnly; Path=/api/auth/user. Secure и SameSite определяются AUTH_COOKIE_SECURE и AUTH_COOKIE_SAMESITE.
+          Cache-Control:
+            schema:
+              type: string
+              enum: [no-store]
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  description: Штатный access JWT; имя поля сохранено для тестового маршрута.
+      '401':
+        description: Пользователь деактивирован либо срок гостя отсутствует или истёк
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [detail]
+              properties:
+                detail:
+                  type: string
+            example:
+              detail: Недействительная сессия
+      '404':
+        description: Тестовый вход выключен, пользователь не найден или URL не соответствует числовому ID
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [detail]
+              properties:
+                detail:
+                  type: string
+            examples:
+              disabled:
+                value:
+                  detail: Тестовый вход отключён
+              missing-user:
+                value:
+                  detail: Пользователь не найден
+              invalid-path:
+                value:
+                  detail: Not Found
+
 user-guest:
   post:
     tags:
