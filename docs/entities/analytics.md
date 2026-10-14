@@ -1,89 +1,93 @@
 # Аналитика
 
-Описание сущности для событий аналитики.
+## AnalyticsEvent
 
----
-
-## AnalyticsEvent (Событие аналитики)
-
-Единое событие для аналитики. Собирается со всех подсистем и используется для консолидированной аналитики, дашбордов и отчётов.
+Бэкенд создаёт события, отправитель сохраняет их в общей таблице ClickHouse
+`analytics.events`. Сейчас подключены индивидуальная и командная викторины.
+Сервисы вызывают `app.services.analytics.emit_event`; HTTP API приёма событий
+от внешних устройств пока не реализован.
 
 ### Атрибуты
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | integer (int64, автоинкремент) | Уникальный идентификатор события (используется для идемпотентности) |
-| `device_type` | string | Тип оборудования (например, `avatar_terminal`, `led_screen`, `pwa`) — см. [Источники событий](../references/event-sources.md) |
-| `software_id` | string | Программный комплекс (например, `led_platform`, `profstart`, `feedback`) — см. [Источники событий](../references/event-sources.md) |
-| `session_id` | integer (int64), nullable | ID локальной сессии на терминале (от авторизации до выхода) |
-| `user_id` | integer (int64) | ID пользователя (гостя или авторизованного) — всегда заполнен |
-| `payload` | json | Дополнительные параметры события (action_type, entity_type, entity_id, result, duration, content_version и другие данные) |
-| `created_at` | timestamp | Дата и время события |
+| Поле | Тип ClickHouse | Описание |
+|---|---|---|
+| `id` | UUID | Уникальный ID конкретного факта; сохраняется при повторах |
+| `event_id` | UInt16 | Действие из `EventType(IntEnum)` |
+| `module_id` | UInt8 | Функциональный модуль из `ModuleType(IntEnum)` |
+| `software_id` | UInt8 | Программный комплекс из `SoftwareType(IntEnum)` |
+| `device_type` | Nullable(UInt8) | Оборудование из `DeviceType(IntEnum)`; NULL, если не передано |
+| `device_id` | Nullable(Int64) | Конкретное устройство |
+| `user_id` | Nullable(Int64) | Пользователь действия, если известен |
+| `session_id` | Nullable(Int64) | ID сессии соответствующего модуля |
+| `occurred_at` | DateTime64(3, UTC) | Время действия |
+| `received_at` | DateTime64(3, UTC) | Назначается ClickHouse при вставке |
+| `payload` | String | JSON с параметрами конкретного события |
 
-### Структура payload
+В Python payload передаётся словарём. Enum проверяются и сериализуются в числа
+до помещения в очередь. ORM-объекты и AsyncSession в очередь не передаются.
+Коды и названия перечислены в [типах событий](../references/analytics-event-types.md)
+и [источниках событий](../references/event-sources.md). После публикации коды
+не перенумеровываются и не назначаются другому значению.
 
-Поле `payload` содержит произвольные данные события, которые зависят от типа события. Примеры:
+`device_type` и `device_id` по умолчанию равны NULL. Значения передаются только
+при наличии соответствующих данных. В коде оставлен TODO для определения типа
+оборудования по источнику; автоматического определения пока нет. Исторические
+события с неизвестным типом оборудования также сохраняют NULL.
 
-```json
-{
-  "action_type": "user_action",
-  "entity_type": "profession",
-  "entity_id": "uuid-profession-123",
-  "result": "selected",
-  "duration": 45000,
-  "content_version": "1.2"
-}
-```
+Сессия различается по `(software_id, module_id, session_id)`. Числовые ID сессий
+внутри одного модуля не должны переиспользоваться, пока соответствующие события
+остаются в ClickHouse.
 
-| Поле в payload | Тип | Описание |
-|----------------|-----|----------|
-| `action_type` | enum | Тип действия: `user_action`, `system_action` |
-| `entity_type` | string | Тип сущности: `profession`, `industry`, `direction`, `employer`, `educational_institution`, `question`, `survey` |
-| `entity_id` | integer (int64) | ID сущности |
-| `result` | string | Результат: `correct`, `incorrect`, `completed`, `viewed`, `selected`, `recommended` |
-| `duration` | integer | Длительность в миллисекундах |
-| `content_version` | string | Версия контента |
+### Хранение и доставка
 
-### Связи
+Таблица использует `ReplacingMergeTree(received_at)`, ключ
+`(software_id, module_id, id)` и месячную партицию `toYYYYMM(occurred_at)`.
+Представления читают `analytics.events_unique` с FINAL и учитывают повтор факта
+один раз. DDL находится в `infra/clickhouse/migrations`; запуск:
+`docker compose exec api python infra/clickhouse/scripts/update.py`.
 
-- **AnalyticsEvent → User**: событие привязано к пользователю (`user_id`) — гостю или авторизованному
-- **AnalyticsEvent → Profession**: событие может быть связано с профессией (через `entity_id` и `entity_type`)
-- **AnalyticsEvent → Direction**: событие может быть связано с направлением (через `entity_id` и `entity_type`)
+`emit_event` выполняет только локальную постановку и не ждёт сеть или свободное
+место в очереди. Фоновый отправитель собирает пакеты, ждёт подтверждения записи
+и повторяет неудачную доставку с тем же содержимым и токеном вставки.
+UUID5 создаётся из источника, модуля, сессии, действия и стабильного `event_key`;
+при отсутствии ключа используется UUID4. Время действия не меняется при повторах.
 
-### Где используется
+Очередь ограничена количеством событий и байтами. Доставка best effort:
+авария/reload, переполнение или исчерпание повторов могут терять события.
+Отсутствующий факт не восстанавливается SQL-представлением.
 
-- **LED-медиаплатформа** — отправка событий о сессиях, ответах, результатах
-- **ПрофСтарт** — отправка событий о прохождении теста, результатах
-- **Командная игра** — отправка событий о раундах, ответах команд
-- **Обратная связь** — отправка событий о прохождении анкет
-- **Аватар профессий** — отправка событий о генерации фото
-- **Видео-окна** — отправка событий о просмотре видео
-- **Видео-резюме** — отправка событий о записи видео
-- **Аналитика** — приём, хранение, агрегация событий
-- **Цифровой профиль** — анализ событий для формирования рекомендательной модели (агрегируемое значение)
+### Викторина
 
-### Примечания
+`software_id=1` (LED_PLATFORM); `module_id=1` (QUIZ_IND) — индивидуальная
+викторина, `module_id=2` (QUIZ_TEAM) — командная. Режим определяется модулем.
+[Требуемые показатели](../interfaces/admin-portal/dashboards.md#индивидуальная-викторина).
 
-- Приём событий идемпотентный: повторная передача с тем же `id` не приводит к двойному учёту
-- Производительность: не менее 100 000 событий/сутки, не менее 10 000 000 событий в хранилище
-- События хранятся в раздельных слоях: сырые события, нормализованные данные, агрегаты
-- Срок хранения — настраиваемый, по умолчанию 36 месяцев
+| event_id | Действие | Payload |
+|---|---|---|
+| 1 | SESSION_STARTED | participant_count, team_count, participants[{participant_id,user_id}], teams[{team_id,participant_count}] |
+| 2 | PARTICIPANT_JOINED | participant_id, team_id |
+| 3 | ANSWER_EVALUATED | session_question_id, participant_id, team_id, is_correct |
+| 4 | SESSION_FINISHED | duration_ms, finish_reason |
 
-### Примеры типов событий
+Количество участников и непустых команд фиксируется на старте. Повторное
+подключение не создаёт регистрации. Ответ оценивается при раскрытии вопроса;
+командный ответ учитывается один раз от команды. Неотвеченные вопросы не входят
+в процент ошибок. Тексты, сложность, тип, варианты, ответы и баллы не отправляются.
+Завершение определяется переходом сессии в `FINISHED` и записью `finished_at`
+через `/finish`. Для этого события `finish_reason="completed"`: пропуски вопросов,
+число обработанных ответов и позиция в игре на завершённость не влияют.
+Без события окончания сессия не считается завершённой. Отдельный счётчик
+обработанных вопросов для аналитики не ведётся.
+`duration_ms` включает паузы, при неизвестном старте — null. Уникальные пользователи
+считаются по ненулевым user_id, это не оценка числа людей без идентификации.
 
-| Тип события | Описание | software_id |
-|-------------|----------|-------------|
-| `session_started` | Начало сессии | `led_platform` |
-| `session_completed` | Завершение сессии | `led_platform` |
-| `quiz_answer` | Ответ на вопрос викторины | `led_platform` |
-| `test_started` | Начало теста | `profstart` |
-| `test_completed` | Завершение теста | `profstart` |
-| `test_answer` | Ответ на вопрос теста | `profstart` |
-| `team_game_round_started` | Начало раунда командной игры | `led_platform` |
-| `team_game_answer` | Ответ команды | `led_platform` |
-| `survey_submitted` | Отправка анкеты | `feedback` |
-| `avatar_generated` | Генерация фото в образе профессии | `profession_avatar` |
-| `video_viewed` | Просмотр видео о профессии | `video_windows` |
-| `video_resume_recorded` | Запись видео-резюме | `video_resume` |
-| `profession_viewed` | Просмотр карточки профессии | `led_platform`, `profstart` |
-| `career_route_generated` | Формирование рекомендаций | `profstart` |
+Представления: quiz_sessions, quiz_answers, quiz_teams, quiz_participants.
+Соединения используют software_id, module_id и session_id. Признак completed
+в quiz_sessions определяется наличием finished_at, а не значением finish_reason.
+Период дашборда
+выбирает игры по started_at; границы дат — Europe/Moscow.
+Правильность — correct/evaluated; завершённость — completed/started.
+Средняя длительность и её распределение — только completed с известным временем.
+Нулевой знаменатель — null. Без окончания игра не объявляется автоматически прерванной.
+
+Подключение и развёртывание: [ClickHouse и Metabase](../subsystems/analytics/clickhouse-metabase.md).

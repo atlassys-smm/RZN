@@ -147,7 +147,7 @@ tags:
 - name: Файлы
   description: Получение файлов по подписанному URL
 - name: Аналитика
-  description: Отправка и получение аналитических событий
+  description: Справочник коллекций, дашбордов и графиков Metabase
 - name: Справочники
   description: Общие справочные данные CMS
 
@@ -440,8 +440,8 @@ paths:
     $ref: ./paths/profstart.yaml#/cms-archive
 
   # ── Аналитика ────────────────────────────────────
-  /analytics/events:
-    $ref: './paths/analytics.yaml#/events'
+  /analytics/catalog:
+    $ref: './paths/analytics.yaml#/catalog'
 
   # ── CMS ──────────────────────────────────────────
   /cms/references:
@@ -523,6 +523,49 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    AnalyticsMetabaseObject:
+      type: object
+      required: [id, url, api_url]
+      properties:
+        id:
+          type: integer
+          description: Текущий числовой ID объекта Metabase
+          example: 101
+        url:
+          type: string
+          description: Веб-ссылка на объект Metabase
+          example: https://analytics.example.org/dashboard/101
+        api_url:
+          type: string
+          description: URL для получения описания объекта через Metabase API
+          example: https://analytics.example.org/api/dashboard/101
+    AnalyticsCatalog:
+      type: object
+      required: [revision, metabase_url, collections, dashboards, charts]
+      properties:
+        revision:
+          type: string
+          format: date-time
+          description: Время последнего сохранения реестра в UTC
+        metabase_url:
+          type: string
+          description: Публичный URL Metabase из MB_SITE_URL, локально — localhost с METABASE_PORT
+          example: https://analytics.example.org
+        collections:
+          type: object
+          description: Коллекции по постоянному collection.key
+          additionalProperties:
+            $ref: '#/components/schemas/AnalyticsMetabaseObject'
+        dashboards:
+          type: object
+          description: Дашборды по постоянному dashboards[].key
+          additionalProperties:
+            $ref: '#/components/schemas/AnalyticsMetabaseObject'
+        charts:
+          type: object
+          description: Сохранённые вопросы по cards[].key; текстовые заготовки без SQL сюда не входят
+          additionalProperties:
+            $ref: '#/components/schemas/AnalyticsMetabaseObject'
     AuthTokenResponse:
       type: object
       required: [access_token, token_type, expires_in]

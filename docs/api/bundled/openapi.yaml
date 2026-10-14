@@ -175,7 +175,7 @@ tags:
 - name: Файлы
   description: Получение файлов по подписанному URL
 - name: Аналитика
-  description: Отправка и получение аналитических событий
+  description: Справочник коллекций, дашбордов и графиков Metabase
 - name: Справочники
   description: Общие справочные данные CMS
 paths:
@@ -7364,45 +7364,38 @@ paths:
           description: Конфликт состояния или уникальности.
         '422':
           description: Некорректные параметры, ссылки или состав теста.
-  /analytics/events:
-    post:
-      tags:
-      - Аналитика
-      summary: Отправить событие
-      description: Зарегистрировать аналитическое событие
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '201':
-          description: Событие зарегистрировано
+  /analytics/catalog:
     get:
       tags:
       - Аналитика
-      summary: Список событий
-      description: Получить список аналитических событий с фильтрацией
-      parameters:
-      - name: type
-        in: query
-        schema:
-          type: string
-        description: Тип события
-      - name: from
-        in: query
-        schema:
-          type: string
-          format: date-time
-      - name: to
-        in: query
-        schema:
-          type: string
-          format: date-time
+      summary: Справочник объектов Metabase
+      operationId: getAnalyticsCatalog
+      description: 'Получить соответствия постоянных ключей проекта и ID, веб-ссылок
+        и API-ссылок
+
+        коллекций, дашбордов и графиков Metabase. Запрос пока доступен без авторизации.
+
+        Бэкенд читает локальный реестр state.json, не обращается к Metabase
+
+        и не выполняет аналитические запросы. Фронтенд получает данные напрямую
+
+        через Metabase API с отдельной авторизацией Metabase.
+
+        revision изменяется при сохранении реестра. При отсутствии или повреждении
+
+        реестра возвращается 503. Пароли, токены и внутренние настройки не возвращаются.
+
+        '
+      security: []
       responses:
         '200':
-          description: Список событий
+          description: Справочник текущих объектов Metabase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsCatalog'
+        '503':
+          description: Реестр Metabase не развёрнут или недоступен
   /cms/references:
     get:
       tags:
@@ -8316,6 +8309,59 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    AnalyticsMetabaseObject:
+      type: object
+      required:
+      - id
+      - url
+      - api_url
+      properties:
+        id:
+          type: integer
+          description: Текущий числовой ID объекта Metabase
+          example: 101
+        url:
+          type: string
+          description: Веб-ссылка на объект Metabase
+          example: https://analytics.example.org/dashboard/101
+        api_url:
+          type: string
+          description: URL для получения описания объекта через Metabase API
+          example: https://analytics.example.org/api/dashboard/101
+    AnalyticsCatalog:
+      type: object
+      required:
+      - revision
+      - metabase_url
+      - collections
+      - dashboards
+      - charts
+      properties:
+        revision:
+          type: string
+          format: date-time
+          description: Время последнего сохранения реестра в UTC
+        metabase_url:
+          type: string
+          description: Публичный URL Metabase из MB_SITE_URL, локально — localhost
+            с METABASE_PORT
+          example: https://analytics.example.org
+        collections:
+          type: object
+          description: Коллекции по постоянному collection.key
+          additionalProperties:
+            $ref: '#/components/schemas/AnalyticsMetabaseObject'
+        dashboards:
+          type: object
+          description: Дашборды по постоянному dashboards[].key
+          additionalProperties:
+            $ref: '#/components/schemas/AnalyticsMetabaseObject'
+        charts:
+          type: object
+          description: Сохранённые вопросы по cards[].key; текстовые заготовки без
+            SQL сюда не входят
+          additionalProperties:
+            $ref: '#/components/schemas/AnalyticsMetabaseObject'
     AuthTokenResponse:
       type: object
       required:

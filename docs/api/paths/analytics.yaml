@@ -1,37 +1,23 @@
-events:
-  post:
-    tags: [Аналитика]
-    summary: Отправить событие
-    description: Зарегистрировать аналитическое событие
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-    responses:
-      '201':
-        description: Событие зарегистрировано
+catalog:
   get:
     tags: [Аналитика]
-    summary: Список событий
-    description: Получить список аналитических событий с фильтрацией
-    parameters:
-      - name: type
-        in: query
-        schema:
-          type: string
-        description: Тип события
-      - name: from
-        in: query
-        schema:
-          type: string
-          format: date-time
-      - name: to
-        in: query
-        schema:
-          type: string
-          format: date-time
+    summary: Справочник объектов Metabase
+    operationId: getAnalyticsCatalog
+    description: |
+      Получить соответствия постоянных ключей проекта и ID, веб-ссылок и API-ссылок
+      коллекций, дашбордов и графиков Metabase. Запрос пока доступен без авторизации.
+      Бэкенд читает локальный реестр state.json, не обращается к Metabase
+      и не выполняет аналитические запросы. Фронтенд получает данные напрямую
+      через Metabase API с отдельной авторизацией Metabase.
+      revision изменяется при сохранении реестра. При отсутствии или повреждении
+      реестра возвращается 503. Пароли, токены и внутренние настройки не возвращаются.
+    security: []
     responses:
       '200':
-        description: Список событий
+        description: Справочник текущих объектов Metabase
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsCatalog'
+      '503':
+        description: Реестр Metabase не развёрнут или недоступен

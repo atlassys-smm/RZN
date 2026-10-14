@@ -28,6 +28,7 @@
 | `current_question_index` | integer | Индекс текущего вопроса в раунде |
 | `settings` | json | Настройки сессии — см. ниже. Включая `team_count` для `mode = 2` (team) |
 | `created_at` | timestamp | Дата создания |
+| `started_at` | timestamp, nullable | Фактический старт, отдельно от создания лобби; внутреннее поле аналитики |
 | `finished_at` | timestamp, nullable | Дата завершения |
 
 ### settings (JSON)
