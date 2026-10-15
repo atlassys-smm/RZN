@@ -83,6 +83,7 @@
 | `device_id` | integer (int64) | ID LED-устройства, на котором запущен показ |
 | `status` | integer | Статус сессии: `1` — active, `2` — finished |
 | `settings` | json | Настройки показа (см. ниже) |
+| `participant_count` | integer | Счётчик успешных join, изначально 0; каждый повторный join тоже учитывается. Возвращается в `voting_point.participant_count` запросов state и voting |
 | `created_at` | timestamp | Дата создания |
 | `finished_at` | timestamp, nullable | Дата завершения показа |
 

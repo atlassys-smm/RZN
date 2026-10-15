@@ -2417,12 +2417,16 @@ components:
           type: object
           nullable: true
           description: Информация о голосовании (заполняется в фазе voting)
-          required: [voted_count]
+          required: [voted_count, participant_count]
           properties:
             voted_count:
               type: integer
               minimum: 0
-              description: Число уникальных пользователей, уже проголосовавших в текущей точке выбора. Общее число потенциальных голосующих не определяется — список участников не сохраняется.
+              description: Число уникальных пользователей, уже проголосовавших в текущей точке выбора.
+            participant_count:
+              type: integer
+              minimum: 0
+              description: Счётчик успешных join за всю сессию, используемый как общее возможное число голосов. Каждый повторный join тоже увеличивает значение; это не число уникальных или онлайн-зрителей. Голосование без join не увеличивает счётчик.
             timer:
               type: object
               properties:
@@ -2460,12 +2464,16 @@ components:
           type: object
           nullable: true
           description: Точка голосования (заполняется в фазе voting)
-          required: [voted_count]
+          required: [voted_count, participant_count]
           properties:
             voted_count:
               type: integer
               minimum: 0
-              description: Число уникальных пользователей, уже проголосовавших в текущей точке выбора. Общее число потенциальных голосующих не определяется — список участников не сохраняется.
+              description: Число уникальных пользователей, уже проголосовавших в текущей точке выбора.
+            participant_count:
+              type: integer
+              minimum: 0
+              description: Счётчик успешных join за всю сессию, используемый как общее возможное число голосов. Каждый повторный join тоже увеличивает значение; это не число уникальных или онлайн-зрителей. Голосование без join не увеличивает счётчик.
             prompt:
               type: string
               description: Текст вопроса/ситуации
