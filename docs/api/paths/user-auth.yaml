@@ -177,11 +177,11 @@ user-info:
                 first_name:
                   type: string
                   nullable: true
-                  description: Имя (только для авторизованных)
+                  description: Имя из OAuth или заданное пользователем через PATCH /user/info
                 last_name:
                   type: string
                   nullable: true
-                  description: Фамилия (только для авторизованных)
+                  description: Фамилия из OAuth или заданная пользователем через PATCH /user/info
                 avatar_url:
                   type: string
                   nullable: true
