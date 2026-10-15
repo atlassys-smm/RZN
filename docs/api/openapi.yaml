@@ -91,6 +91,8 @@ tags:
   x-displayName: Авторизация - Устройство
 - name: Устройства
   description: Регистрация устройств, роли и device-токены
+- name: Сотрудник
+  description: Профиль текущего сотрудника
 - name: Пользователь
   description: Данные текущего пользователя
   x-displayName: Пользователь - Профиль
@@ -169,6 +171,8 @@ paths:
     $ref: './paths/auth.yaml#/logout'
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
+  /staff/info:
+    $ref: './paths/staff.yaml#/staff-info'
   # ── Авторизация пользователя ─────────────────────
   /auth/{id}:
     $ref: './paths/user-auth.yaml#/user-test-login'
@@ -181,12 +185,13 @@ paths:
   /auth/user/oauth/{provider}:
     $ref: './paths/user-auth.yaml#/user-oauth'
   /user/info:
-    $ref: './paths/user-auth.yaml#/user-info'
+    get:
+      $ref: './paths/user-auth.yaml#/user-info/get'
+    patch:
+      $ref: './paths/users.yaml#/user-info/patch'
   # ── Пользователи ─────────────────────────────────
   /users/me/recommendations:
     $ref: './paths/user-recommendations.yaml#/me-recommendations'
-  /users/me:
-    $ref: './paths/users.yaml#/me'
 
   # ── Профессии ────────────────────────────────────
   /professions:
@@ -566,6 +571,42 @@ components:
           description: Сохранённые вопросы по cards[].key; текстовые заготовки без SQL сюда не входят
           additionalProperties:
             $ref: '#/components/schemas/AnalyticsMetabaseObject'
+    StaffInfoResponse:
+      type: object
+      required: [id, email, first_name, last_name, role, status]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: integer
+          enum: [1, 2, 3, 4]
+          description: 1 — администратор, 2 — оператор, 3 — аналитик, 4 — контент-редактор.
+        status:
+          type: integer
+          enum: [1, 2]
+          description: 1 — активен, 2 — заблокирован.
+    UserInfoResponse:
+      type: object
+      required: [id, is_guest, email, first_name, last_name, avatar_url]
+      properties:
+        id:
+          type: integer
+        is_guest:
+          type: boolean
+        email:
+          type: [string, 'null']
+        first_name:
+          type: [string, 'null']
+        last_name:
+          type: [string, 'null']
+        avatar_url:
+          type: [string, 'null']
     AuthTokenResponse:
       type: object
       required: [access_token, token_type, expires_in]
@@ -1760,7 +1801,7 @@ components:
                 correct_answer:
                   type: object
                   nullable: true
-                  description: Заполнено после вызова reveal (ответ показан)
+                  description: Для Staff JWT возвращается сразу; для User и Device — только после reveal. Просмотр сотрудником не раскрывает ответ остальным.
                   properties:
                     answer:
                       type: object
@@ -1996,7 +2037,7 @@ components:
             correct_answer:
               type: object
               nullable: true
-              description: Заполнено после вызова reveal
+              description: Для Staff JWT возвращается сразу; для User и Device — только после reveal. Просмотр сотрудником не раскрывает ответ остальным.
               properties:
                 answer:
                   type: object
@@ -2419,7 +2460,16 @@ components:
           type: object
           nullable: true
           description: Информация о голосовании (заполняется в фазе voting)
+          required: [voted_count, participant_count]
           properties:
+            voted_count:
+              type: integer
+              minimum: 0
+              description: Число уникальных пользователей, уже проголосовавших в текущей точке выбора.
+            participant_count:
+              type: integer
+              minimum: 0
+              description: Счётчик успешных join за всю сессию, используемый как общее возможное число голосов. Каждый повторный join тоже увеличивает значение; это не число уникальных или онлайн-зрителей. Голосование без join не увеличивает счётчик.
             timer:
               type: object
               properties:
@@ -2457,7 +2507,16 @@ components:
           type: object
           nullable: true
           description: Точка голосования (заполняется в фазе voting)
+          required: [voted_count, participant_count]
           properties:
+            voted_count:
+              type: integer
+              minimum: 0
+              description: Число уникальных пользователей, уже проголосовавших в текущей точке выбора.
+            participant_count:
+              type: integer
+              minimum: 0
+              description: Счётчик успешных join за всю сессию, используемый как общее возможное число голосов. Каждый повторный join тоже увеличивает значение; это не число уникальных или онлайн-зрителей. Голосование без join не увеличивает счётчик.
             prompt:
               type: string
               description: Текст вопроса/ситуации

@@ -242,6 +242,8 @@ nav:
     - Обзор: changelog/index.md
     - Документация:
       - Обзор: changelog/docs/index.md
+      - Версия 1.25: changelog/docs/v1.25.md
+      - Версия 1.24: changelog/docs/v1.24.md
       - Версия 1.23: changelog/docs/v1.23.md
       - Версия 1.22: changelog/docs/v1.22.md
       - Версия 1.21: changelog/docs/v1.21.md

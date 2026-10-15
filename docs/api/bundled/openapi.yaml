@@ -119,6 +119,8 @@ tags:
   x-displayName: Авторизация - Устройство
 - name: Устройства
   description: Регистрация устройств, роли и device-токены
+- name: Сотрудник
+  description: Профиль текущего сотрудника
 - name: Пользователь
   description: Данные текущего пользователя
   x-displayName: Пользователь - Профиль
@@ -554,6 +556,96 @@ paths:
           description: Недействительная сессия; cookie удаляется
         '403':
           description: Недопустимый или отсутствующий Origin/Referer
+  /staff/info:
+    get:
+      tags:
+      - Сотрудник
+      summary: Данные сотрудника
+      description: Профиль текущего сотрудника по Staff JWT. Доступен сотрудникам
+        всех ролей. Хеш пароля не возвращается.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Данные текущего сотрудника
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            Pragma:
+              schema:
+                type: string
+                enum:
+                - no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffInfoResponse'
+        '401':
+          description: Staff JWT отсутствует или недействителен; пользователь и устройство
+            не допускаются; сотрудник заблокирован или сессия истекла/отозвана
+    patch:
+      tags:
+      - Сотрудник
+      summary: Изменить данные сотрудника
+      description: 'Частично обновляет профиль владельца Staff JWT. Доступен сотрудникам
+        всех
+
+        ролей. Принимает first_name и last_name: хотя бы одно поле обязательно.
+
+        Пропущенные поля сохраняются. Пробелы по краям удаляются до проверки длины;
+
+        null не принимается. Email, роль, статус и пароль этим запросом не меняются.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                first_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                last_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+            example:
+              first_name: Анна
+              last_name: Иванова
+      responses:
+        '200':
+          description: Данные текущего сотрудника
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            Pragma:
+              schema:
+                type: string
+                enum:
+                - no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffInfoResponse'
+        '401':
+          description: Staff JWT отсутствует или недействителен; пользователь и устройство
+            не допускаются; сотрудник заблокирован или сессия истекла/отозвана
+        '422':
+          description: Не передано ни одного поля; имя или фамилия null, не строка,
+            пустые, длиннее 100 символов; переданы лишние поля
   /auth/{id}:
     get:
       tags:
@@ -864,17 +956,83 @@ paths:
                   first_name:
                     type: string
                     nullable: true
-                    description: Имя (только для авторизованных)
+                    description: Имя из OAuth или заданное пользователем через PATCH
+                      /user/info
                   last_name:
                     type: string
                     nullable: true
-                    description: Фамилия (только для авторизованных)
+                    description: Фамилия из OAuth или заданная пользователем через
+                      PATCH /user/info
                   avatar_url:
                     type: string
                     nullable: true
                     description: URL аватара (только для авторизованных)
         '401':
           description: Недействительный токен
+    patch:
+      tags:
+      - Пользователь
+      summary: Изменить данные пользователя
+      description: 'Частично обновляет данные текущего пользователя по Bearer-токену,
+        включая
+
+        гостя с действующей сессией. Принимает first_name и last_name: хотя бы одно
+
+        поле обязательно. Пропущенные поля сохраняются. Пробелы по краям удаляются
+
+        до проверки длины; null не принимается. При следующем OAuth-входе имя
+
+        и фамилия могут быть обновлены данными провайдера.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                first_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: Непустое имя после удаления пробелов по краям.
+                last_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: Непустая фамилия после удаления пробелов по краям.
+            example:
+              first_name: Анна
+              last_name: Иванова
+      responses:
+        '200':
+          description: Обновлённые данные текущего пользователя
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            Pragma:
+              schema:
+                type: string
+                enum:
+                - no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+        '401':
+          description: Токен отсутствует или недействителен; токены сотрудников и
+            устройств не принимаются
+        '422':
+          description: Не передано ни одного поля; имя или фамилия null, не строка,
+            пустые, длиннее 255 символов; переданы лишние поля
   /users/me/recommendations:
     get:
       tags:
@@ -907,29 +1065,6 @@ paths:
                 - type: 'null'
         '401':
           description: Требуется авторизация
-  /users/me:
-    get:
-      tags:
-      - Пользователь
-      summary: Текущий пользователь
-      description: Получить профиль текущего аутентифицированного пользователя
-      responses:
-        '200':
-          description: Профиль пользователя
-    patch:
-      tags:
-      - Пользователь
-      summary: Обновить профиль
-      description: Частичное обновление профиля текущего пользователя
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Профиль обновлён
   /professions:
     get:
       tags:
@@ -3580,14 +3715,17 @@ paths:
         \ `round_count` — общее количество раундов и `current_round_question_count`\
         \ — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов\
         \ относится к первому раунду.\nВо время active также возвращает текущий раунд,\
-        \ вопрос и таймер. `select=answers` добавляет корневое поле `answers` с голосами\
-        \ участников, решающими ответами и статусами команд, счётчиками по вариантам;\
-        \ без параметра поле отсутствует. До начала и после завершения игры `answers=null`.\
-        \ User в командной игре видит свою команду, StaffUser — все команды, Device\
-        \ — общие счётчики и статусы без содержимого ответов. `select=teams` и `select=participants`\
-        \ добавляют состав команд и участников; несколько значений select передаются\
-        \ повторяющимися параметрами запроса.\nЕсли активной сессии нет — возвращает\
-        \ 404.\n Для device-токена требуется роль 1; другая группа устройства — 403."
+        \ вопрос и таймер. Сотрудник получает current_question.correct_answer сразу;\
+        \ User и Device — только после reveal. Просмотр сотрудником не раскрывает\
+        \ ответ для игроков. `select=answers` добавляет корневое поле `answers` с\
+        \ голосами участников, решающими ответами и статусами команд, счётчиками по\
+        \ вариантам; без параметра поле отсутствует. До начала и после завершения\
+        \ игры `answers=null`. User в командной игре видит свою команду, StaffUser\
+        \ — все команды, Device — общие счётчики и статусы без содержимого ответов.\
+        \ `select=teams` и `select=participants` добавляют состав команд и участников;\
+        \ несколько значений select передаются повторяющимися параметрами запроса.\n\
+        Если активной сессии нет — возвращает 404.\n Для device-токена требуется роль\
+        \ 1; другая группа устройства — 403."
       parameters:
       - name: device_id
         in: query
@@ -3644,6 +3782,8 @@ paths:
         \ состав команд и участников. Несколько значений select передаются повторяющимися\
         \ параметрами запроса. Для авторизованного капитана `answer_submissions` текущего\
         \ вопроса содержит ответы его команды; участник определяется по access-токену.\
+        \ Сотрудник получает current_question.correct_answer сразу; User и Device\
+        \ — только после reveal. Просмотр сотрудником не раскрывает ответ для игроков.\
         \ До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key`\
         \ вопроса не возвращаются.\n Для device-токена требуется роль 1; другая группа\
         \ устройства — 403."
@@ -5135,8 +5275,12 @@ paths:
       description: 'Информация о текущей точке голосования для мобильного клиента.
         Пользователь определяется по user access-токену.
 
-        Включает варианты выбора, таймер, статус участника (проголосовал/не проголосовал),
-        результат.
+        Включает варианты выбора, таймер, число проголосовавших voting_point.voted_count,
+        статус участника (проголосовал/не проголосовал), результат.
+
+        voted_count относится к текущей точке выбора. participant_count — счётчик
+        успешных join за всю сессию, используемый как общее возможное число голосов.
+        Повторные join учитываются повторно; голосование без join счётчик не увеличивает.
 
         '
       parameters:
@@ -5163,7 +5307,10 @@ paths:
       - Профессии в действии - Зритель
       summary: Подключиться к показу
       description: Подключиться с user access-токеном после гостевого входа или OAuth.
-        Возвращает ID текущего пользователя. Повторный запрос возвращает тот же ID.
+        Возвращает ID текущего пользователя. Каждый успешный запрос, включая повторный
+        запрос того же пользователя, увеличивает participant_count сессии на 1. Счётчик
+        возвращается в voting_point запросов state и voting; ID пользователя при повторе
+        остаётся тем же.
       parameters:
       - name: sessionId
         in: path
@@ -8362,6 +8509,68 @@ components:
             SQL сюда не входят
           additionalProperties:
             $ref: '#/components/schemas/AnalyticsMetabaseObject'
+    StaffInfoResponse:
+      type: object
+      required:
+      - id
+      - email
+      - first_name
+      - last_name
+      - role
+      - status
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          - 4
+          description: 1 — администратор, 2 — оператор, 3 — аналитик, 4 — контент-редактор.
+        status:
+          type: integer
+          enum:
+          - 1
+          - 2
+          description: 1 — активен, 2 — заблокирован.
+    UserInfoResponse:
+      type: object
+      required:
+      - id
+      - is_guest
+      - email
+      - first_name
+      - last_name
+      - avatar_url
+      properties:
+        id:
+          type: integer
+        is_guest:
+          type: boolean
+        email:
+          type:
+          - string
+          - 'null'
+        first_name:
+          type:
+          - string
+          - 'null'
+        last_name:
+          type:
+          - string
+          - 'null'
+        avatar_url:
+          type:
+          - string
+          - 'null'
     AuthTokenResponse:
       type: object
       required:
@@ -9633,7 +9842,8 @@ components:
               correct_answer:
                 type: object
                 nullable: true
-                description: Заполнено после вызова reveal (ответ показан)
+                description: Для Staff JWT возвращается сразу; для User и Device —
+                  только после reveal. Просмотр сотрудником не раскрывает ответ остальным.
                 properties:
                   answer:
                     type: object
@@ -9949,7 +10159,8 @@ components:
             correct_answer:
               type: object
               nullable: true
-              description: Заполнено после вызова reveal
+              description: Для Staff JWT возвращается сразу; для User и Device — только
+                после reveal. Просмотр сотрудником не раскрывает ответ остальным.
               properties:
                 answer:
                   type: object
@@ -10406,7 +10617,22 @@ components:
           type: object
           nullable: true
           description: Информация о голосовании (заполняется в фазе voting)
+          required:
+          - voted_count
+          - participant_count
           properties:
+            voted_count:
+              type: integer
+              minimum: 0
+              description: Число уникальных пользователей, уже проголосовавших в текущей
+                точке выбора.
+            participant_count:
+              type: integer
+              minimum: 0
+              description: Счётчик успешных join за всю сессию, используемый как общее
+                возможное число голосов. Каждый повторный join тоже увеличивает значение;
+                это не число уникальных или онлайн-зрителей. Голосование без join
+                не увеличивает счётчик.
             timer:
               type: object
               properties:
@@ -10449,7 +10675,22 @@ components:
           type: object
           nullable: true
           description: Точка голосования (заполняется в фазе voting)
+          required:
+          - voted_count
+          - participant_count
           properties:
+            voted_count:
+              type: integer
+              minimum: 0
+              description: Число уникальных пользователей, уже проголосовавших в текущей
+                точке выбора.
+            participant_count:
+              type: integer
+              minimum: 0
+              description: Счётчик успешных join за всю сессию, используемый как общее
+                возможное число голосов. Каждый повторный join тоже увеличивает значение;
+                это не число уникальных или онлайн-зрителей. Голосование без join
+                не увеличивает счётчик.
             prompt:
               type: string
               description: Текст вопроса/ситуации

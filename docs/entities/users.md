@@ -57,8 +57,8 @@
 | `oauth_provider` | integer, nullable | Провайдер авторизации: `1` — Яндекс, `2` — VK. Null для гостя |
 | `oauth_provider_id` | string, nullable | ID пользователя у провайдера. Null для гостя |
 | `email` | string, nullable | Email из OAuth-провайдера |
-| `first_name` | string(255), nullable | Имя из OAuth-провайдера |
-| `last_name` | string(255), nullable | Фамилия из OAuth-провайдера |
+| `first_name` | string(255), nullable | Имя из OAuth-провайдера или заданное пользователем через `PATCH /api/user/info`; при следующем OAuth-входе может обновиться данными провайдера |
+| `last_name` | string(255), nullable | Фамилия из OAuth-провайдера или заданная пользователем через `PATCH /api/user/info`; при следующем OAuth-входе может обновиться данными провайдера |
 | `avatar_url` | string(1024), nullable | Ссылка аватара из Яндекс ID/VK ID; обновляется при OAuth-входе, если передана новая ссылка |
 | `gender` | integer, nullable | Пол: `1` — male, `2` — female, `null` — не указан |
 | `birth_date` | date, nullable | Дата рождения из OAuth-провайдера |
