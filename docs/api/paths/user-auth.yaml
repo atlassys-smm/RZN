@@ -74,7 +74,7 @@ user-guest:
     tags:
     - Авторизация пользователей
     summary: Создание гостя
-    description: Гость на 24 часа. Обязательны существующая версия согласия
+    description: Гость на 24 часа. При создании first_name получает «Гость», last_name — строковый users.id. Обязательны существующая версия согласия
       и consent_accepted=true. Тип, статус, дата и актуальность версии не проверяются. Origin обязателен. Refresh только в HttpOnly
       cookie user_refresh.
     security: []

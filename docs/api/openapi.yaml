@@ -1787,6 +1787,7 @@ components:
                             format: int64
                           participant_name:
                             type: string
+                            description: Имя и фамилия из users, соединённые пробелом; пустые части пропускаются
                           answer:
                             type: object
                             additionalProperties: true
@@ -1831,6 +1832,7 @@ components:
                 format: int64
               participant_name:
                 type: string
+                description: Имя и фамилия из users, соединённые пробелом; пустые части пропускаются
               team_id:
                 type: [integer, 'null']
                 format: int64
@@ -1883,7 +1885,7 @@ components:
       example:
         participant_answers:
           - participant_id: 34
-            participant_name: Участник 34
+            participant_name: Гость 123
             team_id: 2
             answer: {option_id: 12}
         team_answers:
@@ -1932,6 +1934,7 @@ components:
           description: ID команды (null для mode=1, individual)
         name:
           type: string
+          description: Имя и фамилия из users, соединённые пробелом; для нового гостя — «Гость users.id»
         individual_score:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
@@ -2023,6 +2026,7 @@ components:
                         format: int64
                       participant_name:
                         type: string
+                        description: Имя и фамилия из users, соединённые пробелом; пустые части пропускаются
                       answer:
                         type: object
                         additionalProperties: true

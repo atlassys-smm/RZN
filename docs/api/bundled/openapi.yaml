@@ -732,7 +732,8 @@ paths:
       tags:
       - Авторизация пользователей
       summary: Создание гостя
-      description: Гость на 24 часа. Обязательны существующая версия согласия и consent_accepted=true.
+      description: Гость на 24 часа. При создании first_name получает «Гость», last_name
+        — строковый users.id. Обязательны существующая версия согласия и consent_accepted=true.
         Тип, статус, дата и актуальность версии не проверяются. Origin обязателен.
         Refresh только в HttpOnly cookie user_refresh.
       security: []
@@ -9938,6 +9939,8 @@ components:
                           format: int64
                         participant_name:
                           type: string
+                          description: Имя и фамилия из users, соединённые пробелом;
+                            пустые части пропускаются
                         answer:
                           type: object
                           additionalProperties: true
@@ -9997,6 +10000,8 @@ components:
                 format: int64
               participant_name:
                 type: string
+                description: Имя и фамилия из users, соединённые пробелом; пустые
+                  части пропускаются
               team_id:
                 type:
                 - integer
@@ -10074,7 +10079,7 @@ components:
       example:
         participant_answers:
         - participant_id: 34
-          participant_name: Участник 34
+          participant_name: Гость 123
           team_id: 2
           answer:
             option_id: 12
@@ -10129,6 +10134,8 @@ components:
           description: ID команды (null для mode=1, individual)
         name:
           type: string
+          description: Имя и фамилия из users, соединённые пробелом; для нового гостя
+            — «Гость users.id»
         individual_score:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
@@ -10255,6 +10262,8 @@ components:
                         format: int64
                       participant_name:
                         type: string
+                        description: Имя и фамилия из users, соединённые пробелом;
+                          пустые части пропускаются
                       answer:
                         type: object
                         additionalProperties: true
