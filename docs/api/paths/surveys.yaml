@@ -5,6 +5,14 @@ cms-surveys:
     summary: Список анкет
     operationId: list_surveys_api_cms_surveys_get
     parameters:
+    - name: type
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - $ref: '#/components/schemas/SurveyType'
+        - type: 'null'
+        title: Type
     - name: is_active
       in: query
       required: false
@@ -44,6 +52,8 @@ cms-surveys:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
   post:
     tags:
     - Обратная связь - CMS
@@ -68,6 +78,8 @@ cms-surveys:
           application/json:
             schema:
               $ref: '#/components/schemas/HTTPValidationError'
+    security:
+    - bearerAuth: []
 cms-survey-responses:
   get:
     tags:
@@ -83,14 +95,14 @@ cms-survey-responses:
         - type: integer
         - type: 'null'
         title: Survey Id
-    - name: external_id
+    - name: type
       in: query
       required: false
       schema:
         anyOf:
-        - type: string
+        - $ref: '#/components/schemas/SurveyType'
         - type: 'null'
-        title: External Id
+        title: Type
     - name: is_active
       in: query
       required: false
@@ -156,6 +168,8 @@ cms-survey-responses:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
 cms-survey-detail:
   get:
     tags:
@@ -184,6 +198,8 @@ cms-survey-detail:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
   put:
     tags:
     - Обратная связь - CMS
@@ -217,6 +233,8 @@ cms-survey-detail:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
   delete:
     tags:
     - Обратная связь - CMS
@@ -240,6 +258,8 @@ cms-survey-detail:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
 cms-survey-copy:
   post:
     tags:
@@ -268,6 +288,10 @@ cms-survey-copy:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
+    description: Создать черновик того же type. Копируются вопросы, варианты и ссылки на профессии; ID вопросов,
+      вариантов и parent_id пересоздаются для новой версии.
 cms-survey-publish:
   post:
     tags:
@@ -296,6 +320,11 @@ cms-survey-publish:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
+    description: Опубликовать анкету. Предыдущая активная версия с тем же type автоматически деактивируется. Вопросы
+      с выбором должны содержать хотя бы один вариант. Начатые прохождения старой версии можно завершить по её survey_id
+      и response_id.
 cms-survey-questions:
   post:
     tags:
@@ -310,7 +339,6 @@ cms-survey-questions:
         type: integer
         title: Survey Id
     requestBody:
-      required: true
       content:
         multipart/form-data:
           schema:
@@ -339,19 +367,16 @@ cms-survey-questions:
                 anyOf:
                 - type: integer
                 - type: 'null'
-                default: null
                 title: Parent Id
               file_title:
                 anyOf:
                 - type: string
                 - type: 'null'
-                default: null
                 title: File Title
               file_description:
                 anyOf:
                 - type: string
                 - type: 'null'
-                default: null
                 title: File Description
               condition:
                 type:
@@ -365,20 +390,52 @@ cms-survey-questions:
                   - additionalProperties: true
                     type: object
                   - type: 'null'
-                  default: null
                   title: Condition
               scale_min:
                 anyOf:
                 - type: integer
                 - type: 'null'
-                default: null
                 title: Scale Min
               scale_max:
                 anyOf:
                 - type: integer
                 - type: 'null'
-                default: null
                 title: Scale Max
+              answer_options:
+                type:
+                - string
+                - 'null'
+                title: Answer Options
+                description: JSON-массив вариантов ответа в одном текстовом поле формы. text и order обязательны;
+                  profession_id обязателен только для PROFESSION_CHOICE. При создании id не передаётся. Вопрос и
+                  варианты сохраняются одной транзакцией. В ответе варианты находятся в options.
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        minLength: 1
+                        title: Text
+                        type: string
+                      order:
+                        minimum: 1
+                        title: Order
+                        type: integer
+                      profession_id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        title: Profession Id
+                    required:
+                    - text
+                    - order
+                    title: SurveyAnswerOptionRequest
+                    type: object
+                  title: Answer Options
+                  type: array
+                example: '[{"text":"Да","order":1},{"text":"Нет","order":2}]'
               file:
                 type: string
                 format: binary
@@ -395,6 +452,9 @@ cms-survey-questions:
           encoding:
             condition:
               contentType: text/plain
+            answer_options:
+              contentType: text/plain
+      required: true
     responses:
       '201':
         description: Создано
@@ -410,9 +470,11 @@ cms-survey-questions:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
-    description: Поля вопроса передаются отдельно в multipart/form-data; file — необязательный
-      файл, file_title и file_description — его метаданные. condition передаётся JSON
-      в одноимённом поле. ID файла не принимается.
+    description: Изменения доступны редактору контента только у неактивной анкеты без прохождений. У активной или
+      уже начатой версии создайте копию анкеты. answer_options — JSON-массив в multipart/form-data, аналогично созданию
+      вопроса викторины; подробности и пример находятся в описании поля.
+    security:
+    - bearerAuth: []
 cms-survey-questions-reorder:
   put:
     tags:
@@ -441,8 +503,7 @@ cms-survey-questions-reorder:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyQuestionResponse'
-              title: Response Reorder Questions Api Cms Surveys  Survey Id  Questions
-                Reorder Put
+              title: Response Reorder Questions Api Cms Surveys  Survey Id  Questions Reorder Put
       '422':
         description: Ошибка валидации
         content:
@@ -451,6 +512,10 @@ cms-survey-questions-reorder:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
+    description: Изменения доступны редактору контента только у неактивной анкеты без прохождений. У активной или
+      уже начатой версии создайте копию анкеты.
 cms-survey-question-detail:
   put:
     tags:
@@ -471,7 +536,6 @@ cms-survey-question-detail:
         type: integer
         title: Question Id
     requestBody:
-      required: false
       content:
         multipart/form-data:
           schema:
@@ -481,13 +545,11 @@ cms-survey-question-detail:
                 anyOf:
                 - type: string
                 - type: 'null'
-                default: null
                 title: Text
               required:
                 anyOf:
                 - type: boolean
                 - type: 'null'
-                default: null
                 title: Required
               condition:
                 type:
@@ -501,32 +563,70 @@ cms-survey-question-detail:
                   - additionalProperties: true
                     type: object
                   - type: 'null'
-                  default: null
                   title: Condition
               scale_min:
                 anyOf:
                 - type: integer
                 - type: 'null'
-                default: null
                 title: Scale Min
               scale_max:
                 anyOf:
                 - type: integer
                 - type: 'null'
-                default: null
                 title: Scale Max
               file_title:
                 anyOf:
                 - type: string
                 - type: 'null'
-                default: null
                 title: File Title
               file_description:
                 anyOf:
                 - type: string
                 - type: 'null'
-                default: null
                 title: File Description
+              answer_options:
+                type:
+                - string
+                - 'null'
+                title: Answer Options
+                description: 'JSON-массив вариантов ответа в одном текстовом поле формы. text и order обязательны;
+                  profession_id обязателен только для PROFESSION_CHOICE. Переданный список полностью заменяет состав
+                  вариантов: id обновляет существующий, без id создаётся новый, пропущенные ID удаляются. Без поля
+                  список не меняется; [] очищает его. Вопрос и варианты сохраняются одной транзакцией. В ответе
+                  варианты находятся в options.'
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        minLength: 1
+                        title: Text
+                        type: string
+                      order:
+                        minimum: 1
+                        title: Order
+                        type: integer
+                      profession_id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        title: Profession Id
+                      id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        title: Id
+                    required:
+                    - text
+                    - order
+                    title: SurveyAnswerOptionUpdateItem
+                    type: object
+                  title: Answer Options
+                  type: array
+                example: '[{"id":101,"text":"Да","order":1},{"text":"Новый вариант","order":2}]'
               file:
                 type: string
                 format: binary
@@ -539,6 +639,9 @@ cms-survey-question-detail:
           encoding:
             condition:
               contentType: text/plain
+            answer_options:
+              contentType: text/plain
+      required: false
     responses:
       '200':
         description: Успешный ответ
@@ -554,9 +657,11 @@ cms-survey-question-detail:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
-    description: Поля вопроса передаются отдельно в multipart/form-data; file — необязательный
-      файл, file_title и file_description — его метаданные. condition передаётся JSON
-      в одноимённом поле. ID файла не принимается.
+    description: Изменения доступны редактору контента только у неактивной анкеты без прохождений. У активной или
+      уже начатой версии создайте копию анкеты. answer_options — JSON-массив в multipart/form-data, аналогично созданию
+      вопроса викторины; подробности и пример находятся в описании поля.
+    security:
+    - bearerAuth: []
   delete:
     tags:
     - Обратная связь - CMS
@@ -586,20 +691,24 @@ cms-survey-question-detail:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
+    description: Изменения доступны редактору контента только у неактивной анкеты без прохождений. У активной или
+      уже начатой версии создайте копию анкеты.
 feedback-survey:
   get:
-    description: "Для device-токена требуется роль 4; другая группа устройства — 403."
+    description: Требуется device-токен активного устройства с ролью 4. type=1 — оценка качества. Возвращает вопросы
+      с options; у TEXT и RATING_SCALE список options пуст.
     tags:
     - Обратная связь - LED
-    summary: Получить активную анкету с вопросами
-    operationId: get_survey_by_external_id_api_feedback_surveys__external_id__get
+    summary: Активная анкета по типу
+    operationId: get_survey_by_type_api_feedback_surveys__type__get
     parameters:
-    - name: external_id
+    - name: type
       in: path
       required: true
       schema:
-        type: string
-        title: External Id
+        $ref: '#/components/schemas/SurveyType'
     responses:
       '403':
         description: Недостаточно прав устройства или сотрудника.
@@ -617,3 +726,194 @@ feedback-survey:
               $ref: '#/components/schemas/HTTPValidationError'
       '404':
         description: Анкета или вопрос не найдены
+    security:
+    - bearerAuth: []
+cms-survey-options:
+  get:
+    tags:
+    - Обратная связь - CMS
+    summary: Список вариантов ответа
+    operationId: list_answer_options_api_cms_surveys__survey_id__questions__question_id__options_get
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Question Id
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+              title: Response List Answer Options Api Cms Surveys  Survey Id  Questions  Question Id  Options Get
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация
+      '403':
+        description: Недостаточно прав
+      '404':
+        description: Анкета, вопрос или вариант не найден
+    description: Чтение доступно редактору контента или аналитику. Варианты поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE
+      и PROFESSION_CHOICE; profession_id обязателен только для последнего.
+  post:
+    tags:
+    - Обратная связь - CMS
+    summary: Создать вариант ответа
+    operationId: create_answer_option_api_cms_surveys__survey_id__questions__question_id__options_post
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Question Id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SurveyAnswerOptionRequest'
+    responses:
+      '201':
+        description: Создано
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация
+      '403':
+        description: Недостаточно прав
+      '404':
+        description: Анкета, вопрос или вариант не найден
+    description: Требуется редактор контента. Изменения разрешены только у неактивной анкеты без прохождений. Варианты
+      поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE и PROFESSION_CHOICE; profession_id обязателен только для последнего.
+cms-survey-option:
+  put:
+    tags:
+    - Обратная связь - CMS
+    summary: Обновить вариант ответа
+    operationId: update_answer_option_api_cms_surveys__survey_id__questions__question_id__options__option_id__put
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Question Id
+    - name: option_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Option Id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SurveyAnswerOptionRequest'
+    responses:
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация
+      '403':
+        description: Недостаточно прав
+      '404':
+        description: Анкета, вопрос или вариант не найден
+    description: Требуется редактор контента. Изменения разрешены только у неактивной анкеты без прохождений. Варианты
+      поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE и PROFESSION_CHOICE; profession_id обязателен только для последнего.
+  delete:
+    tags:
+    - Обратная связь - CMS
+    summary: Удалить вариант ответа
+    operationId: delete_answer_option_api_cms_surveys__survey_id__questions__question_id__options__option_id__delete
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: survey_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Survey Id
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Question Id
+    - name: option_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Option Id
+    responses:
+      '204':
+        description: Удалено
+      '422':
+        description: Ошибка валидации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация
+      '403':
+        description: Недостаточно прав
+      '404':
+        description: Анкета, вопрос или вариант не найден
+    description: Требуется редактор контента. Изменения разрешены только у неактивной анкеты без прохождений. Варианты
+      поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE и PROFESSION_CHOICE; profession_id обязателен только для последнего.

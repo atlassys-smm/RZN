@@ -1,21 +1,64 @@
+start:
+  post:
+    tags: [Обратная связь - Пользователь]
+    summary: Начать заполнение анкеты
+    description: >-
+      Создать незавершённый SurveyResponse перед показом первого вопроса.
+      started_at назначается сервером, completed_at остаётся NULL.
+      Требуется User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
+      Для устройства обязателен X-Device-Connection-Id. Полученный id передать
+      как response_id в respond. Каждый вызов start создаёт новое прохождение:
+      после успешного ответа используйте сохранённый id, не вызывайте start повторно.
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/FeedbackStartRequest'
+    responses:
+      '201':
+        description: Создан незавершённый ответ на анкету
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackStartResponse'
+      '401':
+        description: Требуется действующий токен пользователя или устройства
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён
+      '404':
+        description: Анкета не найдена
+      '422':
+        description: Анкета неактивна, неверное тело или не передан заголовок подключения
+
 # ═══════════════════════════════════════════════════════════════
 # Обратная связь — Пользователь
 # ═══════════════════════════════════════════════════════════════
 
-survey-by-external-id:
+survey-by-type:
   get:
     tags: [Обратная связь - LED]
-    summary: Активная анкета по external_id
-    description: "Получить активную анкету по external_id. Требуется device-токен активного устройства с ролью 4. QR-привязка для чтения состава анкеты не требуется."
+    summary: Активная анкета по типу
+    description: "Получить активную анкету по типу. Требуется device-токен активного устройства с ролью 4. QR-привязка для чтения состава анкеты не требуется."
     security:
       - bearerAuth: []
     parameters:
-      - name: external_id
+      - name: type
         in: path
         required: true
         schema:
-          type: string
-        description: Символьный идентификатор анкеты (например, videoresume_feedback)
+          $ref: '#/components/schemas/SurveyType'
+        description: Тип анкеты, 1 — оценка качества
     responses:
       '403':
         description: Недостаточная роль устройства или пользователь не подключён к этому устройству.
@@ -34,7 +77,18 @@ respond:
   post:
     tags: [Обратная связь - Пользователь]
     summary: Ответить на анкету
-    description: "Отправить ответы по User JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства обязателен X-Device-Connection-Id; пользователь определяется по связи в Redis. При User JWT владелец определяется по токену. user_id в JSON не принимается."
+    description: >-
+      Отправить ответы по User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
+      Для устройства обязателен X-Device-Connection-Id; пользователь определяется по
+      связи в Redis. При User JWT владелец определяется по токену; user_id в JSON запрещён.
+      Новый поток: сначала start, затем response_id в этом запросе. Повтор с тем же
+      response_id и ответами возвращает прежний результат без новых событий. Другие
+      ответы, согласие или источник завершённого прохождения дают 409. Без response_id
+      сохранение остаётся совместимым со старым клиентом: есть оценки и окончание, но нет
+      реального старта или защиты от повторной отправки. Оценка rating_scale — целое
+      число в границах шкалы; чужие и повторные question_id отклоняются. Для SINGLE_CHOICE
+      value содержит строку с ID варианта, для MULTIPLE_CHOICE и PROFESSION_CHOICE —
+      строку с JSON-массивом ID вариантов. ID должны принадлежать вопросу и не повторяться.
     parameters:
       - $ref: '#/components/parameters/DeviceConnectionId'
       - name: survey_id
@@ -63,5 +117,7 @@ respond:
               $ref: '#/components/schemas/FeedbackSubmitResponse'
       '404':
         description: Анкета не найдена
+      '409':
+        description: Источник или ответы не совпадают с сохранённым прохождением
       '422':
-        description: Анкета не активна
+        description: Анкета не активна, оценка некорректна или вопрос чужой/повторный

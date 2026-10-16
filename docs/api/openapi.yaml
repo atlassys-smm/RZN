@@ -469,11 +469,18 @@ paths:
     $ref: ./paths/surveys.yaml#/cms-survey-questions-reorder
   /cms/surveys/{survey_id}/questions/{question_id}:
     $ref: ./paths/surveys.yaml#/cms-survey-question-detail
+  /cms/surveys/{survey_id}/questions/{question_id}/options:
+    $ref: ./paths/surveys.yaml#/cms-survey-options
+  /cms/surveys/{survey_id}/questions/{question_id}/options/{option_id}:
+    $ref: ./paths/surveys.yaml#/cms-survey-option
   # ── Обратная связь — LED ────────────────────────
-  /feedback/surveys/{external_id}:
+  /feedback/surveys/{type}:
     $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь — Пользователь ────────────────
+  /feedback/surveys/{survey_id}/start:
+    $ref: './paths/feedback.yaml#/start'
+
   /feedback/surveys/{survey_id}/respond:
     $ref: './paths/feedback.yaml#/respond'
 
@@ -865,12 +872,18 @@ components:
           - type: 'null'
           default: null
           title: Scale Max
+        answer_options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionRequest'
+          title: Answer Options
+          type: array
       required:
       - type
       - text
       - order
       title: SurveyQuestionCreateRequest
       type: object
+
     SurveyQuestionUpdateRequest:
       additionalProperties: false
       properties:
@@ -917,8 +930,14 @@ components:
           - type: 'null'
           default: null
           title: File Description
+        answer_options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionUpdateItem'
+          title: Answer Options
+          type: array
       title: SurveyQuestionUpdateRequest
       type: object
+
     FeedbackQuestionResponse:
       properties:
         id:
@@ -960,6 +979,11 @@ components:
           - type: integer
           - type: 'null'
           title: Scale Max
+        options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+          type: array
+          title: Options
       type: object
       required:
       - id
@@ -972,15 +996,16 @@ components:
       - condition
       - scale_min
       - scale_max
+      - options
       title: FeedbackQuestionResponse
+
     FeedbackSurveyResponse:
       properties:
         id:
           type: integer
           title: Id
-        external_id:
-          type: string
-          title: External Id
+        type:
+          $ref: '#/components/schemas/SurveyType'
         name:
           type: string
           title: Name
@@ -998,10 +1023,11 @@ components:
       type: object
       required:
       - id
-      - external_id
+      - type
       - name
       - description
       title: FeedbackSurveyResponse
+
     FileResponse:
       properties:
         url:
@@ -1099,9 +1125,8 @@ components:
       title: SurveyAnswerResponse
     SurveyCreateRequest:
       properties:
-        external_id:
-          type: string
-          title: External Id
+        type:
+          $ref: '#/components/schemas/SurveyType'
         name:
           type: string
           title: Name
@@ -1110,11 +1135,13 @@ components:
           - type: string
           - type: 'null'
           title: Description
+      additionalProperties: false
       type: object
       required:
-      - external_id
+      - type
       - name
       title: SurveyCreateRequest
+
     SurveyQuestionResponse:
       properties:
         id:
@@ -1159,6 +1186,11 @@ components:
           - type: integer
           - type: 'null'
           title: Scale Max
+        options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+          type: array
+          title: Options
       type: object
       required:
       - id
@@ -1172,7 +1204,9 @@ components:
       - condition
       - scale_min
       - scale_max
+      - options
       title: SurveyQuestionResponse
+
     SurveyQuestionType:
       type: integer
       enum:
@@ -1187,9 +1221,8 @@ components:
         id:
           type: integer
           title: Id
-        external_id:
-          type: string
-          title: External Id
+        type:
+          $ref: '#/components/schemas/SurveyType'
         name:
           type: string
           title: Name
@@ -1223,7 +1256,7 @@ components:
       type: object
       required:
       - id
-      - external_id
+      - type
       - name
       - description
       - is_active
@@ -1231,6 +1264,7 @@ components:
       - created_at
       - updated_at
       title: SurveyResponse
+
     SurveyResponseItem:
       properties:
         id:
@@ -2552,50 +2586,10 @@ components:
     # ═══════════════════════════════════════════════════════
 
     CmsSurvey:
-      description: Анкета обратной связи (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        external_id:
-          type: string
-          description: Символьный идентификатор (например, videoresume_feedback)
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        is_active:
-          type: boolean
-          description: Активна ли анкета
-        copied_from_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID анкеты, от которой эта была скопирована
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        questions:
-          type: array
-          items:
-            $ref: '#/components/schemas/CmsSurveyQuestion'
+      $ref: '#/components/schemas/SurveyResponse'
 
     CmsSurveyCreateRequest:
-      type: object
-      required: [external_id, name]
-      properties:
-        external_id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
+      $ref: '#/components/schemas/SurveyCreateRequest'
 
     CmsSurveyUpdateRequest:
       type: object
@@ -2607,108 +2601,13 @@ components:
           nullable: true
 
     CmsSurveyQuestion:
-      description: Вопрос анкеты (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        survey_id:
-          type: integer
-          format: int64
-        parent_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID родительского вопроса для условного показа
-        type:
-          type: integer
-          enum: [1, 2, 3, 4, 5]
-          description: |
-            Тип вопроса:
-            - `1` — rating_scale (шкала оценки)
-            - `2` — single_choice (одиночный выбор)
-            - `3` — multiple_choice (множественный выбор)
-            - `4` — text (текстовый ответ)
-            - `5` — profession_choice (выбор профессии)
-        text:
-          type: string
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-        required:
-          type: boolean
-        order:
-          type: integer
-        condition:
-          type: object
-          nullable: true
-          description: 'Условие показа (например, {"operator": "lte", "value": 2})'
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-          description: Минимальное значение шкалы (по умолчанию 1)
-        scale_max:
-          type: integer
-          nullable: true
-          description: Максимальное значение шкалы (по умолчанию 5)
+      $ref: '#/components/schemas/SurveyQuestionResponse'
 
     CmsSurveyQuestionCreateRequest:
-      type: object
-      required: [type, text, order]
-      properties:
-        type:
-          type: integer
-          enum: [1, 2, 3, 4, 5]
-        text:
-          type: string
-        order:
-          type: integer
-        required:
-          type: boolean
-          default: false
-        parent_id:
-          type: integer
-          format: int64
-          nullable: true
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-        condition:
-          type: object
-          nullable: true
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-        scale_max:
-          type: integer
-          nullable: true
+      $ref: '#/components/schemas/SurveyQuestionCreateRequest'
 
     CmsSurveyQuestionUpdateRequest:
-      type: object
-      properties:
-        text:
-          type: string
-        required:
-          type: boolean
-        condition:
-          type: object
-          nullable: true
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-        scale_max:
-          type: integer
-          nullable: true
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
+      $ref: '#/components/schemas/SurveyQuestionUpdateRequest'
 
     CmsSurveyResponse:
       description: Ответ пользователя на анкету (CMS)
@@ -2755,57 +2654,41 @@ components:
           description: Анкета, на которую дан ответ
 
     FeedbackSurvey:
-      description: Активная анкета для прохождения (клиент)
+      $ref: '#/components/schemas/FeedbackSurveyResponse'
+
+    FeedbackStartRequest:
       type: object
+      additionalProperties: false
+      required: [source_id]
+      properties:
+        source_id:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: XML_ID точки сбора из клиента
+
+    FeedbackStartResponse:
+      type: object
+      required: [id, survey_id, started_at, completed_at]
       properties:
         id:
           type: integer
           format: int64
-        external_id:
+          description: ID созданного SurveyResponse; передать как response_id при отправке
+        survey_id:
+          type: integer
+          format: int64
+        started_at:
           type: string
-        name:
+          format: date-time
+        completed_at:
           type: string
-        description:
-          type: string
+          format: date-time
           nullable: true
-        questions:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                format: int64
-              parent_id:
-                type: integer
-                format: int64
-                nullable: true
-              type:
-                type: integer
-                enum: [1, 2, 3, 4, 5]
-              text:
-                type: string
-              media_id:
-                type: integer
-                format: int64
-                nullable: true
-              required:
-                type: boolean
-              order:
-                type: integer
-              condition:
-                type: object
-                nullable: true
-                additionalProperties: true
-              scale_min:
-                type: integer
-                nullable: true
-              scale_max:
-                type: integer
-                nullable: true
+          description: NULL до успешного завершения
 
     FeedbackSubmitRequest:
-      description: Запрос на отправку ответов
+      description: Отправка анкеты; response_id связывает с реальным стартом и защищает повтор
       type: object
       required: [source_id, duration, answers]
       additionalProperties: false
@@ -2813,9 +2696,18 @@ components:
         source_id:
           type: string
           description: XML_ID устройства (ПАК, веб)
+          minLength: 1
+          maxLength: 255
+        response_id:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: ID из start; без него старый поток без реального старта
         duration:
           type: integer
-          description: Время прохождения в секундах
+          minimum: 0
+          description: Время в секундах для старого потока; при response_id длительность рассчитывает сервер
         consent_version_id:
           type: integer
           format: int64
@@ -2832,7 +2724,7 @@ components:
                 format: int64
               value:
                 type: string
-                description: Значение ответа (число, текст, JSON для множественного выбора)
+                description: Строка — оценка, текст, ID варианта (SINGLE_CHOICE) или JSON-массив ID вариантов (MULTIPLE_CHOICE, PROFESSION_CHOICE). Не ID профессий.
 
     FeedbackSubmitResponse:
       description: Результат отправки ответов
@@ -4770,5 +4662,115 @@ components:
           - string
           - 'null'
           description: Идентификатор текущего подключения; null, если пользователя нет.
+    SurveyType:
+      type: integer
+      enum:
+      - 1
+      title: SurveyType
+      description: 'Тип анкеты (IntEnum): 1 — QUALITY_ASSESSMENT, оценка качества.'
+
+    SurveyAnswerOptionRequest:
+      properties:
+        text:
+          type: string
+          minLength: 1
+          title: Text
+        order:
+          type: integer
+          minimum: 1.0
+          title: Order
+        profession_id:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Profession Id
+      additionalProperties: false
+      type: object
+      required:
+      - text
+      - order
+      title: SurveyAnswerOptionRequest
+      description: Вариант вопроса. profession_id обязателен только для PROFESSION_CHOICE, для других типов — null.
+        order уникален внутри вопроса.
+
+    SurveyAnswerOptionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        question_id:
+          type: integer
+          title: Question Id
+        text:
+          type: string
+          title: Text
+        order:
+          type: integer
+          title: Order
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+      type: object
+      required:
+      - id
+      - question_id
+      - text
+      - order
+      - profession_id
+      title: SurveyAnswerOptionResponse
+
+    FeedbackAnswerItem:
+      properties:
+        question_id:
+          type: integer
+          title: Question Id
+        value:
+          type: string
+          title: Value
+          description: 'Строка: RATING_SCALE — целая оценка; TEXT — текст; SINGLE_CHOICE — ID варианта, например "12";
+            MULTIPLE_CHOICE и PROFESSION_CHOICE — JSON-массив ID вариантов, например "[12,13]". Используются ID вариантов,
+            а не профессий.'
+      type: object
+      required:
+      - question_id
+      - value
+      title: FeedbackAnswerItem
+
+    SurveyAnswerOptionUpdateItem:
+      additionalProperties: false
+      properties:
+        text:
+          minLength: 1
+          title: Text
+          type: string
+        order:
+          minimum: 1
+          title: Order
+          type: integer
+        profession_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Profession Id
+        id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Id
+      required:
+      - text
+      - order
+      title: SurveyAnswerOptionUpdateItem
+      type: object
+      description: Элемент полного списка при обновлении вопроса. id — существующий вариант своего вопроса; без id добавляется
+        новый.
+
 security:
   - bearerAuth: []

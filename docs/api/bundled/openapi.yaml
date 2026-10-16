@@ -5278,10 +5278,6 @@ paths:
         Включает варианты выбора, таймер, число проголосовавших voting_point.voted_count,
         статус участника (проголосовал/не проголосовал), результат.
 
-        voted_count относится к текущей точке выбора. participant_count — счётчик
-        успешных join за всю сессию, используемый как общее возможное число голосов.
-        Повторные join учитываются повторно; голосование без join счётчик не увеличивает.
-
         '
       parameters:
       - name: id
@@ -5307,10 +5303,7 @@ paths:
       - Профессии в действии - Зритель
       summary: Подключиться к показу
       description: Подключиться с user access-токеном после гостевого входа или OAuth.
-        Возвращает ID текущего пользователя. Каждый успешный запрос, включая повторный
-        запрос того же пользователя, увеличивает participant_count сессии на 1. Счётчик
-        возвращается в voting_point запросов state и voting; ID пользователя при повторе
-        остаётся тем же.
+        Возвращает ID текущего пользователя.
       parameters:
       - name: sessionId
         in: path
@@ -7559,6 +7552,14 @@ paths:
       summary: Список анкет
       operationId: list_surveys_api_cms_surveys_get
       parameters:
+      - name: type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/SurveyType'
+          - type: 'null'
+          title: Type
       - name: is_active
         in: query
         required: false
@@ -7598,6 +7599,8 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
     post:
       tags:
       - Обратная связь - CMS
@@ -7622,6 +7625,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
   /cms/surveys/responses:
     get:
       tags:
@@ -7637,14 +7642,14 @@ paths:
           - type: integer
           - type: 'null'
           title: Survey Id
-      - name: external_id
+      - name: type
         in: query
         required: false
         schema:
           anyOf:
-          - type: string
+          - $ref: '#/components/schemas/SurveyType'
           - type: 'null'
-          title: External Id
+          title: Type
       - name: is_active
         in: query
         required: false
@@ -7710,6 +7715,8 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
   /cms/surveys/{survey_id}:
     get:
       tags:
@@ -7738,6 +7745,8 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
     put:
       tags:
       - Обратная связь - CMS
@@ -7771,6 +7780,8 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - Обратная связь - CMS
@@ -7794,6 +7805,8 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
   /cms/surveys/{survey_id}/copy:
     post:
       tags:
@@ -7822,6 +7835,10 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
+      description: Создать черновик того же type. Копируются вопросы, варианты и ссылки
+        на профессии; ID вопросов, вариантов и parent_id пересоздаются для новой версии.
   /cms/surveys/{survey_id}/publish:
     post:
       tags:
@@ -7850,6 +7867,11 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
+      description: Опубликовать анкету. Предыдущая активная версия с тем же type автоматически
+        деактивируется. Вопросы с выбором должны содержать хотя бы один вариант. Начатые
+        прохождения старой версии можно завершить по её survey_id и response_id.
   /cms/surveys/{survey_id}/questions:
     post:
       tags:
@@ -7864,7 +7886,6 @@ paths:
           type: integer
           title: Survey Id
       requestBody:
-        required: true
         content:
           multipart/form-data:
             schema:
@@ -7893,19 +7914,16 @@ paths:
                   anyOf:
                   - type: integer
                   - type: 'null'
-                  default: null
                   title: Parent Id
                 file_title:
                   anyOf:
                   - type: string
                   - type: 'null'
-                  default: null
                   title: File Title
                 file_description:
                   anyOf:
                   - type: string
                   - type: 'null'
-                  default: null
                   title: File Description
                 condition:
                   type:
@@ -7919,20 +7937,54 @@ paths:
                     - additionalProperties: true
                       type: object
                     - type: 'null'
-                    default: null
                     title: Condition
                 scale_min:
                   anyOf:
                   - type: integer
                   - type: 'null'
-                  default: null
                   title: Scale Min
                 scale_max:
                   anyOf:
                   - type: integer
                   - type: 'null'
-                  default: null
                   title: Scale Max
+                answer_options:
+                  type:
+                  - string
+                  - 'null'
+                  title: Answer Options
+                  description: JSON-массив вариантов ответа в одном текстовом поле
+                    формы. text и order обязательны; profession_id обязателен только
+                    для PROFESSION_CHOICE. При создании id не передаётся. Вопрос и
+                    варианты сохраняются одной транзакцией. В ответе варианты находятся
+                    в options.
+                  contentMediaType: application/json
+                  contentSchema:
+                    items:
+                      additionalProperties: false
+                      properties:
+                        text:
+                          minLength: 1
+                          title: Text
+                          type: string
+                        order:
+                          minimum: 1
+                          title: Order
+                          type: integer
+                        profession_id:
+                          anyOf:
+                          - exclusiveMinimum: 0
+                            type: integer
+                          - type: 'null'
+                          title: Profession Id
+                      required:
+                      - text
+                      - order
+                      title: SurveyAnswerOptionRequest
+                      type: object
+                    title: Answer Options
+                    type: array
+                  example: '[{"text":"Да","order":1},{"text":"Нет","order":2}]'
                 file:
                   type: string
                   format: binary
@@ -7949,6 +8001,9 @@ paths:
             encoding:
               condition:
                 contentType: text/plain
+              answer_options:
+                contentType: text/plain
+        required: true
       responses:
         '201':
           description: Создано
@@ -7964,9 +8019,12 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
-      description: Поля вопроса передаются отдельно в multipart/form-data; file —
-        необязательный файл, file_title и file_description — его метаданные. condition
-        передаётся JSON в одноимённом поле. ID файла не принимается.
+      description: Изменения доступны редактору контента только у неактивной анкеты
+        без прохождений. У активной или уже начатой версии создайте копию анкеты.
+        answer_options — JSON-массив в multipart/form-data, аналогично созданию вопроса
+        викторины; подробности и пример находятся в описании поля.
+      security:
+      - bearerAuth: []
   /cms/surveys/{survey_id}/questions/reorder:
     put:
       tags:
@@ -8005,6 +8063,10 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
+      description: Изменения доступны редактору контента только у неактивной анкеты
+        без прохождений. У активной или уже начатой версии создайте копию анкеты.
   /cms/surveys/{survey_id}/questions/{question_id}:
     put:
       tags:
@@ -8025,7 +8087,6 @@ paths:
           type: integer
           title: Question Id
       requestBody:
-        required: false
         content:
           multipart/form-data:
             schema:
@@ -8035,13 +8096,11 @@ paths:
                   anyOf:
                   - type: string
                   - type: 'null'
-                  default: null
                   title: Text
                 required:
                   anyOf:
                   - type: boolean
                   - type: 'null'
-                  default: null
                   title: Required
                 condition:
                   type:
@@ -8055,32 +8114,72 @@ paths:
                     - additionalProperties: true
                       type: object
                     - type: 'null'
-                    default: null
                     title: Condition
                 scale_min:
                   anyOf:
                   - type: integer
                   - type: 'null'
-                  default: null
                   title: Scale Min
                 scale_max:
                   anyOf:
                   - type: integer
                   - type: 'null'
-                  default: null
                   title: Scale Max
                 file_title:
                   anyOf:
                   - type: string
                   - type: 'null'
-                  default: null
                   title: File Title
                 file_description:
                   anyOf:
                   - type: string
                   - type: 'null'
-                  default: null
                   title: File Description
+                answer_options:
+                  type:
+                  - string
+                  - 'null'
+                  title: Answer Options
+                  description: 'JSON-массив вариантов ответа в одном текстовом поле
+                    формы. text и order обязательны; profession_id обязателен только
+                    для PROFESSION_CHOICE. Переданный список полностью заменяет состав
+                    вариантов: id обновляет существующий, без id создаётся новый,
+                    пропущенные ID удаляются. Без поля список не меняется; [] очищает
+                    его. Вопрос и варианты сохраняются одной транзакцией. В ответе
+                    варианты находятся в options.'
+                  contentMediaType: application/json
+                  contentSchema:
+                    items:
+                      additionalProperties: false
+                      properties:
+                        text:
+                          minLength: 1
+                          title: Text
+                          type: string
+                        order:
+                          minimum: 1
+                          title: Order
+                          type: integer
+                        profession_id:
+                          anyOf:
+                          - exclusiveMinimum: 0
+                            type: integer
+                          - type: 'null'
+                          title: Profession Id
+                        id:
+                          anyOf:
+                          - exclusiveMinimum: 0
+                            type: integer
+                          - type: 'null'
+                          title: Id
+                      required:
+                      - text
+                      - order
+                      title: SurveyAnswerOptionUpdateItem
+                      type: object
+                    title: Answer Options
+                    type: array
+                  example: '[{"id":101,"text":"Да","order":1},{"text":"Новый вариант","order":2}]'
                 file:
                   type: string
                   format: binary
@@ -8093,6 +8192,9 @@ paths:
             encoding:
               condition:
                 contentType: text/plain
+              answer_options:
+                contentType: text/plain
+        required: false
       responses:
         '200':
           description: Успешный ответ
@@ -8108,9 +8210,12 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
-      description: Поля вопроса передаются отдельно в multipart/form-data; file —
-        необязательный файл, file_title и file_description — его метаданные. condition
-        передаётся JSON в одноимённом поле. ID файла не принимается.
+      description: Изменения доступны редактору контента только у неактивной анкеты
+        без прохождений. У активной или уже начатой версии создайте копию анкеты.
+        answer_options — JSON-массив в multipart/form-data, аналогично созданию вопроса
+        викторины; подробности и пример находятся в описании поля.
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - Обратная связь - CMS
@@ -8140,21 +8245,219 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
-  /feedback/surveys/{external_id}:
+      security:
+      - bearerAuth: []
+      description: Изменения доступны редактору контента только у неактивной анкеты
+        без прохождений. У активной или уже начатой версии создайте копию анкеты.
+  /cms/surveys/{survey_id}/questions/{question_id}/options:
     get:
-      description: Для device-токена требуется роль 4; другая группа устройства —
-        403.
       tags:
-      - Обратная связь - LED
-      summary: Получить активную анкету с вопросами
-      operationId: get_survey_by_external_id_api_feedback_surveys__external_id__get
+      - Обратная связь - CMS
+      summary: Список вариантов ответа
+      operationId: list_answer_options_api_cms_surveys__survey_id__questions__question_id__options_get
+      security:
+      - bearerAuth: []
       parameters:
-      - name: external_id
+      - name: survey_id
         in: path
         required: true
         schema:
-          type: string
-          title: External Id
+          type: integer
+          title: Survey Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Question Id
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+                title: Response List Answer Options Api Cms Surveys  Survey Id  Questions  Question
+                  Id  Options Get
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Анкета, вопрос или вариант не найден
+      description: Чтение доступно редактору контента или аналитику. Варианты поддерживают
+        SINGLE_CHOICE, MULTIPLE_CHOICE и PROFESSION_CHOICE; profession_id обязателен
+        только для последнего.
+    post:
+      tags:
+      - Обратная связь - CMS
+      summary: Создать вариант ответа
+      operationId: create_answer_option_api_cms_surveys__survey_id__questions__question_id__options_post
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Question Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyAnswerOptionRequest'
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Анкета, вопрос или вариант не найден
+      description: Требуется редактор контента. Изменения разрешены только у неактивной
+        анкеты без прохождений. Варианты поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE
+        и PROFESSION_CHOICE; profession_id обязателен только для последнего.
+  /cms/surveys/{survey_id}/questions/{question_id}/options/{option_id}:
+    put:
+      tags:
+      - Обратная связь - CMS
+      summary: Обновить вариант ответа
+      operationId: update_answer_option_api_cms_surveys__survey_id__questions__question_id__options__option_id__put
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Question Id
+      - name: option_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Option Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyAnswerOptionRequest'
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Анкета, вопрос или вариант не найден
+      description: Требуется редактор контента. Изменения разрешены только у неактивной
+        анкеты без прохождений. Варианты поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE
+        и PROFESSION_CHOICE; profession_id обязателен только для последнего.
+    delete:
+      tags:
+      - Обратная связь - CMS
+      summary: Удалить вариант ответа
+      operationId: delete_answer_option_api_cms_surveys__survey_id__questions__question_id__options__option_id__delete
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Survey Id
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Question Id
+      - name: option_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Option Id
+      responses:
+        '204':
+          description: Удалено
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Недостаточно прав
+        '404':
+          description: Анкета, вопрос или вариант не найден
+      description: Требуется редактор контента. Изменения разрешены только у неактивной
+        анкеты без прохождений. Варианты поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE
+        и PROFESSION_CHOICE; profession_id обязателен только для последнего.
+  /feedback/surveys/{type}:
+    get:
+      description: Требуется device-токен активного устройства с ролью 4. type=1 —
+        оценка качества. Возвращает вопросы с options; у TEXT и RATING_SCALE список
+        options пуст.
+      tags:
+      - Обратная связь - LED
+      summary: Активная анкета по типу
+      operationId: get_survey_by_type_api_feedback_surveys__type__get
+      parameters:
+      - name: type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SurveyType'
       responses:
         '403':
           description: Недостаточно прав устройства или сотрудника.
@@ -8172,15 +8475,67 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Анкета или вопрос не найдены
+      security:
+      - bearerAuth: []
+  /feedback/surveys/{survey_id}/start:
+    post:
+      tags:
+      - Обратная связь - Пользователь
+      summary: Начать заполнение анкеты
+      description: 'Создать незавершённый SurveyResponse перед показом первого вопроса.
+        started_at назначается сервером, completed_at остаётся NULL. Требуется User
+        JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства обязателен
+        X-Device-Connection-Id. Полученный id передать как response_id в respond.
+        Каждый вызов start создаёт новое прохождение: после успешного ответа используйте
+        сохранённый id, не вызывайте start повторно.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackStartRequest'
+      responses:
+        '201':
+          description: Создан незавершённый ответ на анкету
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackStartResponse'
+        '401':
+          description: Требуется действующий токен пользователя или устройства
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+        '404':
+          description: Анкета не найдена
+        '422':
+          description: Анкета неактивна, неверное тело или не передан заголовок подключения
   /feedback/surveys/{survey_id}/respond:
     post:
       tags:
       - Обратная связь - Пользователь
       summary: Ответить на анкету
-      description: Отправить ответы по User JWT либо Device JWT с ролью 4 и действующей
+      description: 'Отправить ответы по User JWT либо Device JWT с ролью 4 и действующей
         QR-привязкой. Для устройства обязателен X-Device-Connection-Id; пользователь
-        определяется по связи в Redis. При User JWT владелец определяется по токену.
-        user_id в JSON не принимается.
+        определяется по связи в Redis. При User JWT владелец определяется по токену;
+        user_id в JSON запрещён. Новый поток: сначала start, затем response_id в этом
+        запросе. Повтор с тем же response_id и ответами возвращает прежний результат
+        без новых событий. Другие ответы, согласие или источник завершённого прохождения
+        дают 409. Без response_id сохранение остаётся совместимым со старым клиентом:
+        есть оценки и окончание, но нет реального старта или защиты от повторной отправки.
+        Оценка rating_scale — целое число в границах шкалы; чужие и повторные question_id
+        отклоняются. Для SINGLE_CHOICE value содержит строку с ID варианта, для MULTIPLE_CHOICE
+        и PROFESSION_CHOICE — строку с JSON-массивом ID вариантов. ID должны принадлежать
+        вопросу и не повторяться.'
       parameters:
       - $ref: '#/components/parameters/DeviceConnectionId'
       - name: survey_id
@@ -8210,8 +8565,10 @@ paths:
                 $ref: '#/components/schemas/FeedbackSubmitResponse'
         '404':
           description: Анкета не найдена
+        '409':
+          description: Источник или ответы не совпадают с сохранённым прохождением
         '422':
-          description: Анкета не активна
+          description: Анкета не активна, оценка некорректна или вопрос чужой/повторный
   /files/{file_uuid}:
     get:
       tags:
@@ -8833,6 +9190,11 @@ components:
           - type: 'null'
           default: null
           title: Scale Max
+        answer_options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionRequest'
+          title: Answer Options
+          type: array
       required:
       - type
       - text
@@ -8885,6 +9247,11 @@ components:
           - type: 'null'
           default: null
           title: File Description
+        answer_options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionUpdateItem'
+          title: Answer Options
+          type: array
       title: SurveyQuestionUpdateRequest
       type: object
     FeedbackQuestionResponse:
@@ -8928,6 +9295,11 @@ components:
           - type: integer
           - type: 'null'
           title: Scale Max
+        options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+          type: array
+          title: Options
       type: object
       required:
       - id
@@ -8940,15 +9312,15 @@ components:
       - condition
       - scale_min
       - scale_max
+      - options
       title: FeedbackQuestionResponse
     FeedbackSurveyResponse:
       properties:
         id:
           type: integer
           title: Id
-        external_id:
-          type: string
-          title: External Id
+        type:
+          $ref: '#/components/schemas/SurveyType'
         name:
           type: string
           title: Name
@@ -8966,7 +9338,7 @@ components:
       type: object
       required:
       - id
-      - external_id
+      - type
       - name
       - description
       title: FeedbackSurveyResponse
@@ -9067,9 +9439,8 @@ components:
       title: SurveyAnswerResponse
     SurveyCreateRequest:
       properties:
-        external_id:
-          type: string
-          title: External Id
+        type:
+          $ref: '#/components/schemas/SurveyType'
         name:
           type: string
           title: Name
@@ -9078,9 +9449,10 @@ components:
           - type: string
           - type: 'null'
           title: Description
+      additionalProperties: false
       type: object
       required:
-      - external_id
+      - type
       - name
       title: SurveyCreateRequest
     SurveyQuestionResponse:
@@ -9127,6 +9499,11 @@ components:
           - type: integer
           - type: 'null'
           title: Scale Max
+        options:
+          items:
+            $ref: '#/components/schemas/SurveyAnswerOptionResponse'
+          type: array
+          title: Options
       type: object
       required:
       - id
@@ -9140,6 +9517,7 @@ components:
       - condition
       - scale_min
       - scale_max
+      - options
       title: SurveyQuestionResponse
     SurveyQuestionType:
       type: integer
@@ -9155,9 +9533,8 @@ components:
         id:
           type: integer
           title: Id
-        external_id:
-          type: string
-          title: External Id
+        type:
+          $ref: '#/components/schemas/SurveyType'
         name:
           type: string
           title: Name
@@ -9191,7 +9568,7 @@ components:
       type: object
       required:
       - id
-      - external_id
+      - type
       - name
       - description
       - is_active
@@ -10722,51 +11099,9 @@ components:
               nullable: true
               description: ID ветки, за которую проголосовал участник (если already_voted=true)
     CmsSurvey:
-      description: Анкета обратной связи (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        external_id:
-          type: string
-          description: Символьный идентификатор (например, videoresume_feedback)
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        is_active:
-          type: boolean
-          description: Активна ли анкета
-        copied_from_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID анкеты, от которой эта была скопирована
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        questions:
-          type: array
-          items:
-            $ref: '#/components/schemas/CmsSurveyQuestion'
+      $ref: '#/components/schemas/SurveyResponse'
     CmsSurveyCreateRequest:
-      type: object
-      required:
-      - external_id
-      - name
-      properties:
-        external_id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
+      $ref: '#/components/schemas/SurveyCreateRequest'
     CmsSurveyUpdateRequest:
       type: object
       properties:
@@ -10776,125 +11111,11 @@ components:
           type: string
           nullable: true
     CmsSurveyQuestion:
-      description: Вопрос анкеты (CMS)
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        survey_id:
-          type: integer
-          format: int64
-        parent_id:
-          type: integer
-          format: int64
-          nullable: true
-          description: ID родительского вопроса для условного показа
-        type:
-          type: integer
-          enum:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-          description: 'Тип вопроса:
-
-            - `1` — rating_scale (шкала оценки)
-
-            - `2` — single_choice (одиночный выбор)
-
-            - `3` — multiple_choice (множественный выбор)
-
-            - `4` — text (текстовый ответ)
-
-            - `5` — profession_choice (выбор профессии)
-
-            '
-        text:
-          type: string
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-        required:
-          type: boolean
-        order:
-          type: integer
-        condition:
-          type: object
-          nullable: true
-          description: 'Условие показа (например, {"operator": "lte", "value": 2})'
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-          description: Минимальное значение шкалы (по умолчанию 1)
-        scale_max:
-          type: integer
-          nullable: true
-          description: Максимальное значение шкалы (по умолчанию 5)
+      $ref: '#/components/schemas/SurveyQuestionResponse'
     CmsSurveyQuestionCreateRequest:
-      type: object
-      required:
-      - type
-      - text
-      - order
-      properties:
-        type:
-          type: integer
-          enum:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-        text:
-          type: string
-        order:
-          type: integer
-        required:
-          type: boolean
-          default: false
-        parent_id:
-          type: integer
-          format: int64
-          nullable: true
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
-        condition:
-          type: object
-          nullable: true
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-        scale_max:
-          type: integer
-          nullable: true
+      $ref: '#/components/schemas/SurveyQuestionCreateRequest'
     CmsSurveyQuestionUpdateRequest:
-      type: object
-      properties:
-        text:
-          type: string
-        required:
-          type: boolean
-        condition:
-          type: object
-          nullable: true
-          additionalProperties: true
-        scale_min:
-          type: integer
-          nullable: true
-        scale_max:
-          type: integer
-          nullable: true
-        media_id:
-          type: integer
-          format: int64
-          nullable: true
+      $ref: '#/components/schemas/SurveyQuestionUpdateRequest'
     CmsSurveyResponse:
       description: Ответ пользователя на анкету (CMS)
       type: object
@@ -10939,61 +11160,45 @@ components:
           nullable: true
           description: Анкета, на которую дан ответ
     FeedbackSurvey:
-      description: Активная анкета для прохождения (клиент)
+      $ref: '#/components/schemas/FeedbackSurveyResponse'
+    FeedbackStartRequest:
       type: object
+      additionalProperties: false
+      required:
+      - source_id
+      properties:
+        source_id:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: XML_ID точки сбора из клиента
+    FeedbackStartResponse:
+      type: object
+      required:
+      - id
+      - survey_id
+      - started_at
+      - completed_at
       properties:
         id:
           type: integer
           format: int64
-        external_id:
+          description: ID созданного SurveyResponse; передать как response_id при
+            отправке
+        survey_id:
+          type: integer
+          format: int64
+        started_at:
           type: string
-        name:
+          format: date-time
+        completed_at:
           type: string
-        description:
-          type: string
+          format: date-time
           nullable: true
-        questions:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                format: int64
-              parent_id:
-                type: integer
-                format: int64
-                nullable: true
-              type:
-                type: integer
-                enum:
-                - 1
-                - 2
-                - 3
-                - 4
-                - 5
-              text:
-                type: string
-              media_id:
-                type: integer
-                format: int64
-                nullable: true
-              required:
-                type: boolean
-              order:
-                type: integer
-              condition:
-                type: object
-                nullable: true
-                additionalProperties: true
-              scale_min:
-                type: integer
-                nullable: true
-              scale_max:
-                type: integer
-                nullable: true
+          description: NULL до успешного завершения
     FeedbackSubmitRequest:
-      description: Запрос на отправку ответов
+      description: Отправка анкеты; response_id связывает с реальным стартом и защищает
+        повтор
       type: object
       required:
       - source_id
@@ -11004,9 +11209,19 @@ components:
         source_id:
           type: string
           description: XML_ID устройства (ПАК, веб)
+          minLength: 1
+          maxLength: 255
+        response_id:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: ID из start; без него старый поток без реального старта
         duration:
           type: integer
-          description: Время прохождения в секундах
+          minimum: 0
+          description: Время в секундах для старого потока; при response_id длительность
+            рассчитывает сервер
         consent_version_id:
           type: integer
           format: int64
@@ -11025,8 +11240,9 @@ components:
                 format: int64
               value:
                 type: string
-                description: Значение ответа (число, текст, JSON для множественного
-                  выбора)
+                description: Строка — оценка, текст, ID варианта (SINGLE_CHOICE) или
+                  JSON-массив ID вариантов (MULTIPLE_CHOICE, PROFESSION_CHOICE). Не
+                  ID профессий.
     FeedbackSubmitResponse:
       description: Результат отправки ответов
       type: object
@@ -12982,5 +13198,110 @@ components:
           - 'null'
           description: Идентификатор текущего подключения; null, если пользователя
             нет.
+    SurveyType:
+      type: integer
+      enum:
+      - 1
+      title: SurveyType
+      description: 'Тип анкеты (IntEnum): 1 — QUALITY_ASSESSMENT, оценка качества.'
+    SurveyAnswerOptionRequest:
+      properties:
+        text:
+          type: string
+          minLength: 1
+          title: Text
+        order:
+          type: integer
+          minimum: 1.0
+          title: Order
+        profession_id:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Profession Id
+      additionalProperties: false
+      type: object
+      required:
+      - text
+      - order
+      title: SurveyAnswerOptionRequest
+      description: Вариант вопроса. profession_id обязателен только для PROFESSION_CHOICE,
+        для других типов — null. order уникален внутри вопроса.
+    SurveyAnswerOptionResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        question_id:
+          type: integer
+          title: Question Id
+        text:
+          type: string
+          title: Text
+        order:
+          type: integer
+          title: Order
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+      type: object
+      required:
+      - id
+      - question_id
+      - text
+      - order
+      - profession_id
+      title: SurveyAnswerOptionResponse
+    FeedbackAnswerItem:
+      properties:
+        question_id:
+          type: integer
+          title: Question Id
+        value:
+          type: string
+          title: Value
+          description: 'Строка: RATING_SCALE — целая оценка; TEXT — текст; SINGLE_CHOICE
+            — ID варианта, например "12"; MULTIPLE_CHOICE и PROFESSION_CHOICE — JSON-массив
+            ID вариантов, например "[12,13]". Используются ID вариантов, а не профессий.'
+      type: object
+      required:
+      - question_id
+      - value
+      title: FeedbackAnswerItem
+    SurveyAnswerOptionUpdateItem:
+      additionalProperties: false
+      properties:
+        text:
+          minLength: 1
+          title: Text
+          type: string
+        order:
+          minimum: 1
+          title: Order
+          type: integer
+        profession_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Profession Id
+        id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Id
+      required:
+      - text
+      - order
+      title: SurveyAnswerOptionUpdateItem
+      type: object
+      description: Элемент полного списка при обновлении вопроса. id — существующий
+        вариант своего вопроса; без id добавляется новый.
 security:
 - bearerAuth: []

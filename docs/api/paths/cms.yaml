@@ -308,7 +308,7 @@ surveys-copy:
   post:
     tags: [Обратная связь - CMS]
     summary: Создать новую версию анкеты
-    description: Требуется staff access-токен редактора контента. Скопировать анкету и все её вопросы в новый черновик с тем же external_id
+    description: Требуется staff access-токен редактора контента. Скопировать анкету и все её вопросы в новый черновик с тем же type
     parameters:
       - name: survey_id
         in: path
@@ -334,7 +334,7 @@ surveys-publish:
   post:
     tags: [Обратная связь - CMS]
     summary: Опубликовать анкету
-    description: Требуется staff access-токен редактора контента. Активировать анкету. Предыдущая активная анкета с тем же external_id автоматически деактивируется.
+    description: Требуется staff access-токен редактора контента. Активировать анкету. Предыдущая активная анкета с тем же type автоматически деактивируется.
     parameters:
       - name: survey_id
         in: path
@@ -360,22 +360,134 @@ surveys-publish:
 
 surveys-questions-create:
   post:
-    tags: [Обратная связь - CMS]
+    tags:
+    - Обратная связь - CMS
     summary: Добавить вопрос
     description: Требуется staff access-токен редактора контента. Добавить вопрос в анкету-черновик
     parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-    requestBody:
+    - name: survey_id
+      in: path
       required: true
+      schema:
+        type: integer
+        format: int64
+    requestBody:
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            $ref: '#/components/schemas/CmsSurveyQuestionCreateRequest'
+            additionalProperties: false
+            properties:
+              type:
+                enum:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+                title: SurveyQuestionType
+                type: integer
+              text:
+                title: Text
+                type: string
+              order:
+                title: Order
+                type: integer
+              required:
+                default: false
+                title: Required
+                type: boolean
+              parent_id:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                title: Parent Id
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: File Description
+              condition:
+                type:
+                - string
+                - 'null'
+                title: Condition
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  title: Condition
+              scale_min:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                title: Scale Min
+              scale_max:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                title: Scale Max
+              answer_options:
+                type:
+                - string
+                - 'null'
+                title: Answer Options
+                description: JSON-массив вариантов ответа в одном текстовом поле формы. text и order обязательны;
+                  profession_id обязателен только для PROFESSION_CHOICE. При создании id не передаётся. Вопрос и
+                  варианты сохраняются одной транзакцией. В ответе варианты находятся в options.
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        minLength: 1
+                        title: Text
+                        type: string
+                      order:
+                        minimum: 1
+                        title: Order
+                        type: integer
+                      profession_id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        title: Profession Id
+                    required:
+                    - text
+                    - order
+                    title: SurveyAnswerOptionRequest
+                    type: object
+                  title: Answer Options
+                  type: array
+                example: '[{"text":"Да","order":1},{"text":"Нет","order":2}]'
+              file:
+                type: string
+                format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
+            required:
+            - type
+            - text
+            - order
+            title: SurveyQuestionCreateRequest
+            type: object
+          encoding:
+            condition:
+              contentType: text/plain
+            answer_options:
+              contentType: text/plain
+      required: true
     responses:
       '403':
         description: Недостаточно прав
@@ -394,28 +506,130 @@ surveys-questions-create:
 
 surveys-questions-update:
   put:
-    tags: [Обратная связь - CMS]
+    tags:
+    - Обратная связь - CMS
     summary: Обновить вопрос
     description: Требуется staff access-токен редактора контента. Обновить вопрос анкеты-черновика
     parameters:
-      - name: survey_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: question_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-    requestBody:
+    - name: survey_id
+      in: path
       required: true
+      schema:
+        type: integer
+        format: int64
+    - name: question_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    requestBody:
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            $ref: '#/components/schemas/CmsSurveyQuestionUpdateRequest'
+            additionalProperties: false
+            properties:
+              text:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: Text
+              required:
+                anyOf:
+                - type: boolean
+                - type: 'null'
+                title: Required
+              condition:
+                type:
+                - string
+                - 'null'
+                title: Condition
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - additionalProperties: true
+                    type: object
+                  - type: 'null'
+                  title: Condition
+              scale_min:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                title: Scale Min
+              scale_max:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                title: Scale Max
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                title: File Description
+              answer_options:
+                type:
+                - string
+                - 'null'
+                title: Answer Options
+                description: 'JSON-массив вариантов ответа в одном текстовом поле формы. text и order обязательны;
+                  profession_id обязателен только для PROFESSION_CHOICE. Переданный список полностью заменяет состав
+                  вариантов: id обновляет существующий, без id создаётся новый, пропущенные ID удаляются. Без поля
+                  список не меняется; [] очищает его. Вопрос и варианты сохраняются одной транзакцией. В ответе
+                  варианты находятся в options.'
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      text:
+                        minLength: 1
+                        title: Text
+                        type: string
+                      order:
+                        minimum: 1
+                        title: Order
+                        type: integer
+                      profession_id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        title: Profession Id
+                      id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        title: Id
+                    required:
+                    - text
+                    - order
+                    title: SurveyAnswerOptionUpdateItem
+                    type: object
+                  title: Answer Options
+                  type: array
+                example: '[{"id":101,"text":"Да","order":1},{"text":"Новый вариант","order":2}]'
+              file:
+                type: string
+                format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
+            title: SurveyQuestionUpdateRequest
+            type: object
+          encoding:
+            condition:
+              contentType: text/plain
+            answer_options:
+              contentType: text/plain
+      required: false
     responses:
       '403':
         description: Недостаточно прав
@@ -518,11 +732,11 @@ responses:
           type: integer
           format: int64
         description: Фильтр по ID анкеты
-      - name: external_id
+      - name: type
         in: query
         schema:
-          type: string
-        description: Фильтр по external_id анкеты
+          $ref: '#/components/schemas/SurveyType'
+        description: Фильтр по type анкеты
       - name: is_active
         in: query
         schema:
