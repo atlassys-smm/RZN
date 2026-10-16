@@ -2084,6 +2084,7 @@ components:
             - captain_changed
             - team_renamed
             - answers_update
+            - all_answered
             - question_started
             - question_revealed
             - timer_paused
