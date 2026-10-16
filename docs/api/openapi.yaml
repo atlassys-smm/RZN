@@ -324,6 +324,8 @@ paths:
     $ref: './paths/quiz.yaml#/session-active'
   /quiz/sessions/{id}:
     $ref: './paths/quiz.yaml#/session-detail'
+  /quiz/sessions/{id}/final-round:
+    $ref: './paths/quiz.yaml#/session-final-round'
   /quiz/sessions/{id}/finish:
     $ref: './paths/quiz.yaml#/session-finish'
   /quiz/sessions/{id}/teams/{teamId}:
@@ -1715,6 +1717,34 @@ components:
         created_at:
           type: string
           format: date-time
+    FinalRoundRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Вопросы финального раунда: укажите question_ids либо question_count.
+        При одновременной передаче приоритет у question_ids.
+        Тип раунда устанавливает сервер: FINAL = 9. Поле round_type не принимается.
+      properties:
+        question_ids:
+          type: array
+          nullable: true
+          minItems: 1
+          items:
+            type: integer
+            format: int64
+          description: Существующие вопросы в порядке показа; повторное использование вопросов допускается.
+        question_count:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Количество вопросов для случайного выбора из общей базы, если question_ids не заданы.
+        question_filters:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Необязательные фильтры difficulty, age_group и tags, как при создании раундов. Отсутствие или null означает выбор без фильтров.
+      example:
+        question_ids: [101, 102]
     QuizSession:
       description: Сущность сессии викторины (без связей)
       type: object
@@ -1746,11 +1776,14 @@ components:
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от параметра select.
       type: object
-      required: [round_count, current_round_question_count]
+      required: [round_count, current_round_question_count, can_start_final_round]
       allOf:
         - $ref: '#/components/schemas/QuizSession'
         - type: object
           properties:
+            can_start_final_round:
+              type: boolean
+              description: true только в active после раскрытия последнего вопроса последнего раунда, если в сессии нет FINAL (9). Вычисляется заново при чтении; после добавления финала всегда false.
             round_count:
               type: integer
               minimum: 0
