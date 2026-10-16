@@ -32,6 +32,48 @@ x-websocket-channels:
       воспроизводятся после переподключения.
     message:
       $ref: '#/components/schemas/DeviceAuthWebSocketEvent'
+  device-sessions:
+    url: /api/device/sessions/ws?token={device_jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Device JWT активного устройства с любыми ролями или без ролей,
+          без Bearer.
+    description: 'Устройство получает только события своих сессий, device_id определяется
+      по JWT.
+
+      User и StaffUser не допускаются. Роли устройства не ограничиваются.
+
+      Проверка JWT, актуального устройства и Origin выполняется до accept; при ошибке
+      close 1008 (HTTP handshake 403).
+
+      session_started отправляется после создания викторины в waiting или запуска
+      видео в active.
+
+      session_finished отправляется после завершения викторины, ручной остановки видео
+
+      или естественного окончания последнего видеосценария. Повторное завершение не
+      повторяет событие.
+
+      Формат сообщений — type и payload с device_id, session_id, module (quiz / interactive_video).
+
+      Подключение не требует session_id. Начальное состояние и история событий не
+      отправляются;
+
+      после переподключения клиент читает активные сессии обоих модулей через REST.
+
+      Сокет подключается до создания оператором сессии. Авторизация проверяется только
+      при подключении.
+
+      Рассылка работает в текущем процессе API; для доставки запрос и сокет должны
+      попасть в один процесс.
+
+      '
+    message:
+      $ref: '#/components/schemas/DeviceSessionWebSocketEvent'
   quiz-session:
     url: /api/quiz/sessions/{sessionId}/ws?token={jwt}
     parameters:
@@ -3554,6 +3596,9 @@ paths:
         `device_id`; на одном устройстве одновременно может быть только одна сессия
         со статусом `1` (waiting) или `2` (active).
 
+        После создания в waiting устройство получает session_started в /api/device/sessions/ws
+        с payload device_id, session_id и module=quiz.
+
         API принимает только готовый массив `rounds`, без `template_id`. Если оператор
         выбрал шаблон, клиент переносит его типы раундов и `question_ids` в этот массив.
         Для каждого раунда передаются либо конкретные `question_ids`, либо `question_count`
@@ -3918,7 +3963,8 @@ paths:
       - Викторина - Оператор
       summary: Завершить сессию
       description: Завершить сессию. Статус меняется на `3` (finished). Возвращает
-        состояние завершённой сессии.
+        состояние завершённой сессии. После первого завершения устройство получает
+        session_finished в /api/device/sessions/ws с module=quiz.
       parameters:
       - name: id
         in: path
@@ -5146,6 +5192,9 @@ paths:
 
         Статус сессии сразу становится `active`.
 
+        Устройство получает session_started в /api/device/sessions/ws с payload device_id,
+        session_id и module=interactive_video.
+
         '
       requestBody:
         required: true
@@ -5256,8 +5305,9 @@ paths:
       tags:
       - Профессии в действии - Оператор
       summary: Остановить показ
-      description: Остановить показ и вернуть LED-экран в режим ожидания. Требуется
-        staff access-токен оператора или администратора.
+      description: Остановить показ и вернуть LED-экран в режим ожидания. После первого
+        завершения устройство получает session_finished в /api/device/sessions/ws
+        с module=interactive_video. Требуется staff access-токен оператора или администратора.
       parameters:
       - name: id
         in: path
@@ -12972,6 +13022,43 @@ components:
       - sources
       - professions
       type: object
+    DeviceSessionWebSocketEvent:
+      type: object
+      required:
+      - type
+      - payload
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum:
+          - session_started
+          - session_finished
+        payload:
+          type: object
+          required:
+          - device_id
+          - session_id
+          - module
+          additionalProperties: false
+          properties:
+            device_id:
+              type: integer
+              format: int64
+            session_id:
+              type: integer
+              format: int64
+            module:
+              type: string
+              enum:
+              - quiz
+              - interactive_video
+      example:
+        type: session_started
+        payload:
+          device_id: 1
+          session_id: 42
+          module: quiz
     DeviceAuthWebSocketEvent:
       type: object
       required:

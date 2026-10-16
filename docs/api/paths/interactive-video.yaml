@@ -330,6 +330,7 @@ session-create:
       В `settings` передаётся либо `scenario_ids` (ручной выбор), либо `profession_count` (случайный выбор N сценариев).
       Бэкенд конвертит `profession_count` в `scenario_ids` перед сохранением.
       Статус сессии сразу становится `active`.
+      Устройство получает session_started в /api/device/sessions/ws с payload device_id, session_id и module=interactive_video.
     requestBody:
       required: true
       content:
@@ -425,7 +426,7 @@ session-stop:
   post:
     tags: [Профессии в действии - Оператор]
     summary: Остановить показ
-    description: Остановить показ и вернуть LED-экран в режим ожидания. Требуется staff access-токен оператора или администратора.
+    description: Остановить показ и вернуть LED-экран в режим ожидания. После первого завершения устройство получает session_finished в /api/device/sessions/ws с module=interactive_video. Требуется staff access-токен оператора или администратора.
     parameters:
       - name: id
         in: path
