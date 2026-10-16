@@ -846,14 +846,21 @@ cms-settings-defaults-get:
                   type: integer
                 team_capacity:
                   type: integer
-                auto_reveal:
-                  type: boolean
-                auto_next:
-                  type: boolean
+                auto_reveal_delay:
+                  type: [integer, "null"]
+                  minimum: 0
+                  default: 0
+                  description: "Задержка показа ответа после закрытия приёма ответов, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                 auto_next_delay:
-                  type: integer
+                  type: [integer, "null"]
+                  minimum: 0
+                  default: null
+                  description: "Задержка перехода к следующему вопросу внутри раунда после показа ответа, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                 between_rounds_delay:
-                  type: integer
+                  type: [integer, "null"]
+                  minimum: 0
+                  default: 10
+                  description: "Задержка перехода к следующему раунду после показа ответа на последний вопрос, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                 show_intermediate_results:
                   type: boolean
 
@@ -868,19 +875,24 @@ cms-settings-defaults-update:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               team_count:
                 type: integer
               team_capacity:
                 type: integer
-              auto_reveal:
-                type: boolean
-              auto_next:
-                type: boolean
+              auto_reveal_delay:
+                type: [integer, "null"]
+                minimum: 0
+                description: "Задержка показа ответа после закрытия приёма ответов, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, значение не меняется."
               auto_next_delay:
-                type: integer
+                type: [integer, "null"]
+                minimum: 0
+                description: "Задержка перехода к следующему вопросу внутри раунда после показа ответа, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, значение не меняется."
               between_rounds_delay:
-                type: integer
+                type: [integer, "null"]
+                minimum: 0
+                description: "Задержка перехода к следующему раунду после показа ответа на последний вопрос, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, значение не меняется."
               show_intermediate_results:
                 type: boolean
     responses:
@@ -899,14 +911,21 @@ cms-settings-defaults-update:
                   type: integer
                 team_capacity:
                   type: integer
-                auto_reveal:
-                  type: boolean
-                auto_next:
-                  type: boolean
+                auto_reveal_delay:
+                  type: [integer, "null"]
+                  minimum: 0
+                  default: 0
+                  description: "Задержка показа ответа после закрытия приёма ответов, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                 auto_next_delay:
-                  type: integer
+                  type: [integer, "null"]
+                  minimum: 0
+                  default: null
+                  description: "Задержка перехода к следующему вопросу внутри раунда после показа ответа, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                 between_rounds_delay:
-                  type: integer
+                  type: [integer, "null"]
+                  minimum: 0
+                  default: 10
+                  description: "Задержка перехода к следующему раунду после показа ответа на последний вопрос, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                 show_intermediate_results:
                   type: boolean
 
@@ -1101,6 +1120,7 @@ session-create:
                           description: Теги для фильтрации вопросов
               settings:
                 type: object
+                additionalProperties: false
                 properties:
                   team_count:
                     type: integer
@@ -1113,18 +1133,21 @@ session-create:
                     maximum: 10
                     default: 10
                     description: Максимум участников в одной команде
-                  auto_reveal:
-                    type: boolean
-                    default: true
-                  auto_next:
-                    type: boolean
-                    default: false
+                  auto_reveal_delay:
+                    type: [integer, "null"]
+                    minimum: 0
+                    default: 0
+                    description: "Задержка показа ответа после закрытия приёма ответов, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                   auto_next_delay:
-                    type: integer
-                    default: 5
+                    type: [integer, "null"]
+                    minimum: 0
+                    default: null
+                    description: "Задержка перехода к следующему вопросу внутри раунда после показа ответа, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                   between_rounds_delay:
-                    type: integer
+                    type: [integer, "null"]
+                    minimum: 0
                     default: 10
+                    description: "Задержка перехода к следующему раунду после показа ответа на последний вопрос, в секундах. null отключает автоматическое действие; 0 выполняет без ожидания. Если поле не передано, используется значение из CMS."
                   show_intermediate_results:
                     type: boolean
                     default: true
@@ -1474,8 +1497,8 @@ session-next:
     description: |
       Если сессия в статусе `1` (waiting) — запускает первый вопрос первого раунда (старт игры).
       При старте командной игры исключает пустые команды и требует не менее 2 оставшихся команд с минимум 2 участниками в каждой.
-      Если игра идёт — переход к следующему вопросу. Между вопросами — таймер автопереключения (auto_next_delay).
-      Если вопросов в раунде больше нет — показ результатов раунда, затем (через between_rounds_delay) — следующий раунд.
+      Если игра идёт — ручной переход к следующему вопросу без ожидания автоматической задержки.
+      Если вопросов в раунде больше нет — ручной запуск следующего раунда. Задержки отсчитывает клиент перед вызовом LED endpoint /led/next.
       После последнего вопроса последнего раунда — показ финальных результатов. Сессия остаётся в статусе `2` (active), оператор завершает её явно через `POST /quiz/sessions/{id}/finish`.
     parameters:
       - name: id
@@ -1522,7 +1545,7 @@ session-reveal:
   post:
     tags: [Викторина - Оператор]
     summary: Показать ответ
-    description: Показать правильный ответ с пояснением (используется если auto_reveal = false)
+    description: Показать правильный ответ с пояснением вручную, в том числе при auto_reveal_delay = null или до окончания задержки
     parameters:
       - name: id
         in: path
@@ -1657,7 +1680,7 @@ session-timer-stop:
   post:
     tags: [Викторина - Оператор]
     summary: Остановить таймер
-    description: Досрочно завершить приём ответов на текущий вопрос. После остановки применяется настройка `auto_reveal`; при выключенном автопоказе оператор вызывает `reveal` или `skip`.
+    description: "Досрочно завершить приём ответов на текущий вопрос. При auto_reveal_delay = 0 ответ показывается сразу. При положительном значении клиент отсчитывает задержку и вызывает reveal; при null показ выполняется вручную. Сервер не отсчитывает задержки."
     parameters:
       - name: id
         in: path
@@ -1709,7 +1732,7 @@ session-led-next:
   post:
     tags: [Викторина - LED]
     summary: Следующий вопрос (LED)
-    description: "LED-экран вызывает этот endpoint после окончания таймера.\nЕсли время вышло и `auto_reveal = true` — автоматически показывает правильный ответ и начисляет баллы.\nЕсли ответ уже показан — переходит к следующему вопросу.\n Для device-токена требуется роль 1; другая группа устройства — 403."
+    description: "LED вызывает endpoint после окончания таймера с учётом auto_reveal_delay, который отсчитывает клиент. Если время вопроса вышло и auto_reveal_delay задан числом, сервер раскрывает ответ и начисляет баллы; при null ожидает ручной reveal или skip. Если ответ уже показан, endpoint переходит к следующему вопросу. Перед таким автоматическим вызовом клиент отсчитывает auto_next_delay внутри раунда или between_rounds_delay между раундами; при null вызов не выполняется. Сервер не проверяет время этих задержек и не сохраняет дополнительные временные метки. После ручной остановки при положительном auto_reveal_delay клиент вызывает reveal по окончании задержки. После последнего вопроса последнего раунда оператор вызывает finish. Для device-токена требуется роль 1; другая группа устройства — 403."
     parameters:
       - name: id
         in: path
