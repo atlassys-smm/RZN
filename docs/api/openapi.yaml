@@ -1805,8 +1805,12 @@ components:
             current_question:
               type: object
               nullable: true
-              description: Текущий вопрос (заполняется при select=current_question). До раскрытия ответа из question опускаются answer_key и is_correct у вариантов.
+              description: Текущий вопрос активной игры. До раскрытия ответа из question опускаются answer_key и is_correct у вариантов. В waiting/finished объект не возвращается.
+              required: [revealed]
               properties:
+                revealed:
+                  type: boolean
+                  description: Раскрыт ли ответ именно на этот вопрос для игроков. false при запуске вопроса, true после reveal; одинаков для всех ролей независимо от select и предварительной видимости correct_answer у оператора.
                 index:
                   type: integer
                 question:
@@ -2016,7 +2020,11 @@ components:
         current_question:
           type: object
           nullable: true
+          required: [revealed]
           properties:
+            revealed:
+              type: boolean
+              description: Раскрыт ли ответ на этот вопрос для игроков; одинаков для всех ролей. При новом вопросе false, после reveal true.
             index:
               type: integer
             question:
