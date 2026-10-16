@@ -32,6 +32,48 @@ x-websocket-channels:
       воспроизводятся после переподключения.
     message:
       $ref: '#/components/schemas/DeviceAuthWebSocketEvent'
+  device-sessions:
+    url: /api/device/sessions/ws?token={device_jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Device JWT активного устройства с любыми ролями или без ролей,
+          без Bearer.
+    description: 'Устройство получает только события своих сессий, device_id определяется
+      по JWT.
+
+      User и StaffUser не допускаются. Роли устройства не ограничиваются.
+
+      Проверка JWT, актуального устройства и Origin выполняется до accept; при ошибке
+      close 1008 (HTTP handshake 403).
+
+      session_started отправляется после создания викторины в waiting или запуска
+      видео в active.
+
+      session_finished отправляется после завершения викторины, ручной остановки видео
+
+      или естественного окончания последнего видеосценария. Повторное завершение не
+      повторяет событие.
+
+      Формат сообщений — type и payload с device_id, session_id, module (quiz / interactive_video).
+
+      Подключение не требует session_id. Начальное состояние и история событий не
+      отправляются;
+
+      после переподключения клиент читает активные сессии обоих модулей через REST.
+
+      Сокет подключается до создания оператором сессии. Авторизация проверяется только
+      при подключении.
+
+      Рассылка работает в текущем процессе API; для доставки запрос и сокет должны
+      попасть в один процесс.
+
+      '
+    message:
+      $ref: '#/components/schemas/DeviceSessionWebSocketEvent'
   quiz-session:
     url: /api/quiz/sessions/{sessionId}/ws?token={jwt}
     parameters:
@@ -732,7 +774,8 @@ paths:
       tags:
       - Авторизация пользователей
       summary: Создание гостя
-      description: Гость на 24 часа. Обязательны существующая версия согласия и consent_accepted=true.
+      description: Гость на 24 часа. При создании first_name получает «Гость», last_name
+        — строковый users.id. Обязательны существующая версия согласия и consent_accepted=true.
         Тип, статус, дата и актуальность версии не проверяются. Origin обязателен.
         Refresh только в HttpOnly cookie user_refresh.
       security: []
@@ -3296,14 +3339,36 @@ paths:
                     type: integer
                   team_capacity:
                     type: integer
-                  auto_reveal:
-                    type: boolean
-                  auto_next:
-                    type: boolean
+                  auto_reveal_delay:
+                    type:
+                    - integer
+                    - 'null'
+                    minimum: 0
+                    default: 0
+                    description: Задержка показа ответа после закрытия приёма ответов,
+                      в секундах. null отключает автоматическое действие; 0 выполняет
+                      без ожидания. Если поле не передано, используется значение из
+                      CMS.
                   auto_next_delay:
-                    type: integer
+                    type:
+                    - integer
+                    - 'null'
+                    minimum: 0
+                    default: null
+                    description: Задержка перехода к следующему вопросу внутри раунда
+                      после показа ответа, в секундах. null отключает автоматическое
+                      действие; 0 выполняет без ожидания. Если поле не передано, используется
+                      значение из CMS.
                   between_rounds_delay:
-                    type: integer
+                    type:
+                    - integer
+                    - 'null'
+                    minimum: 0
+                    default: 10
+                    description: Задержка перехода к следующему раунду после показа
+                      ответа на последний вопрос, в секундах. null отключает автоматическое
+                      действие; 0 выполняет без ожидания. Если поле не передано, используется
+                      значение из CMS.
                   show_intermediate_results:
                     type: boolean
     put:
@@ -3318,19 +3383,38 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
                 team_count:
                   type: integer
                 team_capacity:
                   type: integer
-                auto_reveal:
-                  type: boolean
-                auto_next:
-                  type: boolean
+                auto_reveal_delay:
+                  type:
+                  - integer
+                  - 'null'
+                  minimum: 0
+                  description: Задержка показа ответа после закрытия приёма ответов,
+                    в секундах. null отключает автоматическое действие; 0 выполняет
+                    без ожидания. Если поле не передано, значение не меняется.
                 auto_next_delay:
-                  type: integer
+                  type:
+                  - integer
+                  - 'null'
+                  minimum: 0
+                  description: Задержка перехода к следующему вопросу внутри раунда
+                    после показа ответа, в секундах. null отключает автоматическое
+                    действие; 0 выполняет без ожидания. Если поле не передано, значение
+                    не меняется.
                 between_rounds_delay:
-                  type: integer
+                  type:
+                  - integer
+                  - 'null'
+                  minimum: 0
+                  description: Задержка перехода к следующему раунду после показа
+                    ответа на последний вопрос, в секундах. null отключает автоматическое
+                    действие; 0 выполняет без ожидания. Если поле не передано, значение
+                    не меняется.
                 show_intermediate_results:
                   type: boolean
       responses:
@@ -3349,14 +3433,36 @@ paths:
                     type: integer
                   team_capacity:
                     type: integer
-                  auto_reveal:
-                    type: boolean
-                  auto_next:
-                    type: boolean
+                  auto_reveal_delay:
+                    type:
+                    - integer
+                    - 'null'
+                    minimum: 0
+                    default: 0
+                    description: Задержка показа ответа после закрытия приёма ответов,
+                      в секундах. null отключает автоматическое действие; 0 выполняет
+                      без ожидания. Если поле не передано, используется значение из
+                      CMS.
                   auto_next_delay:
-                    type: integer
+                    type:
+                    - integer
+                    - 'null'
+                    minimum: 0
+                    default: null
+                    description: Задержка перехода к следующему вопросу внутри раунда
+                      после показа ответа, в секундах. null отключает автоматическое
+                      действие; 0 выполняет без ожидания. Если поле не передано, используется
+                      значение из CMS.
                   between_rounds_delay:
-                    type: integer
+                    type:
+                    - integer
+                    - 'null'
+                    minimum: 0
+                    default: 10
+                    description: Задержка перехода к следующему раунду после показа
+                      ответа на последний вопрос, в секундах. null отключает автоматическое
+                      действие; 0 выполняет без ожидания. Если поле не передано, используется
+                      значение из CMS.
                   show_intermediate_results:
                     type: boolean
   /cms/quiz/settings/scoring:
@@ -3490,6 +3596,9 @@ paths:
         `device_id`; на одном устройстве одновременно может быть только одна сессия
         со статусом `1` (waiting) или `2` (active).
 
+        После создания в waiting устройство получает session_started в /api/device/sessions/ws
+        с payload device_id, session_id и module=quiz.
+
         API принимает только готовый массив `rounds`, без `template_id`. Если оператор
         выбрал шаблон, клиент переносит его типы раундов и `question_ids` в этот массив.
         Для каждого раунда передаются либо конкретные `question_ids`, либо `question_count`
@@ -3585,6 +3694,7 @@ paths:
                             description: Теги для фильтрации вопросов
                 settings:
                   type: object
+                  additionalProperties: false
                   properties:
                     team_count:
                       type: integer
@@ -3597,18 +3707,36 @@ paths:
                       maximum: 10
                       default: 10
                       description: Максимум участников в одной команде
-                    auto_reveal:
-                      type: boolean
-                      default: true
-                    auto_next:
-                      type: boolean
-                      default: false
+                    auto_reveal_delay:
+                      type:
+                      - integer
+                      - 'null'
+                      minimum: 0
+                      default: 0
+                      description: Задержка показа ответа после закрытия приёма ответов,
+                        в секундах. null отключает автоматическое действие; 0 выполняет
+                        без ожидания. Если поле не передано, используется значение
+                        из CMS.
                     auto_next_delay:
-                      type: integer
-                      default: 5
+                      type:
+                      - integer
+                      - 'null'
+                      minimum: 0
+                      default: null
+                      description: Задержка перехода к следующему вопросу внутри раунда
+                        после показа ответа, в секундах. null отключает автоматическое
+                        действие; 0 выполняет без ожидания. Если поле не передано,
+                        используется значение из CMS.
                     between_rounds_delay:
-                      type: integer
+                      type:
+                      - integer
+                      - 'null'
+                      minimum: 0
                       default: 10
+                      description: Задержка перехода к следующему раунду после показа
+                        ответа на последний вопрос, в секундах. null отключает автоматическое
+                        действие; 0 выполняет без ожидания. Если поле не передано,
+                        используется значение из CMS.
                     show_intermediate_results:
                       type: boolean
                       default: true
@@ -3714,9 +3842,13 @@ paths:
         \ для отображения сессии, уже запущенной на этом устройстве.\nВсегда возвращает\
         \ `round_count` — общее количество раундов и `current_round_question_count`\
         \ — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов\
-        \ относится к первому раунду.\nВо время active также возвращает текущий раунд,\
-        \ вопрос и таймер. Сотрудник получает current_question.correct_answer сразу;\
-        \ User и Device — только после reveal. Просмотр сотрудником не раскрывает\
+        \ относится к первому раунду. current_question.revealed показывает реальное\
+        \ раскрытие ответа на этот вопрос для всех ролей, независимо от select; в\
+        \ waiting и finished объекта current_question нет. can_start_final_round показывает\
+        \ возможность добавить финал после раскрытия последнего вопроса; в waiting\
+        \ и при наличии FINAL он false.\nВо время active также возвращает текущий\
+        \ раунд, вопрос и таймер. Сотрудник получает current_question.correct_answer\
+        \ сразу; User и Device — только после reveal. Просмотр сотрудником не раскрывает\
         \ ответ для игроков. `select=answers` добавляет корневое поле `answers` с\
         \ голосами участников, решающими ответами и статусами команд, счётчиками по\
         \ вариантам; без параметра поле отсутствует. До начала и после завершения\
@@ -3772,21 +3904,24 @@ paths:
       tags:
       - Викторина
       summary: Получить сессию
-      description: "Возвращает базовые поля сессии и счётчики round_count/current_round_question_count;\
-        \ во время active также текущий раунд, вопрос и таймер.\n`select=answers`\
-        \ добавляет корневое поле `answers` с голосами участников, решающими ответами\
-        \ и статусами команд, счётчиками по вариантам; без параметра поле отсутствует.\
-        \ До начала и после завершения игры `answers=null`. User в командной игре\
-        \ видит свою команду, StaffUser — все команды, Device — общие счётчики и статусы\
-        \ без содержимого ответов. `select=teams` и `select=participants` добавляют\
-        \ состав команд и участников. Несколько значений select передаются повторяющимися\
-        \ параметрами запроса. Для авторизованного капитана `answer_submissions` текущего\
-        \ вопроса содержит ответы его команды; участник определяется по access-токену.\
-        \ Сотрудник получает current_question.correct_answer сразу; User и Device\
-        \ — только после reveal. Просмотр сотрудником не раскрывает ответ для игроков.\
-        \ До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key`\
-        \ вопроса не возвращаются.\n Для device-токена требуется роль 1; другая группа\
-        \ устройства — 403."
+      description: "Возвращает базовые поля сессии, счётчики round_count/current_round_question_count\
+        \ и вычисляемый can_start_final_round. Во время active также возвращаются\
+        \ текущий раунд, вопрос и таймер. current_question.revealed показывает реальное\
+        \ раскрытие ответа на этот вопрос, независимо от роли и select; в waiting/finished\
+        \ объекта current_question нет.\n`select=answers` добавляет корневое поле\
+        \ `answers` с голосами участников, решающими ответами и статусами команд,\
+        \ счётчиками по вариантам; без параметра поле отсутствует. До начала и после\
+        \ завершения игры `answers=null`. User в командной игре видит свою команду,\
+        \ StaffUser — все команды, Device — общие счётчики и статусы без содержимого\
+        \ ответов. `select=teams` и `select=participants` добавляют состав команд\
+        \ и участников. Несколько значений select передаются повторяющимися параметрами\
+        \ запроса. Для авторизованного капитана `answer_submissions` текущего вопроса\
+        \ содержит ответы его команды; участник определяется по access-токену. Сотрудник\
+        \ получает current_question.correct_answer сразу; User и Device — только после\
+        \ reveal. Просмотр сотрудником не раскрывает ответ для игроков. До раскрытия\
+        \ правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса\
+        \ не возвращаются.\n Для device-токена требуется роль 1; другая группа устройства\
+        \ — 403."
       parameters:
       - name: id
         in: path
@@ -3829,13 +3964,109 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /quiz/sessions/{id}/final-round:
+    post:
+      tags:
+      - Викторина - Оператор
+      summary: Добавить и запустить финальный раунд
+      description: 'Доступен admin/operator только в активной сессии после раскрытия
+        последнего вопроса последнего раунда.
+
+        Проверяется реальное раскрытие для игроков, а не наличие correct_answer у
+        оператора.
+
+        Создаёт последний GameSessionRound с round_type=9 и связанные GameSessionQuestion,
+
+        переключает индексы и сразу запускает первый вопрос обычным механизмом викторины.
+
+        В запросе укажите question_ids либо question_count с необязательными question_filters.
+
+        При одновременной передаче приоритет у question_ids. Отсутствие или null фильтров
+        означает выбор без фильтров.
+
+        Отбор использует общую базу вопросов, как при создании сессии; ранее использованные
+        вопросы не исключаются.
+
+        Начальные 3–8 раундов дополняются одним финальным: после 8 основных допустимо
+        9 раундов.
+
+        Статус остаётся active; ID сессии, участники, команды, настройки и набранные
+        баллы сохраняются.
+
+        Повторный или параллельный запрос не добавляет второй финал: существующий
+        FINAL в любом месте сессии даёт 409.
+
+        Если вопросы не найдены или их недостаточно, раунд не создаётся и текущая
+        позиция не меняется.
+
+        Возвращает состояние с can_start_final_round=false; первый вопрос имеет работающий
+        таймер.
+
+        Отправляются существующие question_started и session_state. События начала/завершения
+        сессии устройства не отправляются.
+
+        В финале действуют обычные переходы, ответы и final_multiplier. После последнего
+        вопроса финала
+
+        клиент завершает игру через /finish без повторного предложения финала. Сервер
+        не добавляет новые задержки или временные метки.
+
+        '
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinalRoundRequest'
+            examples:
+              explicit:
+                summary: Конкретные вопросы
+                value:
+                  question_ids:
+                  - 101
+                  - 102
+              random:
+                summary: Случайный выбор по фильтрам
+                value:
+                  question_count: 3
+                  question_filters:
+                    difficulty: 2
+      responses:
+        '200':
+          description: Финальный раунд добавлен, первый вопрос запущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizSessionState'
+        '400':
+          description: Сессия не active, основные вопросы ещё не раскрыты, способ
+            выбора не указан, вопросы не найдены или их недостаточно
+        '401':
+          description: Отсутствует действующая авторизация сотрудника
+        '403':
+          description: Сотруднику требуется роль admin/operator
+        '404':
+          description: Сессия не найдена
+        '409':
+          description: В сессии уже есть финальный раунд
+        '422':
+          description: Некорректное тело запроса, пустой question_ids, question_count
+            меньше 1 или неизвестное поле
   /quiz/sessions/{id}/finish:
     post:
       tags:
       - Викторина - Оператор
       summary: Завершить сессию
       description: Завершить сессию. Статус меняется на `3` (finished). Возвращает
-        состояние завершённой сессии.
+        состояние завершённой сессии. После первого завершения устройство получает
+        session_finished в /api/device/sessions/ws с module=quiz.
       parameters:
       - name: id
         in: path
@@ -3944,6 +4175,18 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Переместить участника в другую команду
+      description: 'При переносе капитана в другую команду новый капитан старой команды
+        выбирается случайно из оставшихся участников. Если участников не осталось,
+        `captain_id` старой команды становится `null`. Если в целевой команде нет
+        капитана, им становится перенесённый участник (даже если до переноса он не
+        был капитаном); существующий капитан целевой команды сохраняется. Участник
+        и капитаны обеих команд обновляются одной транзакцией. После сохранения отправляется
+        только participant_team_changed; клиент по нему обновляет составы и капитанов
+        команд. Повторный запрос с текущей командой возвращает участника без изменений
+        и событий, даже если команда заполнена. Перенос в другую заполненную команду
+        возвращает 409 без изменений.
+
+        '
       parameters:
       - name: id
         in: path
@@ -3995,15 +4238,16 @@ paths:
         При старте командной игры исключает пустые команды и требует не менее 2 оставшихся
         команд с минимум 2 участниками в каждой.
 
-        Если игра идёт — переход к следующему вопросу. Между вопросами — таймер автопереключения
-        (auto_next_delay).
+        Если игра идёт — ручной переход к следующему вопросу без ожидания автоматической
+        задержки.
 
-        Если вопросов в раунде больше нет — показ результатов раунда, затем (через
-        between_rounds_delay) — следующий раунд.
+        Если вопросов в раунде больше нет — ручной запуск следующего раунда. Задержки
+        отсчитывает клиент перед вызовом LED endpoint /led/next.
 
-        После последнего вопроса последнего раунда — показ финальных результатов.
-        Сессия остаётся в статусе `2` (active), оператор завершает её явно через `POST
-        /quiz/sessions/{id}/finish`.
+        После последнего вопроса последнего раунда сессия остаётся в статусе `2` (active);
+        /next больше не продвигает игру. После раскрытия ответа can_start_final_round=true
+        позволяет оператору выбрать /finish или /final-round. Если FINAL (9) уже есть,
+        доступно только завершение через /finish.
 
         '
       parameters:
@@ -4051,8 +4295,8 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Показать ответ
-      description: Показать правильный ответ с пояснением (используется если auto_reveal
-        = false)
+      description: Показать правильный ответ с пояснением вручную, в том числе при
+        auto_reveal_delay = null или до окончания задержки
       parameters:
       - name: id
         in: path
@@ -4189,9 +4433,10 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Остановить таймер
-      description: Досрочно завершить приём ответов на текущий вопрос. После остановки
-        применяется настройка `auto_reveal`; при выключенном автопоказе оператор вызывает
-        `reveal` или `skip`.
+      description: Досрочно завершить приём ответов на текущий вопрос. При auto_reveal_delay
+        = 0 ответ показывается сразу. При положительном значении клиент отсчитывает
+        задержку и вызывает reveal; при null показ выполняется вручную. Сервер не
+        отсчитывает задержки.
       parameters:
       - name: id
         in: path
@@ -4245,11 +4490,18 @@ paths:
       tags:
       - Викторина - LED
       summary: Следующий вопрос (LED)
-      description: "LED-экран вызывает этот endpoint после окончания таймера.\nЕсли\
-        \ время вышло и `auto_reveal = true` — автоматически показывает правильный\
-        \ ответ и начисляет баллы.\nЕсли ответ уже показан — переходит к следующему\
-        \ вопросу.\n Для device-токена требуется роль 1; другая группа устройства\
-        \ — 403."
+      description: LED вызывает endpoint после окончания таймера с учётом auto_reveal_delay,
+        который отсчитывает клиент. Если время вопроса вышло и auto_reveal_delay задан
+        числом, сервер раскрывает ответ и начисляет баллы; при null ожидает ручной
+        reveal или skip. Если ответ уже показан, endpoint переходит к следующему вопросу.
+        Перед таким автоматическим вызовом клиент отсчитывает auto_next_delay внутри
+        раунда или between_rounds_delay между раундами; при null вызов не выполняется.
+        Сервер не проверяет время этих задержек и не сохраняет дополнительные временные
+        метки. После ручной остановки при положительном auto_reveal_delay клиент вызывает
+        reveal по окончании задержки. После раскрытия последнего вопроса последнего
+        раунда оператор выбирает finish или final-round по can_start_final_round;
+        после финала вызывает только finish. Для device-токена требуется роль 1; другая
+        группа устройства — 403.
       parameters:
       - name: id
         in: path
@@ -4421,8 +4673,22 @@ paths:
 
         - Team mode, обычный участник: сохраняется как голос (для отображения капитану)
 
-        - Team mode, капитан: предварительный ответ при `is_final=false`, зачётный
-        ответ команды при `is_final=true`
+        - Team mode, капитан: любой ответ является решающим ответом команды независимо
+        от `is_final`; повторная отправка запрещена
+
+        После ответа последнего участника индивидуальной игры или ответа капитана
+        последней непустой команды приём ответов автоматически закрывается. Голос
+        капитана всегда решающий, независимо от `is_final`; предварительные голоса
+        остальных участников не завершают командное голосование. Пустые команды не
+        учитываются. После `answers_update` отправляется `all_answered` (только поле
+        `type`), затем применяется та же обработка, что при окончании таймера через
+        `/led/next`: при числовом `auto_reveal_delay` ответ раскрывается и начисляются
+        баллы, при `null` ожидается ручной `reveal` или `skip`. Досрочное закрытие
+        не отправляет `timer_expired` или `timer_stopped`. Дальнейший переход выполняется
+        по существующему сценарию LED, задержки отсчитывает клиент.
+
+        Ответ API остаётся {"accepted": true}, включая ответ, который досрочно закрыл
+        вопрос.
 
         '
       parameters:
@@ -4450,8 +4716,9 @@ paths:
                 is_final:
                   type: boolean
                   default: false
-                  description: true только для решающего ответа капитана команды;
-                    false означает предварительный ответ участника
+                  description: Необязательный флаг совместимости. Ответ капитана всегда
+                    решающий независимо от значения; is_final=true у обычного участника
+                    запрещён
       responses:
         '401':
           description: Отсутствующий, истёкший или недействительный токен
@@ -5029,6 +5296,9 @@ paths:
 
         Статус сессии сразу становится `active`.
 
+        Устройство получает session_started в /api/device/sessions/ws с payload device_id,
+        session_id и module=interactive_video.
+
         '
       requestBody:
         required: true
@@ -5139,8 +5409,9 @@ paths:
       tags:
       - Профессии в действии - Оператор
       summary: Остановить показ
-      description: Остановить показ и вернуть LED-экран в режим ожидания. Требуется
-        staff access-токен оператора или администратора.
+      description: Остановить показ и вернуть LED-экран в режим ожидания. После первого
+        завершения устройство получает session_finished в /api/device/sessions/ws
+        с module=interactive_video. Требуется staff access-токен оператора или администратора.
       parameters:
       - name: id
         in: path
@@ -10133,6 +10404,42 @@ components:
         created_at:
           type: string
           format: date-time
+    FinalRoundRequest:
+      type: object
+      additionalProperties: false
+      description: 'Вопросы финального раунда: укажите question_ids либо question_count.
+
+        При одновременной передаче приоритет у question_ids.
+
+        Тип раунда устанавливает сервер: FINAL = 9. Поле round_type не принимается.
+
+        '
+      properties:
+        question_ids:
+          type: array
+          nullable: true
+          minItems: 1
+          items:
+            type: integer
+            format: int64
+          description: Существующие вопросы в порядке показа; повторное использование
+            вопросов допускается.
+        question_count:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Количество вопросов для случайного выбора из общей базы, если
+            question_ids не заданы.
+        question_filters:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Необязательные фильтры difficulty, age_group и tags, как при
+            создании раундов. Отсутствие или null означает выбор без фильтров.
+      example:
+        question_ids:
+        - 101
+        - 102
     QuizSession:
       description: Сущность сессии викторины (без связей)
       type: object
@@ -10173,10 +10480,16 @@ components:
       required:
       - round_count
       - current_round_question_count
+      - can_start_final_round
       allOf:
       - $ref: '#/components/schemas/QuizSession'
       - type: object
         properties:
+          can_start_final_round:
+            type: boolean
+            description: true только в active после раскрытия последнего вопроса последнего
+              раунда, если в сессии нет FINAL (9). Вычисляется заново при чтении;
+              после добавления финала всегда false.
           round_count:
             type: integer
             minimum: 0
@@ -10208,10 +10521,18 @@ components:
           current_question:
             type: object
             nullable: true
-            description: Текущий вопрос (заполняется при select=current_question).
-              До раскрытия ответа из question опускаются answer_key и is_correct у
-              вариантов.
+            description: Текущий вопрос активной игры. До раскрытия ответа из question
+              опускаются answer_key и is_correct у вариантов. В waiting/finished объект
+              не возвращается.
+            required:
+            - revealed
             properties:
+              revealed:
+                type: boolean
+                description: Раскрыт ли ответ именно на этот вопрос для игроков. false
+                  при запуске вопроса, true после reveal; одинаков для всех ролей
+                  независимо от select и предварительной видимости correct_answer
+                  у оператора.
               index:
                 type: integer
               question:
@@ -10252,6 +10573,8 @@ components:
                           format: int64
                         participant_name:
                           type: string
+                          description: Имя и фамилия из users, соединённые пробелом;
+                            пустые части пропускаются
                         answer:
                           type: object
                           additionalProperties: true
@@ -10311,6 +10634,8 @@ components:
                 format: int64
               participant_name:
                 type: string
+                description: Имя и фамилия из users, соединённые пробелом; пустые
+                  части пропускаются
               team_id:
                 type:
                 - integer
@@ -10388,7 +10713,7 @@ components:
       example:
         participant_answers:
         - participant_id: 34
-          participant_name: Участник 34
+          participant_name: Гость 123
           team_id: 2
           answer:
             option_id: 12
@@ -10443,6 +10768,8 @@ components:
           description: ID команды (null для mode=1, individual)
         name:
           type: string
+          description: Имя и фамилия из users, соединённые пробелом; для нового гостя
+            — «Гость users.id»
         individual_score:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
@@ -10481,7 +10808,13 @@ components:
         current_question:
           type: object
           nullable: true
+          required:
+          - revealed
           properties:
+            revealed:
+              type: boolean
+              description: Раскрыт ли ответ на этот вопрос для игроков; одинаков для
+                всех ролей. При новом вопросе false, после reveal true.
             index:
               type: integer
             question:
@@ -10569,6 +10902,8 @@ components:
                         format: int64
                       participant_name:
                         type: string
+                        description: Имя и фамилия из users, соединённые пробелом;
+                          пустые части пропускаются
                       answer:
                         type: object
                         additionalProperties: true
@@ -10640,6 +10975,7 @@ components:
           - captain_changed
           - team_renamed
           - answers_update
+          - all_answered
           - question_started
           - question_revealed
           - timer_paused
@@ -13115,6 +13451,43 @@ components:
       - sources
       - professions
       type: object
+    DeviceSessionWebSocketEvent:
+      type: object
+      required:
+      - type
+      - payload
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum:
+          - session_started
+          - session_finished
+        payload:
+          type: object
+          required:
+          - device_id
+          - session_id
+          - module
+          additionalProperties: false
+          properties:
+            device_id:
+              type: integer
+              format: int64
+            session_id:
+              type: integer
+              format: int64
+            module:
+              type: string
+              enum:
+              - quiz
+              - interactive_video
+      example:
+        type: session_started
+        payload:
+          device_id: 1
+          session_id: 42
+          module: quiz
     DeviceAuthWebSocketEvent:
       type: object
       required:

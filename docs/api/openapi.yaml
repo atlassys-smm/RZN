@@ -30,6 +30,29 @@ x-websocket-channels:
       Уведомления отправляются через ConnectionManager в текущем процессе API и не воспроизводятся после переподключения.
     message:
       $ref: '#/components/schemas/DeviceAuthWebSocketEvent'
+  device-sessions:
+    url: /api/device/sessions/ws?token={device_jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Device JWT активного устройства с любыми ролями или без ролей, без Bearer.
+    description: |
+      Устройство получает только события своих сессий, device_id определяется по JWT.
+      User и StaffUser не допускаются. Роли устройства не ограничиваются.
+      Проверка JWT, актуального устройства и Origin выполняется до accept; при ошибке close 1008 (HTTP handshake 403).
+      session_started отправляется после создания викторины в waiting или запуска видео в active.
+      session_finished отправляется после завершения викторины, ручной остановки видео
+      или естественного окончания последнего видеосценария. Повторное завершение не повторяет событие.
+      Формат сообщений — type и payload с device_id, session_id, module (quiz / interactive_video).
+      Подключение не требует session_id. Начальное состояние и история событий не отправляются;
+      после переподключения клиент читает активные сессии обоих модулей через REST.
+      Сокет подключается до создания оператором сессии. Авторизация проверяется только при подключении.
+      Рассылка работает в текущем процессе API; для доставки запрос и сокет должны попасть в один процесс.
+    message:
+      $ref: '#/components/schemas/DeviceSessionWebSocketEvent'
   quiz-session:
     url: /api/quiz/sessions/{sessionId}/ws?token={jwt}
     parameters:
@@ -301,6 +324,8 @@ paths:
     $ref: './paths/quiz.yaml#/session-active'
   /quiz/sessions/{id}:
     $ref: './paths/quiz.yaml#/session-detail'
+  /quiz/sessions/{id}/final-round:
+    $ref: './paths/quiz.yaml#/session-final-round'
   /quiz/sessions/{id}/finish:
     $ref: './paths/quiz.yaml#/session-finish'
   /quiz/sessions/{id}/teams/{teamId}:
@@ -1769,6 +1794,34 @@ components:
         created_at:
           type: string
           format: date-time
+    FinalRoundRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Вопросы финального раунда: укажите question_ids либо question_count.
+        При одновременной передаче приоритет у question_ids.
+        Тип раунда устанавливает сервер: FINAL = 9. Поле round_type не принимается.
+      properties:
+        question_ids:
+          type: array
+          nullable: true
+          minItems: 1
+          items:
+            type: integer
+            format: int64
+          description: Существующие вопросы в порядке показа; повторное использование вопросов допускается.
+        question_count:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Количество вопросов для случайного выбора из общей базы, если question_ids не заданы.
+        question_filters:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Необязательные фильтры difficulty, age_group и tags, как при создании раундов. Отсутствие или null означает выбор без фильтров.
+      example:
+        question_ids: [101, 102]
     QuizSession:
       description: Сущность сессии викторины (без связей)
       type: object
@@ -1800,11 +1853,14 @@ components:
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от параметра select.
       type: object
-      required: [round_count, current_round_question_count]
+      required: [round_count, current_round_question_count, can_start_final_round]
       allOf:
         - $ref: '#/components/schemas/QuizSession'
         - type: object
           properties:
+            can_start_final_round:
+              type: boolean
+              description: true только в active после раскрытия последнего вопроса последнего раунда, если в сессии нет FINAL (9). Вычисляется заново при чтении; после добавления финала всегда false.
             round_count:
               type: integer
               minimum: 0
@@ -1826,8 +1882,12 @@ components:
             current_question:
               type: object
               nullable: true
-              description: Текущий вопрос (заполняется при select=current_question). До раскрытия ответа из question опускаются answer_key и is_correct у вариантов.
+              description: Текущий вопрос активной игры. До раскрытия ответа из question опускаются answer_key и is_correct у вариантов. В waiting/finished объект не возвращается.
+              required: [revealed]
               properties:
+                revealed:
+                  type: boolean
+                  description: Раскрыт ли ответ именно на этот вопрос для игроков. false при запуске вопроса, true после reveal; одинаков для всех ролей независимо от select и предварительной видимости correct_answer у оператора.
                 index:
                   type: integer
                 question:
@@ -1864,6 +1924,7 @@ components:
                             format: int64
                           participant_name:
                             type: string
+                            description: Имя и фамилия из users, соединённые пробелом; пустые части пропускаются
                           answer:
                             type: object
                             additionalProperties: true
@@ -1908,6 +1969,7 @@ components:
                 format: int64
               participant_name:
                 type: string
+                description: Имя и фамилия из users, соединённые пробелом; пустые части пропускаются
               team_id:
                 type: [integer, 'null']
                 format: int64
@@ -1960,7 +2022,7 @@ components:
       example:
         participant_answers:
           - participant_id: 34
-            participant_name: Участник 34
+            participant_name: Гость 123
             team_id: 2
             answer: {option_id: 12}
         team_answers:
@@ -2009,6 +2071,7 @@ components:
           description: ID команды (null для mode=1, individual)
         name:
           type: string
+          description: Имя и фамилия из users, соединённые пробелом; для нового гостя — «Гость users.id»
         individual_score:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
@@ -2034,7 +2097,11 @@ components:
         current_question:
           type: object
           nullable: true
+          required: [revealed]
           properties:
+            revealed:
+              type: boolean
+              description: Раскрыт ли ответ на этот вопрос для игроков; одинаков для всех ролей. При новом вопросе false, после reveal true.
             index:
               type: integer
             question:
@@ -2100,6 +2167,7 @@ components:
                         format: int64
                       participant_name:
                         type: string
+                        description: Имя и фамилия из users, соединённые пробелом; пустые части пропускаются
                       answer:
                         type: object
                         additionalProperties: true
@@ -2161,6 +2229,7 @@ components:
             - captain_changed
             - team_renamed
             - answers_update
+            - all_answered
             - question_started
             - question_revealed
             - timer_paused
@@ -4580,6 +4649,34 @@ components:
       - professions
       type: object
 
+    DeviceSessionWebSocketEvent:
+      type: object
+      required: [type, payload]
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [session_started, session_finished]
+        payload:
+          type: object
+          required: [device_id, session_id, module]
+          additionalProperties: false
+          properties:
+            device_id:
+              type: integer
+              format: int64
+            session_id:
+              type: integer
+              format: int64
+            module:
+              type: string
+              enum: [quiz, interactive_video]
+      example:
+        type: session_started
+        payload:
+          device_id: 1
+          session_id: 42
+          module: quiz
     DeviceAuthWebSocketEvent:
       type: object
       required:
