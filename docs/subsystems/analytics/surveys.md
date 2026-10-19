@@ -12,8 +12,7 @@
 вопросом, передавая source_id. Сервер создаёт SurveyResponse с started_at,
 device_id (если известно устройство), completed_at=NULL и duration=0.
 Полученный id передаётся как response_id в запросе respond. Новых таблиц
-прохождений нет: миграция 0059 добавляет только device_id и started_at в
-survey_responses и разрешает пустой completed_at для незавершённой анкеты.
+прохождений нет.
 Существующие результаты сохраняются с прежним completed_at и started_at=NULL.
 
 После commit старта отправляется `SURVEY_STARTED=7`. После commit ответов —
@@ -32,6 +31,8 @@ survey_responses и разрешает пустой completed_at для неза
 `module_id=5`, `software_id=4`. В общем событии session_id равен ID SurveyResponse.
 user_id берётся из авторизации. Device JWT даёт реальный ID устройства;
 при User JWT без устройства device_id=NULL. device_type пока NULL.
+`is_guest` передаётся отдельным nullable-полем события и фиксирует статус
+пользователя при начале/отправке анкеты. Исторические события сохраняют NULL.
 source_id — строка точки сбора из клиента; она не заменяет device_id и сама
 не подтверждает принадлежность к физической точке.
 
