@@ -562,32 +562,21 @@ components:
   schemas:
     AnalyticsMetabaseObject:
       type: object
-      required: [id, url, api_url]
+      required: [id, type]
       properties:
         id:
           type: integer
           description: Текущий числовой ID объекта Metabase
           example: 101
-        url:
+        type:
           type: string
-          description: Веб-ссылка на объект Metabase
-          example: https://analytics.example.org/dashboard/101
-        api_url:
-          type: string
-          description: URL для получения описания объекта через Metabase API
-          example: https://analytics.example.org/api/dashboard/101
+          enum: [collection, dashboard, question]
+          description: Тип объекта; question — сохранённый вопрос (график, таблица или карточка)
+          example: dashboard
     AnalyticsCatalog:
       type: object
-      required: [revision, metabase_url, collections, dashboards, charts]
+      required: [collections, dashboards, charts]
       properties:
-        revision:
-          type: string
-          format: date-time
-          description: Время последнего сохранения реестра в UTC
-        metabase_url:
-          type: string
-          description: Публичный URL Metabase из MB_SITE_URL, локально — localhost с METABASE_PORT
-          example: https://analytics.example.org
         collections:
           type: object
           description: Коллекции по постоянному collection.key
