@@ -1993,3 +1993,96 @@ cms-session-abandon:
         description: Некорректные параметры, ссылки или состав теста.
     security:
     - bearerAuth: []
+groups:
+  get:
+    tags:
+    - ПрофСтарт - Пользователь
+    summary: Группы результата типа теста
+    operationId: profstart_groups_get
+    description: 'Требуется пользовательский access-токен (включая гостя) или Device JWT активного устройства с ролью 3. QR-привязка
+      и X-Device-Connection-Id не требуются: группы являются общим справочником. Доступны группы всех типов независимо от
+      статуса версии теста; возвращаются актуальные данные CMS. Порядок id ASC, ответ содержит items, total, limit, offset.'
+    x-implementation-status: implemented
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: test_code_type
+      in: path
+      required: true
+      description: Код типа теста, например solomin, holland или dellinger
+      schema:
+        type: string
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    responses:
+      '401':
+        description: Отсутствующий или недействительный пользовательский токен либо Device JWT; staff-токен не допускается.
+      '403':
+        description: Устройство не имеет роли ПрофСтарт (3).
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupPage'
+      '404':
+        description: Тип теста не найден или группа не принадлежит указанному типу.
+      '422':
+        description: Некорректные параметры пути или пагинации.
+group:
+  get:
+    description: 'Требуется пользовательский access-токен (включая гостя) или Device JWT активного устройства с ролью 3. QR-привязка
+      и X-Device-Connection-Id не требуются: группы являются общим справочником. Доступны группы всех типов независимо от
+      статуса версии теста; возвращаются актуальные данные CMS. Проверяется принадлежность group_id указанному test_code_type.'
+    tags:
+    - ПрофСтарт - Пользователь
+    summary: Карточка группы результата
+    operationId: profstart_group_get
+    x-implementation-status: implemented
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: test_code_type
+      in: path
+      required: true
+      description: Код типа теста, например solomin, holland или dellinger
+      schema:
+        type: string
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '401':
+        description: Отсутствующий или недействительный пользовательский токен либо Device JWT; staff-токен не допускается.
+      '403':
+        description: Устройство не имеет роли ПрофСтарт (3).
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroup'
+      '404':
+        description: Тип теста не найден или группа не принадлежит указанному типу.
+      '422':
+        description: Некорректные параметры пути или пагинации.

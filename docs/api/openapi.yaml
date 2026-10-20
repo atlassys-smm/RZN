@@ -438,6 +438,10 @@ paths:
     $ref: ./paths/profstart.yaml#/cms-options
   /cms/profstart/tests/{test_id}/questions/{question_id}/options/{option_id}:
     $ref: ./paths/profstart.yaml#/cms-option
+  /profstart/test-types/{test_code_type}/groups:
+    $ref: ./paths/profstart.yaml#/groups
+  /profstart/test-types/{test_code_type}/groups/{group_id}:
+    $ref: ./paths/profstart.yaml#/group
   /profstart/tests:
     $ref: ./paths/profstart.yaml#/tests
   /profstart/tests/{test_id}:
