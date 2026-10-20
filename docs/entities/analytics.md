@@ -15,8 +15,6 @@
 | `id` | UUID | Уникальный ID конкретного факта; сохраняется при повторах |
 | `event_id` | UInt16 | Действие из `EventType(IntEnum)` |
 | `module_id` | UInt8 | Функциональный модуль из `ModuleType(IntEnum)` |
-| `software_id` | UInt8 | Программный комплекс из `SoftwareType(IntEnum)` |
-| `device_type` | Nullable(UInt8) | Оборудование из `DeviceType(IntEnum)`; NULL, если не передано |
 | `device_id` | Nullable(Int64) | Конкретное устройство |
 | `user_id` | Nullable(Int64) | Пользователь действия, если известен |
 | `is_guest` | Nullable(Bool) | Снимок статуса пользователя в момент события: true — гость, false — OAuth, NULL — неизвестен или нет user_id |
@@ -31,12 +29,10 @@
 и [источниках событий](../references/event-sources.md). После публикации коды
 не перенумеровываются и не назначаются другому значению.
 
-`device_type` и `device_id` по умолчанию равны NULL. Значения передаются только
-при наличии соответствующих данных. В коде оставлен TODO для определения типа
-оборудования по источнику; автоматического определения пока нет. Исторические
-события с неизвестным типом оборудования также сохраняют NULL.
+`device_id` равен NULL, если конкретное устройство неизвестно. Тип оборудования
+и программный комплекс в событии не хранятся; модуль задаётся `module_id`.
 
-Сессия различается по `(software_id, module_id, session_id)`. Числовые ID сессий
+Сессия различается по `(module_id, session_id)`. Числовые ID сессий
 внутри одного модуля не должны переиспользоваться, пока соответствующие события
 остаются в ClickHouse.
 
@@ -54,7 +50,7 @@
 ### Хранение и доставка
 
 Таблица использует `ReplacingMergeTree(received_at)`, ключ
-`(software_id, module_id, id)` и месячную партицию `toYYYYMM(occurred_at)`.
+`(module_id, id)` и месячную партицию `toYYYYMM(occurred_at)`.
 Представления читают `analytics.events_unique` с FINAL и учитывают повтор факта
 один раз. DDL находится в `infra/clickhouse/migrations`; запуск:
 `docker compose exec api python infra/clickhouse/scripts/update.py`.
@@ -62,7 +58,7 @@
 `emit_event` выполняет только локальную постановку и не ждёт сеть или свободное
 место в очереди. Фоновый отправитель собирает пакеты, ждёт подтверждения записи
 и повторяет неудачную доставку с тем же содержимым и токеном вставки.
-UUID5 создаётся из источника, модуля, сессии, действия и стабильного `event_key`;
+UUID5 создаётся из модуля, сессии, действия и стабильного `event_key`.
 при отсутствии ключа используется UUID4. Время действия не меняется при повторах.
 
 Очередь ограничена количеством событий и байтами. Доставка best effort:
@@ -71,7 +67,7 @@ UUID5 создаётся из источника, модуля, сессии, д
 
 ### Викторина
 
-`software_id=1` (LED_PLATFORM); `module_id=1` (QUIZ_IND) — индивидуальная
+`module_id=1` (QUIZ_IND) — индивидуальная
 викторина, `module_id=2` (QUIZ_TEAM) — командная. Режим определяется модулем.
 [Требуемые показатели](../interfaces/admin-portal/dashboards.md#индивидуальная-викторина).
 
@@ -104,7 +100,7 @@ UUID5 создаётся из источника, модуля, сессии, д
 считаются по ненулевым user_id, это не оценка числа людей без идентификации.
 
 Представления: quiz_sessions, quiz_answers, quiz_teams, quiz_participants.
-Соединения используют software_id, module_id и session_id. Признак completed
+Соединения используют module_id и session_id. Признак completed
 в quiz_sessions определяется наличием finished_at, а не значением finish_reason.
 Период дашборда
 выбирает игры по started_at; границы дат — Europe/Moscow.
@@ -114,7 +110,7 @@ UUID5 создаётся из источника, модуля, сессии, д
 
 ### ПрофСтарт: события прохождения
 
-`software_id=3`, `module_id=4`. Сервисы отправляют факты только после commit:
+`module_id=4`. Сервисы отправляют факты только после commit:
 
 | event_id | Факт | Дополнительные данные |
 |---|---|---|
@@ -132,8 +128,7 @@ UUID5 создаётся из источника, модуля, сессии, д
 
 ### ПрофСтарт: рекомендованные профессии
 
-`event_id=5` (PROFESSION_RECOMMENDED), `module_id=4` (PROFSTART),
-`software_id=3` (PROFSTART). После успешного commit последнего ответа
+`event_id=5` (PROFESSION_RECOMMENDED), `module_id=4` (PROFSTART). После успешного commit последнего ответа
 создаётся по одному событию на профессию из сохранённого результата теста.
 Используется полный список рекомендаций этого теста, без ограничения
 тремя профессиями общего профиля.
@@ -143,7 +138,6 @@ UUID5 создаётся из источника, модуля, сессии, д
 | `session_id` | ID прохождения TestSession; общий для всех профессий одного результата |
 | `user_id` | Пользователь прохождения |
 | `occurred_at` | Сохранённое время завершения теста completed_at |
-| `device_type` | NULL: источник оборудования пока неизвестен |
 | `device_id` | NULL: устройство в этом потоке не передаётся |
 | `payload.test_id` | ID версии теста |
 | `payload.test_type_id` | ID типа теста |
@@ -158,7 +152,7 @@ UUID5 создаётся из источника, модуля, сессии, д
 задаёт стабильный UUID факта. Внутри одного результата профессии уже
 объединены по profession_id, независимо от числа совпавших групп теста.
 Пять профессий дают пять событий и один подбор: подборы считаются
-по различным `(software_id, module_id, session_id)`, люди — по различным
+по различным `(module_id, session_id)`, люди — по различным
 ненулевым user_id, частота профессии — по результатам с этой профессией.
 Все такие запросы используют `analytics.events_unique` и фильтр действия 5.
 
@@ -179,7 +173,7 @@ profstart_answers, profstart_group_results и profstart_recommendations. Они
 
 ### Обратная связь
 
-`software_id=4`, `module_id=5`: реальный старт `SURVEY_STARTED=7`,
+`module_id=5`: реальный старт `SURVEY_STARTED=7`,
 итоговые числовые ответы `ANSWER_SUBMITTED=6`, окончание `SURVEY_FINISHED=8`.
 `session_id` — ID SurveyResponse. Метаданные анкеты и точки есть во всех событиях;
 оценки содержат ID/текст/тип вопроса, rating и границы шкалы. Текстовые ответы
@@ -192,17 +186,16 @@ profstart_answers, profstart_group_results и profstart_recommendations. Они
 
 Подключение и развёртывание: [ClickHouse и Metabase](../subsystems/analytics/clickhouse-metabase.md).
 
-### Сводные сессии ПАК
+### Сводные сессии модулей
 
-`analytics.pak_sessions` (ClickHouse `0007_pak_sessions.sql`) объединяет
-жизненный цикл сценариев по `(software_id, module_id, session_id)`.
+`analytics.module_sessions` (ClickHouse `0007_module_sessions.sql`) объединяет
+жизненный цикл сценариев по `(module_id, session_id)`.
 Это обычное представление над `events_unique`, без новой физической таблицы.
 
 | Поле | Содержимое |
 |---|---|
-| software_id | Код ПАК |
-| software_name | Название ПАК; для неизвестного кода — «ПАК #код» |
 | module_id | Код модуля |
+| module_name | Название модуля; для неизвестного кода — «Модуль #код» |
 | session_id | ID сессии внутри модуля |
 | device_id | Известный ID устройства, иначе NULL |
 | started_at | Первый реальный старт (1, для анкет 7), иначе NULL |
@@ -222,7 +215,7 @@ profstart_answers, profstart_group_results и profstart_recommendations. Они
 
 `analytics.visitor_activity` (ClickHouse 0008) представляет персональные события
 с известным `user_id` и участников стартового снимка викторины. Поля: `id`,
-`software_id`, `module_id`, `device_id`, `user_id`, `is_guest`, `occurred_at`.
+`module_id`, `device_id`, `user_id`, `is_guest`, `occurred_at`.
 Источником служит `events_unique`; повтор одной личности между событиями
 и ПАК устраняется при расчёте уникальных посетителей, не по числу строк view.
 

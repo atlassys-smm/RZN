@@ -1,7 +1,7 @@
 # Аналитика анкет
 
 В ClickHouse подключены события обратной связи. В Metabase развёртывается
-дашборд **Аналитика → Детальная аналитика по каждому ПАК → Обратная связь**
+дашборд **Аналитика → Детальная аналитика по модулям → Обратная связь**
 (`pak.feedback`, на текущем сервере — `/dashboard/26`). Текстовых комментариев
 в дашборде нет. Исходный шаблон —
 `infra/metabase/collections/analytics/details/feedback/collection.json`.
@@ -28,9 +28,9 @@ device_id (если известно устройство), completed_at=NULL и
 завершения. После получения id клиент сохраняет его и использует для отправки.
 Незавершённые записи исключены из CMS-списка готовых ответов.
 
-`module_id=5`, `software_id=4`. В общем событии session_id равен ID SurveyResponse.
+`module_id=5`, . В общем событии session_id равен ID SurveyResponse.
 user_id берётся из авторизации. Device JWT даёт реальный ID устройства;
-при User JWT без устройства device_id=NULL. device_type пока NULL.
+при User JWT без устройства device_id=NULL.
 `is_guest` передаётся отдельным nullable-полем события и фиксирует статус
 пользователя при начале/отправке анкеты. Исторические события сохраняют NULL.
 source_id — строка точки сбора из клиента; она не заменяет device_id и сама
@@ -58,9 +58,9 @@ response_id, duration_ms и finish_reason="completed".
 Физическая таблица остаётся общей — `analytics.events`. Представления
 `analytics.feedback_sessions` и `analytics.feedback_ratings` добавлены миграцией
 ClickHouse `0004_feedback_views.sql`, читают `events_unique` и отбирают только
-`software_id=4`, `module_id=5`. Повтор доставки одного UUID не увеличивает счётчики.
+`module_id=5`. Повтор доставки одного UUID не увеличивает счётчики.
 
-Сессия определяется по `(software_id, module_id, session_id)`. У событий старта,
+Сессия определяется по `(module_id, session_id)`. У событий старта,
 окончания и оценки стабильные ключи `feedback:<session_id>:start`,
 `feedback:<session_id>:finish`, `feedback:<session_id>:question:<question_id>`.
 Сервисы не ждут HTTP-записи в ClickHouse: очередь и доставка остаются best effort.
