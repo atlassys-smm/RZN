@@ -77,10 +77,19 @@ UUID5 создаётся из источника, модуля, сессии, д
 
 | event_id | Действие | Payload |
 |---|---|---|
-| 1 | SESSION_STARTED | participant_count, team_count, participants[{participant_id,user_id,is_guest}], teams[{team_id,participant_count}] |
+| 1 | SESSION_STARTED | participant_count, team_count, participants[{participant_id,user_id,is_guest}], teams[{team_id,participant_count}]; для командной игры tracks_participant_answers=true |
 | 2 | PARTICIPANT_JOINED | participant_id, team_id |
 | 3 | ANSWER_EVALUATED | session_question_id, participant_id, team_id, is_correct |
-| 4 | SESSION_FINISHED | duration_ms, finish_reason |
+| 4 | SESSION_FINISHED | duration_ms, finish_reason; для командной игры participants[{participant_id,team_id}] — состав на окончание |
+| 6 | ANSWER_SUBMITTED | Только командная игра: session_question_id, participant_id, team_id — факт принятого личного ответа, без содержимого |
+
+Личный ответ командной игры отправляется после commit через синхронную
+постановку в очередь; `event_key=quiz_answer_submitted:<session_question_id>:<participant_id>`.
+`user_id` и `is_guest` передаются на верхнем уровне для отправившего ответ.
+Событие создаётся для обычного участника и капитана, независимо от раскрытия.
+`tracks_participant_answers` в старте отделяет игры с полным новым сбором от
+исторических. Доля личного участия использует только новые завершённые игры
+и состав команд на окончание; [формулы и ограничения](../subsystems/analytics/dashboards/pak-detail/led-platform.md#правильность-и-личное-участие).
 
 Количество участников и непустых команд фиксируется на старте. Повторное
 подключение не создаёт регистрации. Ответ оценивается при раскрытии вопроса;
