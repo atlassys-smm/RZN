@@ -3964,6 +3964,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /quiz/sessions/{id}/questions:
+    get:
+      tags:
+      - Викторина
+      summary: Список вопросов сессии для оператора
+      operationId: quiz_session_questions_get
+      description: Требуется staff access-токен admin/operator. Все вопросы всех раундов
+        конкретной сессии в порядке GameSessionRound.order, GameSessionQuestion.order;
+        повторения одного вопроса различаются по id записи сессии. В waiting все вопросы
+        future. В active ранее пройденные позиции — passed, текущая позиция — current,
+        остальные — future. Reveal, пауза и остановка таймера сохраняют current до
+        next. После finish текущая и прежние позиции — passed, не показанные вопросы
+        остаются future; завершённая до старта сессия содержит только future. Добавленный
+        финальный раунд включается в конец списка. Чтение не изменяет ход сессии.
+      x-implementation-status: implemented
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Упорядоченный список вопросов с вычисленным статусом прохождения.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuizSessionQuestion'
+        '401':
+          description: Требуется действующий staff-токен; User и Device не допускаются.
+        '403':
+          description: Роль сотрудника не admin/operator.
+        '404':
+          description: Сессия не найдена.
+        '422':
+          description: Некорректный ID сессии.
   /quiz/sessions/{id}/final-round:
     post:
       tags:
@@ -10595,6 +10636,52 @@ components:
           type: string
           format: date-time
           nullable: true
+    QuizSessionQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - question_id
+      - text
+      - round_id
+      - round_type
+      - round_order
+      - order
+      - status
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID записи GameSessionQuestion, различает повторения одного
+            вопроса.
+        question_id:
+          type: integer
+          format: int64
+          description: ID вопроса в банке GameQuestion.
+        text:
+          type: string
+          description: Текущий текст вопроса из банка.
+        round_id:
+          type: integer
+          format: int64
+          description: ID раунда сессии.
+        round_type:
+          type: integer
+          description: Тип раунда.
+        round_order:
+          type: integer
+          description: Порядок раунда в сессии.
+        order:
+          type: integer
+          description: Порядок вопроса внутри раунда.
+        status:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'GameSessionQuestionStatus: 1 — passed (пройден), 2 — current
+            (текущий), 3 — future (будущий). Вычисляется при чтении, в БД не хранится.'
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от
         параметра select.

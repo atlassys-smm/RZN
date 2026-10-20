@@ -156,6 +156,10 @@ REST-состояние содержит вычисляемый `can_start_final
 | `question_id` | integer (int64) | ID исходного вопроса ([GameQuestion](quiz.md)) |
 | `order` | integer | Порядок вопроса в раунде |
 
+### Операторский список и прогресс
+
+GET `/quiz/sessions/{id}/questions` возвращает вопросы всех раундов по round.order и question.order. В ответе `id` — ID этой записи, `question_id` — ID исходного вопроса; повторения не объединяются. Дополнительно возвращаются текст, round_id, round_type, round_order и вычисляемый status: 1 — passed, 2 — current, 3 — future (enum GameSessionQuestionStatus).
+
 ### Связи
 
 - **GameSessionQuestion → GameSessionRound**: вопрос принадлежит одному раунду
