@@ -112,6 +112,7 @@ nav:
       - Оператор: subsystems/led-platform/operator.md
     - Аналитика и отчётность:
       - Описание: subsystems/analytics.md
+      - ClickHouse и Metabase: subsystems/analytics/clickhouse-metabase.md
       - Дашборды:
         - Обзор: subsystems/analytics/dashboards.md
         - Главный Dashboard: subsystems/analytics/dashboards/general.md

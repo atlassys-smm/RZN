@@ -1,37 +1,30 @@
-events:
-  post:
-    tags: [Аналитика]
-    summary: Отправить событие
-    description: Зарегистрировать аналитическое событие
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-    responses:
-      '201':
-        description: Событие зарегистрировано
+catalog:
   get:
     tags: [Аналитика]
-    summary: Список событий
-    description: Получить список аналитических событий с фильтрацией
-    parameters:
-      - name: type
-        in: query
-        schema:
-          type: string
-        description: Тип события
-      - name: from
-        in: query
-        schema:
-          type: string
-          format: date-time
-      - name: to
-        in: query
-        schema:
-          type: string
-          format: date-time
+    summary: Справочник объектов Metabase
+    operationId: getAnalyticsCatalog
+    description: |
+      Получить соответствия постоянных ключей проекта и объектов Metabase:
+      каждый объект содержит id и type (collection, dashboard или question).
+      Ответ содержит только collections, dashboards и charts.
+      Требуется Bearer access-токен пользователя (включая гостя), сотрудника любой
+      роли или активного устройства. Дополнительных проверок ролей и привязки
+      устройства к пользователю нет. Токен проверяется штатной авторизацией API.
+      Бэкенд читает локальный реестр state.json, не обращается к Metabase
+      и не выполняет аналитические запросы. Фронтенд получает данные напрямую
+      через Metabase API с отдельной авторизацией Metabase.
+      При отсутствии или повреждении реестра возвращается 503.
+      Пароли, токены и внутренние настройки не возвращаются.
+    security:
+      - bearerAuth: []
     responses:
       '200':
-        description: Список событий
+        description: Справочник текущих объектов Metabase
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsCatalog'
+      '401':
+        description: Токен отсутствует, недействителен или срок его действия истёк; сессия или сущность недействительна
+      '503':
+        description: Реестр Metabase не развёрнут или недоступен
