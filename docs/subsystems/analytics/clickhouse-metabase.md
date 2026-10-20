@@ -71,7 +71,8 @@ storage/infra/                        # вне Git
 ├── clickhouse/
 │   ├── backup/                       # резервные копии ClickHouse
 │   ├── log/                          # ошибки SQL и HTTP
-│   ├── versions.json
+│   ├── versions.json                 # прежний журнал локального clickhouse:8123
+│   ├── targets/<endpoint-hash>/versions.json  # журналы других серверов
 │   └── .update.lock                   # на время обновления
 ├── metabase/
 │   ├── backup/                       # дампы и снимки Metabase
@@ -95,16 +96,22 @@ storage/infra/                        # вне Git
 ## Настройки подключения Metabase
 
 `infra/metabase/config.json` описывает подключение Metabase к ClickHouse:
-имя, движок, адрес `clickhouse:8123`, базу `analytics`, пользователя
-`analytics_reader` и имя переменной с паролем `CLICKHOUSE_READER_PASSWORD`.
+имя, движок, базу `analytics` и ссылки на переменные окружения. `url_env`
+указывает на `ANALYTICS_CLICKHOUSE_URL`, `user_env` — на
+`CLICKHOUSE_READER_USER`, `password_env` — на `CLICKHOUSE_READER_PASSWORD`.
+Host, port и ssl получаются из общего URL: `http` без порта означает 80,
+`https` — 443; для ClickHouse обычно явно задают 8123 или 8443.
 В `settings` задан часовой пояс отчётов `Europe/Moscow`.
 Файл хранится в Git и не содержит паролей или ID текущей установки.
 
 При развёртывании скрипт использует существующее подключение из реестра или
-находит его по имени; отсутствующее подключение создаёт. Уже созданное подключение
-по этому файлу не обновляется. Настройки из `settings` задаются только при отсутствии
-значения в Metabase. Изменение `config.json` не выполняет смену паролей или
-параметров существующего подключения автоматически.
+находит его по имени. Отсутствующее подключение создаётся; существующее
+обновляется через `PUT /api/database/{id}` с сохранением ID. Поэтому графики
+и дашборды продолжают ссылаться на то же подключение. Управляемые поля,
+включая адрес, SSL, пользователя и пароль, заменяются конфигурацией; дополнительные
+параметры драйвера сохраняются. Настройки из `settings` задаются только при
+отсутствии значения в Metabase. Изменение пароля подключения не меняет пароль
+пользователя на сервере ClickHouse — сервер нужно подготовить отдельно.
 
 ## ClickHouse: миграции
 
@@ -115,7 +122,12 @@ docker compose exec api python infra/clickhouse/scripts/update.py --verify
 ```
 
 Команда выполняет новые миграции по порядку и после успеха сохраняет номер
-и SHA-256 в `storage/infra/clickhouse/versions.json`. На новой установке журнал
+и SHA-256 в журнале выбранного сервера. Для `http://clickhouse:8123` сохранён
+путь `storage/infra/clickhouse/versions.json`; для остальных адресов —
+`storage/infra/clickhouse/targets/<endpoint-hash>/versions.json`. Hash вычисляется
+из схемы, имени хоста и эффективного порта, без паролей. Завершающий `/`
+не меняет журнал. Новый адрес не наследует применённые миграции другого сервера.
+На новой установке журнал
 создаётся автоматически с версии 0. `--plan` показывает текущую версию и список
 неприменённых файлов без подключения к ClickHouse. `--verify` применяет новые
 миграции, если они есть, затем проверяет таблицу и представления.
@@ -383,19 +395,25 @@ profstart_answers, profstart_group_results и profstart_recommendations.
 
 | Параметр .env | Как заполнять |
 |---|---|
-| `CLICKHOUSE_USER` | `analytics_admin` |
+| `COMPOSE_PROFILES` | `local-clickhouse` для локального контейнера; пусто для внешнего сервера |
+| `CLICKHOUSE_USER` | Администратор целевого ClickHouse; локально `analytics_admin` |
 | `CLICKHOUSE_PASSWORD` | Пароль администратора ClickHouse |
 | `CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT` | `1` для создания ограниченных пользователей |
 | `CLICKHOUSE_WRITER_PASSWORD` | Пароль `analytics_writer` |
-| `CLICKHOUSE_READER_PASSWORD` | Пароль `analytics_reader` |
-| `CLICKHOUSE_PORT` | HTTP-порт на loopback сервера: `8124`; внутри Docker — `8123` |
-| `ANALYTICS_CLICKHOUSE_URL` | `http://clickhouse:8123` в сети Compose |
+| `CLICKHOUSE_READER_USER` | Пользователь Metabase; по умолчанию `analytics_reader` |
+| `CLICKHOUSE_READER_PASSWORD` | Пароль пользователя Metabase |
+| `CLICKHOUSE_PORT` | Только публикация локального контейнера на loopback: `8124`; не порт внешнего подключения |
+| `ANALYTICS_CLICKHOUSE_URL` | Общий HTTP(S) URL API, миграций и Metabase; локально `http://clickhouse:8123` |
 | `ANALYTICS_CLICKHOUSE_USER` | `analytics_writer` |
 | `ANALYTICS_CLICKHOUSE_PASSWORD` | `${CLICKHOUSE_WRITER_PASSWORD}`, ссылка на тот же секрет |
 
-Скрипты проверяют формат трёх паролей ClickHouse: **64 строчных hex-символа**.
-Использовать разные пароли и заполнить их вручную в общем `.env`. Скрипты
-не генерируют пароли и не подставляют значения по умолчанию.
+Пароли ClickHouse должны быть непустыми; ограничение на 64 hex-символа снято,
+чтобы использовать существующие учётные данные внешнего сервера. Использовать
+разные пароли и заполнить их вручную в общем `.env`. Скрипты не генерируют пароли.
+URL не должен содержать логин/пароль, query, fragment или путь, кроме `/`.
+Пользователи администратора, отправителя и Metabase задаются раздельно.
+Начальная миграция создаёт стандартные `analytics_writer` и `analytics_reader`;
+нестандартные имена внешних пользователей и их права подготавливаются отдельно.
 
 ### Metabase
 
@@ -420,23 +438,90 @@ profstart_answers, profstart_group_results и profstart_recommendations.
 При изменении этих параметров адаптировать `initialize_database.py`.
 
 Все обязательные параметры из таблиц, а также `ANALYTICS_ENABLED`, должны быть
-явно заполнены в `.env`. Compose передаёт их в `api` через `env_file: .env`; скрипты
+явно заполнены в `.env`, кроме `CLICKHOUSE_READER_USER` с совместимым значением
+по умолчанию. `COMPOSE_PROFILES` управляет Compose. Окружение скриптов
+Compose передаёт в `api` через `env_file: .env`; скрипты
 читают окружение контейнера: при отсутствии или пустом
 значении выводят имена переменных, при неверном формате — ошибку соответствующего
 параметра. Значения секретов не выводятся. Порты проверяются на диапазон 1–65535,
-булевы флаги — на `true`/`false`, пароли ClickHouse — на формат hex, пароль отправителя
+булевы флаги — на `true`/`false`, пароли — на непустое значение; пароль отправителя
 должен совпадать с `CLICKHOUSE_WRITER_PASSWORD`. `MB_SITE_URL` остаётся необязательным.
 На существующей установке использовать прежние пароли.
 Изменение `.env` не меняет пароли в ClickHouse, PostgreSQL или Metabase:
 смена выполняется отдельно с согласованным обновлением сохранённых подключений.
+
+## Локальный или внешний ClickHouse
+
+Один URL `ANALYTICS_CLICKHOUSE_URL` используется API для отправки событий,
+административными скриптами для миграций/проверок и Metabase для чтения.
+Текущая локальная конфигурация:
+
+```dotenv
+COMPOSE_PROFILES=local-clickhouse
+ANALYTICS_CLICKHOUSE_URL=http://clickhouse:8123
+CLICKHOUSE_READER_USER=analytics_reader
+```
+
+Внешний сервер (пример, не текущее рабочее подключение):
+
+```dotenv
+COMPOSE_PROFILES=
+ANALYTICS_CLICKHOUSE_URL=https://clickhouse.example.org:8443
+CLICKHOUSE_USER=analytics_admin
+ANALYTICS_CLICKHOUSE_USER=analytics_writer
+CLICKHOUSE_READER_USER=analytics_reader
+```
+
+В том же `.env` задать соответствующие пароли, сохранив ссылку
+`ANALYTICS_CLICKHOUSE_PASSWORD=${CLICKHOUSE_WRITER_PASSWORD}`. HTTPS должен
+быть настроен на внешнем сервере, сертификат — доверенным для API и Metabase;
+проверка TLS не отключается. Адрес должен быть доступен из обоих контейнеров.
+При HTTP использовать защищённую частную сеть. Доступы разделены:
+администратор — миграции; writer — INSERT в `analytics.events`;
+reader — SELECT на `analytics.*`.
+
+Профиль `local-clickhouse` включает только локальный контейнер
+([механизм профилей Compose](https://docs.docker.com/compose/how-tos/profiles/)). Внешний режим
+не запускает его при обычном `docker compose up`; Metabase зависит только от
+PostgreSQL. Смена профиля не останавливает уже запущенный ClickHouse и не
+удаляет контейнер/том. Явный запуск сервиса `clickhouse` включает его независимо
+от профиля: эту команду не использовать при внешнем режиме.
+
+Перед переключением подготовить схему и пользователей целевого сервера и,
+если нужна история, отдельно перенести события. Переключение URL не переносит
+данные. Другая DNS-запись, схема или порт дают отдельный журнал миграций,
+даже если физический сервер тот же. При восстановлении готовой схемы переносить
+соответствующий журнал только после проверки её соответствия; не исправлять
+версии и контрольные суммы вручную для обхода проверки.
+
+После правки `.env` проверить целевую PostgreSQL, текущую ревизию Alembic и все
+неприменённые миграции: обновление API автоматически выполняет `upgrade head`.
+Затем применить окружение только к API и обновить существующее подключение Metabase:
+
+```bash
+docker compose up -d --no-deps api
+docker compose exec api python infra/clickhouse/scripts/update.py --check-env
+docker compose exec api python infra/clickhouse/scripts/update.py --plan
+docker compose exec api python infra/clickhouse/scripts/update.py --verify
+docker compose exec api python infra/metabase/scripts/deploy.py --init
+docker compose exec api python infra/metabase/scripts/deploy.py --verify
+```
+
+`--verify` ClickHouse применяет ожидающие миграции: сначала проверить план.
+`--init` обновляет параметры подключения, сохраняя ID; пересоздание Metabase и
+повторное развёртывание графиков не требуются. Переключение обратно на локальный
+сервер выполняется теми же действиями с прежним URL и профилем. Работающий
+ClickHouse не перезапускается. Очередь событий остаётся в памяти API и best effort:
+перезапуск и длительная недоступность внешнего сервера могут приводить к потере событий.
 
 ## Развёртывание на другом сервере
 
 Нужны checkout проекта, заполненный корневой `.env` и Docker с Compose.
 Python и зависимости уже находятся в образе `api`; устанавливать их на хост не нужно.
 Код `infra` подключён в `api` только для чтения, а `storage/infra` — с правом записи.
-Скрипты подключаются к `http://clickhouse:8123`, `http://metabase:3000` и `db:5432`
-в сети Compose. `MB_SITE_URL` остаётся адресом для браузера и ссылок справочника.
+ClickHouse выбирается через `ANALYTICS_CLICKHOUSE_URL`; Metabase и PostgreSQL
+остаются на `http://metabase:3000` и `db:5432` в сети Compose. `MB_SITE_URL` —
+адрес Metabase для браузера.
 Скрипты не запускают Docker и не управляют жизненным циклом контейнеров.
 
 На новой установке сначала подготовить обычный API и работающий PostgreSQL проекта,
@@ -462,7 +547,7 @@ docker compose exec api python infra/metabase/scripts/deploy.py --init
 дополнить общий `.env` параметрами из `.env.example`; пустые секреты в шаблоне
 являются местами для заполнения, а не рабочими значениями.
 `--init` Metabase проверяет/подготавливает базу, подключение и реестр существующих объектов.
-Содержимое JSON-деклараций при этом не применяется.
+Содержимое `collection.json` при этом не применяется.
 На новой установке администратор создаётся из `.env`.
 После подготовки развернуть нужные файлы коллекций отдельными командами,
 например индивидуальную викторину и командную игру:
