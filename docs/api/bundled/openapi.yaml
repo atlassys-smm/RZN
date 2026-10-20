@@ -7169,11 +7169,14 @@ paths:
       - ПрофСтарт - Пользователь
       summary: Доступные активные тесты
       operationId: profstart_tests_get
-      description: User JWT или Device JWT с ролью 3. Активные версии всех типов,
-        которые пользователь ещё не завершил. Не более одной версии на тип; пустой
-        список допустим. Без X-Device-Connection-Id каталог устройства не персонализируется.
-        С заголовком требуется действующая QR-привязка; завершённые типы подключённого
-        пользователя исключаются.
+      description: User JWT или Device JWT с ролью 3. По умолчанию все активные тесты,
+        включая завершённые и без сессий. session_status — статус последней собственной
+        сессии по типу теста независимо от версии по started_at DESC, id DESC; без
+        сессий — null. Фильтр session_status=1/2/3 оставляет только тесты с соответствующим
+        последним статусом. Без X-Device-Connection-Id устройство получает session_status=null
+        у всех тестов, фильтр любого статуса возвращает пустой список. С заголовком
+        используется действующая QR-привязка. Правило однократного завершения типа
+        при старте не меняется.
       x-implementation-status: implemented
       parameters:
       - $ref: '#/components/parameters/DeviceCatalogConnectionId'
@@ -7194,6 +7197,17 @@ paths:
           type: integer
           format: int64
           minimum: 1
+      - name: session_status
+        in: query
+        required: false
+        description: Статус последней сессии пользователя по типу теста среди всех
+          версий; без фильтра возвращаются все активные тесты, включая тесты без сессий.
+        schema:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
       responses:
         '403':
           description: Недостаточно прав устройства или сотрудника.
@@ -7204,7 +7218,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProfStartPublicTest'
+                  $ref: '#/components/schemas/ProfStartCatalogTest'
         '401':
           description: Требуется авторизация.
         '404':
@@ -12070,6 +12084,109 @@ components:
           - 2
           - 3
           description: 2 — active, 3 — archived.
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
+    ProfStartCatalogTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - status
+      - file
+      - session_status
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при
+            отсутствии.
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+        question_count:
+          type: integer
+          minimum: 1
+        test_code_type:
+          type: string
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 2
+          - 3
+          description: 2 — active, 3 — archived.
+        session_status:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - 3
+          - null
+          description: 'Статус последней сессии текущего пользователя по типу теста
+            независимо от версии: 1 — in_progress, 2 — completed, 3 — abandoned; null
+            — сессий нет или устройство без QR-привязки. Последняя определяется по
+            started_at DESC, id DESC.'
       allOf:
       - if:
           properties:

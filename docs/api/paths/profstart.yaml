@@ -1345,7 +1345,7 @@ tests:
     - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: "User JWT или Device JWT с ролью 3. Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим. Без X-Device-Connection-Id каталог устройства не персонализируется. С заголовком требуется действующая QR-привязка; завершённые типы подключённого пользователя исключаются."
+    description: "User JWT или Device JWT с ролью 3. По умолчанию все активные тесты, включая завершённые и без сессий. session_status — статус последней собственной сессии по типу теста независимо от версии по started_at DESC, id DESC; без сессий — null. Фильтр session_status=1/2/3 оставляет только тесты с соответствующим последним статусом. Без X-Device-Connection-Id устройство получает session_status=null у всех тестов, фильтр любого статуса возвращает пустой список. С заголовком используется действующая QR-привязка. Правило однократного завершения типа при старте не меняется."
     x-implementation-status: implemented
     parameters:
     - $ref: '#/components/parameters/DeviceCatalogConnectionId'
@@ -1365,6 +1365,13 @@ tests:
         type: integer
         format: int64
         minimum: 1
+    - name: session_status
+      in: query
+      required: false
+      description: Статус последней сессии пользователя по типу теста среди всех версий; без фильтра возвращаются все активные тесты, включая тесты без сессий.
+      schema:
+        type: integer
+        enum: [1, 2, 3]
     responses:
       '403':
         description: Недостаточно прав устройства или сотрудника.
@@ -1375,7 +1382,7 @@ tests:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/ProfStartPublicTest'
+                $ref: '#/components/schemas/ProfStartCatalogTest'
       '401':
         description: Требуется авторизация.
       '404':

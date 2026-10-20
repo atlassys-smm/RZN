@@ -3181,6 +3181,106 @@ components:
           properties:
             question_count:
               const: 1
+    ProfStartCatalogTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - status
+      - file
+      - session_status
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+        question_count:
+          type: integer
+          minimum: 1
+        test_code_type:
+          type: string
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 2
+          - 3
+          description: 2 — active, 3 — archived.
+        session_status:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - 3
+          - null
+          description: 'Статус последней сессии текущего пользователя по типу теста независимо от версии: 1 — in_progress, 2 — completed,
+            3 — abandoned; null — сессий нет или устройство без QR-привязки. Последняя определяется по started_at DESC, id DESC.'
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
     ProfStartGroupCreate:
       type: object
       additionalProperties: false
