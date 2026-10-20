@@ -199,9 +199,12 @@ cms-tests:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartTestCreate'
+          encoding:
+            age_group_ids:
+              contentType: text/plain
 cms-test:
   get:
     description: "Требуется staff access-токен: admin/content_editor/operator. "
@@ -276,9 +279,12 @@ cms-test:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartTestPatch'
+          encoding:
+            age_group_ids:
+              contentType: text/plain
   delete:
     tags:
     - ПрофСтарт - CMS
@@ -505,7 +511,7 @@ cms-groups:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartGroupCreate'
 cms-group:
@@ -594,7 +600,7 @@ cms-group:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartGroupPatch'
   delete:

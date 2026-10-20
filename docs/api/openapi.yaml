@@ -2858,6 +2858,20 @@ components:
       - test_type_id
       - name
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         test_type_id:
           type: integer
           format: int64
@@ -2871,18 +2885,34 @@ components:
           type: string
           default: ''
         age_group_ids:
-          type: array
-          description: ID возрастных групп; пустой массив — без ограничений.
-          items:
-            type: integer
-            format: int64
-          uniqueItems: true
-          default: []
+          type: string
+          description: JSON-массив ID возрастных групп в отдельном текстовом поле формы; [] снимает ограничения.
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
     ProfStartTestPatch:
       type: object
       additionalProperties: false
       required: []
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         name:
           type: string
           minLength: 1
@@ -2893,13 +2923,15 @@ components:
           type: string
           default: ''
         age_group_ids:
-          type: array
-          description: ID возрастных групп; пустой массив снимает ограничения.
-          items:
-            type: integer
-            format: int64
-          uniqueItems: true
-          default: []
+          type: string
+          description: JSON-массив ID возрастных групп в отдельном текстовом поле формы; [] снимает ограничения.
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
       minProperties: 1
     ProfStartTest:
       type: object
@@ -2919,7 +2951,13 @@ components:
       - created_at
       - updated_at
       - status
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
         id:
           type: integer
           format: int64
@@ -3068,7 +3106,13 @@ components:
       - age_group_ids
       - question_count
       - status
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
         id:
           type: integer
           format: int64
@@ -3143,6 +3187,20 @@ components:
       - code
       - name
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         code:
           type: string
           minLength: 1
@@ -3168,6 +3226,20 @@ components:
       additionalProperties: false
       required: []
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         code:
           type: string
           minLength: 1
@@ -3198,7 +3270,13 @@ components:
       - name
       - description
       - category
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
         id:
           type: integer
           format: int64
