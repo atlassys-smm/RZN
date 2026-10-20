@@ -2804,6 +2804,7 @@ components:
 
     # ── ПрофСтарт: схемы ─────────────
     ProfStartAgeGroup:
+      description: Фиксированный справочник из enum AgeGroup; поля и формат ответа сохранены.
       type: object
       additionalProperties: false
       required: [id, name, min_age, max_age]

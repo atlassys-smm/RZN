@@ -5,7 +5,7 @@ cms-age-groups:
     - ПрофСтарт - CMS
     summary: Справочник возрастных групп
     operationId: profstart_cms_age_groups_get
-    description: "Требуется staff access-токен: admin/content_editor/operator. Возрастные границы включительно; порядок id ASC."
+    description: "Требуется staff access-токен: admin/content_editor/operator. Фиксированный enum AgeGroup: 1 — 12–14 лет, 2 — 15–17 лет. Возрастные границы включительно; порядок id ASC."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -28,7 +28,7 @@ age-groups:
     - ПрофСтарт - Пользователь
     summary: Справочник возрастных групп
     operationId: profstart_age_groups_get
-    description: "Требуется пользовательский access-токен или токен активного устройства. Группы для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC. Для device-токена требуется роль 3; другая группа устройства — 403."
+    description: "Требуется пользовательский access-токен или токен активного устройства. Фиксированный enum AgeGroup (1 — 12–14 лет, 2 — 15–17 лет) для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC. Для device-токена требуется роль 3; другая группа устройства — 403."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -1352,7 +1352,7 @@ tests:
     - name: age_group_id
       in: query
       required: false
-      description: ID из age_groups; неизвестный ID — 422. Возрастная доступность
+      description: ID enum AgeGroup (1 или 2); неизвестный ID — 422. Возрастная доступность
       schema:
         type: integer
         format: int64
