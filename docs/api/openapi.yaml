@@ -230,6 +230,19 @@ paths:
   /directions/{id}:
     $ref: './paths/professions.yaml#/directions-detail'
 
+  /industries/branches:
+    $ref: './paths/professions.yaml#/industry-branches'
+  /industries/branches/{id}:
+    $ref: './paths/professions.yaml#/industry-branches-detail'
+  /professions/employers:
+    $ref: './paths/professions.yaml#/profession-employers'
+  /professions/employers/{id}:
+    $ref: './paths/professions.yaml#/profession-employers-detail'
+  /professions/education-programs:
+    $ref: './paths/professions.yaml#/profession-education-programs'
+  /professions/education-programs/{id}:
+    $ref: './paths/professions.yaml#/profession-education-programs-detail'
+
   # ── Компетенции ─────────────────────────────────
   /competences:
     $ref: './paths/competences.yaml#/competences'
@@ -241,6 +254,11 @@ paths:
     $ref: './paths/organizations.yaml#/organizations'
   /organizations/{id}:
     $ref: './paths/organizations.yaml#/organizations-detail'
+
+  /organizations/education-programs:
+    $ref: './paths/organizations.yaml#/education-programs'
+  /organizations/education-programs/{id}:
+    $ref: './paths/organizations.yaml#/education-programs-detail'
 
   # ── Согласия ────────────────────────────────────
   /consents/types:
@@ -1367,55 +1385,112 @@ components:
       title: ValidationError
     # ── Справочники ────────────────────────────────
     Industry:
-      description: Отрасль экономики
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
         created_at:
           type: string
           format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      title: IndustryResponse
 
     Direction:
-      description: Профессиональное направление
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
         created_at:
           type: string
           format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - created_at
+      title: DirectionResponse
 
     Profession:
-      description: Профессия из справочника
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
         description:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
         industry_id:
           type: integer
-          format: int64
+          title: Industry Id
         direction_id:
-          type: integer
-          format: int64
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
+        skills:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills
+        prospects:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prospects
+        min_salary:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Min Salary
+        max_salary:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Salary
         created_at:
           type: string
           format: date-time
+          title: Created At
         updated_at:
           type: string
           format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - industry_id
+      - direction_id
+      - skills
+      - prospects
+      - min_salary
+      - max_salary
+      - created_at
+      - updated_at
+      title: ProfessionResponse
 
     Competence:
       description: Компетенция (навык/способность)
@@ -1434,43 +1509,104 @@ components:
           format: date-time
 
     Organization:
-      description: Организация (учебное заведение или работодатель)
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
         type:
-          type: string
-          enum: [education, employer]
+          $ref: '#/components/schemas/OrganizationType'
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        industry_branch_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
+        employee_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Employee Count
+        scale_or_product:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scale Or Product
+        practice_info:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Practice Info
+        education_level:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Education Level
         address:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
         coordinates:
-          type: object
-          nullable: true
-          properties:
-            lat:
-              type: number
-            lng:
-              type: number
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Coordinates
         description:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
         website:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Website
         phone:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
         created_at:
           type: string
           format: date-time
+          title: Created At
         updated_at:
           type: string
           format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - full_name
+      - location
+      - industry_branch_id
+      - employee_count
+      - scale_or_product
+      - practice_info
+      - education_level
+      - address
+      - coordinates
+      - description
+      - website
+      - phone
+      - created_at
+      - updated_at
+      title: OrganizationResponse
 
     ConsentType:
       description: Тип согласия
@@ -4857,6 +4993,741 @@ components:
       type: object
       description: Элемент полного списка при обновлении вопроса. id — существующий вариант своего вопроса; без id добавляется
         новый.
+
+
+    CoordinatesSchema:
+      properties:
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+      type: object
+      required:
+      - lat
+      - lng
+      title: CoordinatesSchema
+
+    DirectionCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - name
+      title: DirectionCreateRequest
+
+    DirectionUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      title: DirectionUpdateRequest
+
+    EducationProgramCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        organization_id:
+          type: integer
+          title: Organization Id
+        education_level:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Education Level
+        duration:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Duration
+        base_class:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Base Class
+      type: object
+      required:
+      - name
+      - organization_id
+      - education_level
+      - duration
+      title: EducationProgramCreateRequest
+
+    EducationProgram:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        organization_id:
+          type: integer
+          title: Organization Id
+        education_level:
+          type: string
+          title: Education Level
+        duration:
+          type: string
+          title: Duration
+        base_class:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Base Class
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - organization_id
+      - education_level
+      - duration
+      - base_class
+      - created_at
+      - updated_at
+      title: EducationProgramResponse
+
+    EducationProgramUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        organization_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Organization Id
+        education_level:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 1
+          - type: 'null'
+          title: Education Level
+        duration:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Duration
+        base_class:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Base Class
+      type: object
+      title: EducationProgramUpdateRequest
+
+    IndustryBranchCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        industry_id:
+          type: integer
+          title: Industry Id
+      type: object
+      required:
+      - name
+      - industry_id
+      title: IndustryBranchCreateRequest
+
+    IndustryBranch:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        industry_id:
+          type: integer
+          title: Industry Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - name
+      - industry_id
+      - created_at
+      title: IndustryBranchResponse
+
+    IndustryBranchUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        industry_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Id
+      type: object
+      title: IndustryBranchUpdateRequest
+
+    IndustryCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+      type: object
+      required:
+      - name
+      title: IndustryCreateRequest
+
+    IndustryUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+      type: object
+      title: IndustryUpdateRequest
+
+    OrganizationCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        type:
+          $ref: '#/components/schemas/OrganizationType'
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        industry_branch_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
+        employee_count:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Employee Count
+        scale_or_product:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scale Or Product
+        practice_info:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Practice Info
+        education_level:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Education Level
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        coordinates:
+          anyOf:
+          - $ref: '#/components/schemas/CoordinatesSchema'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        website:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Website
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Phone
+      type: object
+      required:
+      - name
+      - type
+      title: OrganizationCreateRequest
+
+    OrganizationType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      title: OrganizationType
+
+    OrganizationUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        type:
+          anyOf:
+          - $ref: '#/components/schemas/OrganizationType'
+          - type: 'null'
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        industry_branch_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
+        employee_count:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Employee Count
+        scale_or_product:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scale Or Product
+        practice_info:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Practice Info
+        education_level:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Education Level
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        coordinates:
+          anyOf:
+          - $ref: '#/components/schemas/CoordinatesSchema'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        website:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Website
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Phone
+      type: object
+      title: OrganizationUpdateRequest
+
+    DirectionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Direction'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[DirectionResponse]
+
+    EducationProgramListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/EducationProgram'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[EducationProgramResponse]
+
+    IndustryBranchListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/IndustryBranch'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[IndustryBranchResponse]
+
+    IndustryListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Industry'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[IndustryResponse]
+
+    OrganizationListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Organization'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[OrganizationResponse]
+
+    ProfessionEducationProgramListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProfessionEducationProgram'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[ProfessionEducationProgramResponse]
+
+    ProfessionEmployerListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProfessionEmployer'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[ProfessionEmployerResponse]
+
+    ProfessionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Profession'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[ProfessionResponse]
+
+    ProfessionCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        industry_id:
+          type: integer
+          title: Industry Id
+        direction_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
+        skills:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills
+        prospects:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prospects
+        min_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Min Salary
+        max_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Max Salary
+      type: object
+      required:
+      - name
+      - industry_id
+      title: ProfessionCreateRequest
+
+    ProfessionEducationProgramCreateRequest:
+      properties:
+        profession_id:
+          type: integer
+          title: Profession Id
+        education_program_id:
+          type: integer
+          title: Education Program Id
+      type: object
+      required:
+      - profession_id
+      - education_program_id
+      title: ProfessionEducationProgramCreateRequest
+
+    ProfessionEducationProgram:
+      properties:
+        id:
+          type: integer
+          title: Id
+        profession_id:
+          type: integer
+          title: Profession Id
+        education_program_id:
+          type: integer
+          title: Education Program Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - profession_id
+      - education_program_id
+      - created_at
+      title: ProfessionEducationProgramResponse
+
+    ProfessionEducationProgramUpdateRequest:
+      properties:
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        education_program_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Education Program Id
+      type: object
+      title: ProfessionEducationProgramUpdateRequest
+
+    ProfessionEmployerCreateRequest:
+      properties:
+        profession_id:
+          type: integer
+          title: Profession Id
+        employer_id:
+          type: integer
+          title: Employer Id
+      type: object
+      required:
+      - profession_id
+      - employer_id
+      title: ProfessionEmployerCreateRequest
+
+    ProfessionEmployer:
+      properties:
+        id:
+          type: integer
+          title: Id
+        profession_id:
+          type: integer
+          title: Profession Id
+        employer_id:
+          type: integer
+          title: Employer Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - profession_id
+      - employer_id
+      - created_at
+      title: ProfessionEmployerResponse
+
+    ProfessionEmployerUpdateRequest:
+      properties:
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        employer_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Employer Id
+      type: object
+      title: ProfessionEmployerUpdateRequest
+
+    ProfessionUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        industry_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Id
+        direction_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
+        skills:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills
+        prospects:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prospects
+        min_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Min Salary
+        max_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Max Salary
+      type: object
+      title: ProfessionUpdateRequest
 
 security:
   - bearerAuth: []

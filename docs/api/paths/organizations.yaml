@@ -1,183 +1,399 @@
-# ═══════════════════════════════════════════════════════════════
-# Организации
-# ═══════════════════════════════════════════════════════════════
-
 organizations:
   get:
-    tags: [Организации]
+    tags:
+    - Организации
     summary: Список организаций
-    description: Получить справочник организаций с фильтрацией и пагинацией
-    security: []
     parameters:
-      - name: type
-        in: query
-        schema:
-          type: string
-          enum: [education, employer]
-        description: Фильтр по типу (education — учебные заведения, employer — работодатели)
-      - name: search
-        in: query
-        schema:
-          type: string
-        description: Поиск по названию
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          default: 0
+    - name: type
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - $ref: '#/components/schemas/OrganizationType'
+        - type: 'null'
+        title: Type
+    - name: industry_branch_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Industry Branch Id
+    - name: search
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Search
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        title: Limit
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        title: Offset
     responses:
       '200':
-        description: Список организаций
+        description: Successful Response
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                items:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Organization'
-                total:
-                  type: integer
+              $ref: '#/components/schemas/OrganizationListResponse'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+    security: []
+    description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+      по ID возвращает 404. Пагинация и total учитывают только доступные записи.
   post:
-    tags: [Организации]
+    tags:
+    - Организации
     summary: Создать организацию
-    description: Требуется staff access-токен редактора контента. Создать новую организацию (требуются права CMS)
+    security:
+    - bearerAuth: []
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            required: [name, type]
-            properties:
-              name:
-                type: string
-              type:
-                type: string
-                enum: [education, employer]
-              address:
-                type: string
-              coordinates:
-                type: object
-                properties:
-                  lat:
-                    type: number
-                  lng:
-                    type: number
-              description:
-                type: string
-              website:
-                type: string
-              phone:
-                type: string
+            $ref: '#/components/schemas/OrganizationCreateRequest'
     responses:
-      '403':
-        description: Недостаточно прав
-      '401':
-        description: Недействительный или отсутствующий токен
       '201':
-        description: Организация создана
+        description: Successful Response
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Organization'
-
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация сотрудника
+      '403':
+        description: Недостаточно прав
+      '409':
+        description: Активные зависимости или конфликт уникальной пары связей
+    description: Требуется staff access-токен редактора контента или администратора.
+      Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+      на удалённые записи отклоняются (422).
 organizations-detail:
   get:
-    tags: [Организации]
-    summary: Детали организации
-    description: Получить полную информацию об организации
-    security: []
+    tags:
+    - Организации
+    summary: Получить организацию
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Organization Id
     responses:
       '200':
-        description: Организация
+        description: Successful Response
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Organization'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
       '404':
-        description: Не найдена
+        description: Запись не найдена или удалена
+    security: []
+    description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+      по ID возвращает 404. Пагинация и total учитывают только доступные записи.
   put:
-    tags: [Организации]
-    summary: Обновить организацию
-    description: Требуется staff access-токен редактора контента. Обновить организацию (требуются права CMS)
+    tags:
+    - Организации
+    summary: Изменить организацию
+    security:
+    - bearerAuth: []
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Organization Id
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              type:
-                type: string
-                enum: [education, employer]
-              address:
-                type: string
-              coordinates:
-                type: object
-                properties:
-                  lat:
-                    type: number
-                  lng:
-                    type: number
-              description:
-                type: string
-              website:
-                type: string
-              phone:
-                type: string
+            $ref: '#/components/schemas/OrganizationUpdateRequest'
     responses:
-      '403':
-        description: Недостаточно прав
-      '401':
-        description: Недействительный или отсутствующий токен
       '200':
-        description: Организация обновлена
+        description: Successful Response
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Organization'
-      '404':
-        description: Не найдена
-  delete:
-    tags: [Организации]
-    summary: Удалить организацию
-    description: Требуется staff access-токен редактора контента. Удалить организацию (требуются права CMS)
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-    responses:
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация сотрудника
       '403':
         description: Недостаточно прав
-      '401':
-        description: Недействительный или отсутствующий токен
-      '204':
-        description: Организация удалена
+      '409':
+        description: Активные зависимости или конфликт уникальной пары связей
       '404':
-        description: Не найдена
+        description: Запись не найдена или удалена
+    description: Требуется staff access-токен редактора контента или администратора.
+      Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+      на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный null
+      очищает nullable-поле.
+  delete:
+    tags:
+    - Организации
+    summary: Удалить организацию
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Organization Id
+    responses:
+      '204':
+        description: Successful Response
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация сотрудника
+      '403':
+        description: Недостаточно прав
+      '409':
+        description: Активные зависимости или конфликт уникальной пары связей
+      '404':
+        description: Запись не найдена или удалена
+    description: Требуется staff access-токен редактора контента или администратора.
+      Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+      404. Ответ 409, если существуют активные направления подготовки. Связи с профессиями
+      или организациями также помечаются удалёнными.
+education-programs:
+  get:
+    tags:
+    - Организации
+    summary: Список направлений подготовки
+    parameters:
+    - name: organization_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Organization Id
+    - name: search
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Search
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        title: Limit
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        title: Offset
+    responses:
+      '200':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationProgramListResponse'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+    security: []
+    description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+      по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+  post:
+    tags:
+    - Организации
+    summary: Создать направление подготовки
+    security:
+    - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EducationProgramCreateRequest'
+    responses:
+      '201':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationProgram'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация сотрудника
+      '403':
+        description: Недостаточно прав
+      '409':
+        description: Активные зависимости или конфликт уникальной пары связей
+    description: Требуется staff access-токен редактора контента или администратора.
+      Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+      на удалённые записи отклоняются (422).
+education-programs-detail:
+  get:
+    tags:
+    - Организации
+    summary: Получить направление подготовки
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Education Program Id
+    responses:
+      '200':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationProgram'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '404':
+        description: Запись не найдена или удалена
+    security: []
+    description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+      по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+  put:
+    tags:
+    - Организации
+    summary: Изменить направление подготовки
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Education Program Id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EducationProgramUpdateRequest'
+    responses:
+      '200':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationProgram'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация сотрудника
+      '403':
+        description: Недостаточно прав
+      '409':
+        description: Активные зависимости или конфликт уникальной пары связей
+      '404':
+        description: Запись не найдена или удалена
+    description: Требуется staff access-токен редактора контента или администратора.
+      Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+      на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный null
+      очищает nullable-поле.
+  delete:
+    tags:
+    - Организации
+    summary: Удалить направление подготовки
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Education Program Id
+    responses:
+      '204':
+        description: Successful Response
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Требуется авторизация сотрудника
+      '403':
+        description: Недостаточно прав
+      '409':
+        description: Активные зависимости или конфликт уникальной пары связей
+      '404':
+        description: Запись не найдена или удалена
+    description: Требуется staff access-токен редактора контента или администратора.
+      Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+      404. Связи с профессиями или организациями также помечаются удалёнными.

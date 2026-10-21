@@ -22,3 +22,5 @@ contributions содержит source_id, source_module, source_code, weight, ef
 Исторический результат отдельного теста доступен через `/api/profstart/sessions/{id}/result` с массивом scores.
 
 [Сущности](../entities/user-recommendations.md) · [Формулы](../subsystems/profstart/results.md).
+
+Мягкое удаление профессии (`deleted_at`) не исключает её из ранее сохранённых рекомендаций: ID, название и исходные баллы берутся из снимка источника. При новом прохождении подбираются только активные профессии по активным связям.

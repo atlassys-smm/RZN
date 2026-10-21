@@ -8151,5 +8151,2082 @@
       "profession_name": "Социально-культурная деятельность",
       "program_name": "Биология Профиль: Биоинженерия и биотехнология"
     }
+  ],
+  "profstart_test_types": [
+    {
+      "code": "solomin",
+      "name": "Анкета «Ориентация» И. Л. Соломина",
+      "description": ""
+    },
+    {
+      "code": "holland",
+      "name": "Тест на основе теории Дж. Голланда",
+      "description": ""
+    },
+    {
+      "code": "dellinger",
+      "name": "Геометрический тест Сьюзен Деллингер",
+      "description": ""
+    }
+  ],
+  "profstart_test_groups": [
+    {
+      "test_code_type": "solomin",
+      "code": "human_human",
+      "name": "Человек — человек",
+      "description": "",
+      "category": "subject"
+    },
+    {
+      "test_code_type": "solomin",
+      "code": "human_technology",
+      "name": "Человек — техника",
+      "description": "",
+      "category": "subject"
+    },
+    {
+      "test_code_type": "solomin",
+      "code": "human_sign",
+      "name": "Человек — знаковая система",
+      "description": "",
+      "category": "subject"
+    },
+    {
+      "test_code_type": "solomin",
+      "code": "human_art",
+      "name": "Человек — художественный образ",
+      "description": "",
+      "category": "subject"
+    },
+    {
+      "test_code_type": "solomin",
+      "code": "human_nature",
+      "name": "Человек — природа",
+      "description": "",
+      "category": "subject"
+    },
+    {
+      "test_code_type": "solomin",
+      "code": "executive",
+      "name": "Исполнительские",
+      "description": "",
+      "category": "labor"
+    },
+    {
+      "test_code_type": "solomin",
+      "code": "creative",
+      "name": "Творческие",
+      "description": "",
+      "category": "labor"
+    },
+    {
+      "test_code_type": "holland",
+      "code": "R",
+      "name": "Реалистический",
+      "description": "",
+      "category": "riasec"
+    },
+    {
+      "test_code_type": "holland",
+      "code": "I",
+      "name": "Исследовательский / интеллектуальный",
+      "description": "",
+      "category": "riasec"
+    },
+    {
+      "test_code_type": "holland",
+      "code": "S",
+      "name": "Социальный",
+      "description": "",
+      "category": "riasec"
+    },
+    {
+      "test_code_type": "holland",
+      "code": "E",
+      "name": "Предприимчивый",
+      "description": "",
+      "category": "riasec"
+    },
+    {
+      "test_code_type": "holland",
+      "code": "C",
+      "name": "Конвенциональный",
+      "description": "",
+      "category": "riasec"
+    },
+    {
+      "test_code_type": "holland",
+      "code": "A",
+      "name": "Артистический",
+      "description": "",
+      "category": "riasec"
+    },
+    {
+      "test_code_type": "dellinger",
+      "code": "square",
+      "name": "Квадрат",
+      "description": "",
+      "category": "geometry"
+    },
+    {
+      "test_code_type": "dellinger",
+      "code": "triangle",
+      "name": "Треугольник",
+      "description": "",
+      "category": "geometry"
+    },
+    {
+      "test_code_type": "dellinger",
+      "code": "circle",
+      "name": "Круг",
+      "description": "",
+      "category": "geometry"
+    },
+    {
+      "test_code_type": "dellinger",
+      "code": "zigzag",
+      "name": "Зигзаг",
+      "description": "",
+      "category": "geometry"
+    },
+    {
+      "test_code_type": "dellinger",
+      "code": "rectangle",
+      "name": "Прямоугольник",
+      "description": "",
+      "category": "geometry"
+    }
+  ],
+  "profstart_test_group_professions": [
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 1
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 1
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 1
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 1
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 2
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 2
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 2
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "triangle",
+      "profession_id": 2
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 3
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 3
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 3
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 3
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 4
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 4
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 4
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 4
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 5
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 5
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 5
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 5
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 6
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 6
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 6
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 6
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 7
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 7
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 7
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 7
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 8
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 8
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 8
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 8
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 9
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 9
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 9
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 9
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 10
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 10
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 10
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 10
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 11
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 11
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 11
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 11
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 12
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 12
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 12
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "triangle",
+      "profession_id": 12
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 13
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 13
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 13
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 13
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 14
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 14
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 14
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 14
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 15
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 15
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 15
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 15
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 16
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 16
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 16
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 16
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 17
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 17
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 17
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 17
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 18
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 18
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 18
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 18
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 19
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 19
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "S",
+      "profession_id": 19
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 19
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 20
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 20
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 20
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 20
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 21
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 21
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 21
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 21
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 22
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 22
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 22
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 22
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 23
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 23
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 23
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 23
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 24
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 24
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 24
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 24
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 25
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 25
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 25
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 25
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 26
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 26
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 26
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 26
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 27
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 27
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 27
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 27
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 28
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 28
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 28
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 28
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 29
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 29
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 29
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 29
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 30
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 30
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 30
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 30
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 31
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 31
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 31
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 31
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 32
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 32
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 32
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 32
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 33
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 33
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 33
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 33
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 34
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 34
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 34
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 34
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 35
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 35
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 35
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 35
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 36
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 36
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 36
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 36
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 37
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 37
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 37
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 37
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 38
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 38
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 38
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 38
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 39
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 39
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "S",
+      "profession_id": 39
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 39
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 40
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 40
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "S",
+      "profession_id": 40
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 40
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 41
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 41
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 41
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 41
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 42
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 42
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 42
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 42
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 43
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 43
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 43
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 43
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 44
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 44
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 44
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 44
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 45
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 45
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 45
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 45
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 46
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 46
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 46
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 46
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 47
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 47
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 47
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 47
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 48
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 48
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 48
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 48
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 49
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 49
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 49
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 49
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 50
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 50
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 50
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 50
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 51
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 51
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 51
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 51
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 52
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 52
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 52
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 52
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 53
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 53
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 53
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 53
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 54
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 54
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 54
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 54
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 55
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 55
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 55
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 55
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 56
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 56
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 56
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 56
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 57
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 57
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 57
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 57
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 58
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 58
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 58
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 58
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 59
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 59
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 59
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 59
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_nature",
+      "profession_id": 60
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 60
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 60
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 60
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 61
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 61
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 61
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 61
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 62
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 62
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 62
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 62
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 63
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 63
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "C",
+      "profession_id": 63
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 63
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 64
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 64
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 64
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 64
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 65
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 65
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 65
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 65
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 66
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 66
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 66
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 66
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 67
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 67
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "C",
+      "profession_id": 67
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 67
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 68
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 68
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 68
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 68
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 69
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 69
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "E",
+      "profession_id": 69
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "triangle",
+      "profession_id": 69
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 70
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 70
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 70
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 70
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 71
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 71
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "E",
+      "profession_id": 71
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "triangle",
+      "profession_id": 71
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 72
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 72
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 72
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 72
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 73
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 73
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 73
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 73
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 74
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 74
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 74
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 74
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 75
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 75
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "C",
+      "profession_id": 75
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 75
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 76
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 76
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "C",
+      "profession_id": 76
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 76
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 77
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 77
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "E",
+      "profession_id": 77
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 77
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 78
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 78
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "C",
+      "profession_id": 78
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 78
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_sign",
+      "profession_id": 79
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 79
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "C",
+      "profession_id": 79
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 79
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 80
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 80
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 80
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 80
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 81
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 81
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "I",
+      "profession_id": 81
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 81
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 82
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 82
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 82
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 82
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 83
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 83
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 83
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 83
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 84
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 84
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 84
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 84
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 85
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 85
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 85
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 85
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 86
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 86
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "S",
+      "profession_id": 86
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 86
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 87
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 87
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 87
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 87
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 88
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 88
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 88
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 88
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 89
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 89
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 89
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "zigzag",
+      "profession_id": 89
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_technology",
+      "profession_id": 90
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 90
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "R",
+      "profession_id": 90
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "square",
+      "profession_id": 90
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 91
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "executive",
+      "profession_id": 91
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "E",
+      "profession_id": 91
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 91
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 92
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 92
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "S",
+      "profession_id": 92
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 92
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_human",
+      "profession_id": 93
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 93
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "S",
+      "profession_id": 93
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "circle",
+      "profession_id": 93
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "human_art",
+      "profession_id": 94
+    },
+    {
+      "test_code_type": "solomin",
+      "group_code": "creative",
+      "profession_id": 94
+    },
+    {
+      "test_code_type": "holland",
+      "group_code": "A",
+      "profession_id": 94
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "triangle",
+      "profession_id": 94
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 19
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 20
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 21
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 30
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 48
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 49
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 52
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 85
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 91
+    },
+    {
+      "test_code_type": "dellinger",
+      "group_code": "rectangle",
+      "profession_id": 94
+    }
   ]
 }

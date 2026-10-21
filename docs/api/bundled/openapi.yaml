@@ -1082,12 +1082,15 @@ paths:
       - Рекомендации пользователя
       summary: Общий профиль рекомендаций текущего пользователя
       operationId: user_recommendations_get
-      description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
-        устройства обязателен X-Device-Connection-Id. Профиль с максимум тремя профессиями
-        и вкладами источников. До первого сохранённого источника — JSON null. В расчёте
-        участвуют только источники с положительным весом в SOURCE_WEIGHTS. Рейтинг
-        рассчитывается при каждом запросе из снимков источников; веса заданы в коде,
-        итог не сохраняется.
+      description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
+        для устройства обязателен X-Device-Connection-Id. Профиль с максимум тремя
+        профессиями и вкладами источников. До первого сохранённого источника — JSON
+        null. В расчёте участвуют только источники с положительным весом в SOURCE_WEIGHTS.
+        Рейтинг рассчитывается при каждом запросе из снимков источников; веса заданы
+        в коде, итог не сохраняется. Мягкое удаление профессии (`deleted_at`) не исключает
+        её из ранее сохранённых рекомендаций: ID, название и исходные баллы берутся
+        из снимка источника. При новом прохождении подбираются только активные профессии
+        по активным связям.'
       security:
       - bearerAuth: []
       parameters:
@@ -1113,414 +1116,1165 @@ paths:
       tags:
       - Профессии
       summary: Список профессий
-      description: Получить справочник профессий с фильтрацией и пагинацией
-      security: []
       parameters:
-      - name: direction_id
-        in: query
-        schema:
-          type: integer
-          format: int64
-        description: Фильтр по профессиональному направлению
       - name: industry_id
         in: query
+        required: false
         schema:
-          type: integer
-          format: int64
-        description: Фильтр по отрасли
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Id
+      - name: direction_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
       - name: search
         in: query
+        required: false
         schema:
-          type: string
-        description: Поиск по названию
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
       - name: limit
         in: query
+        required: false
         schema:
           type: integer
+          minimum: 1
           default: 20
+          title: Limit
       - name: offset
         in: query
+        required: false
         schema:
           type: integer
+          minimum: 0
           default: 0
+          title: Offset
       responses:
         '200':
-          description: Список профессий
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Profession'
-                  total:
-                    type: integer
+                $ref: '#/components/schemas/ProfessionListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     post:
       tags:
       - Профессии
       summary: Создать профессию
-      description: Требуется staff access-токен редактора контента. Создать новую
-        профессию (требуются права CMS)
+      security:
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - name
-              - industry_id
-              - direction_id
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-                industry_id:
-                  type: integer
-                  format: int64
-                direction_id:
-                  type: integer
-                  format: int64
+              $ref: '#/components/schemas/ProfessionCreateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '201':
-          description: Профессия создана
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Profession'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422).
   /professions/{id}:
     get:
       tags:
       - Профессии
-      summary: Детали профессии
-      description: Получить полную информацию о профессии по идентификатору
-      security: []
+      summary: Получить профессию
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Profession Id
       responses:
         '200':
-          description: Карточка профессии
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Profession'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '404':
-          description: Профессия не найдена
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     put:
       tags:
       - Профессии
-      summary: Обновить профессию
-      description: Требуется staff access-токен редактора контента. Обновить профессию
-        (требуются права CMS)
+      summary: Изменить профессию
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Profession Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
-                industry_id:
-                  type: integer
-                  format: int64
-                direction_id:
-                  type: integer
-                  format: int64
+              $ref: '#/components/schemas/ProfessionUpdateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '200':
-          description: Профессия обновлена
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Profession'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
     delete:
       tags:
       - Профессии
       summary: Удалить профессию
-      description: Требуется staff access-токен редактора контента. Удалить профессию
-        (требуются права CMS)
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Profession Id
       responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
         '403':
           description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
-        '204':
-          description: Профессия удалена
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404. Связи с профессиями или организациями также помечаются удалёнными.
   /industries:
     get:
       tags:
       - Профессии
-      summary: Список отраслей
-      security: []
+      summary: Список индустрий
       parameters:
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
       - name: limit
         in: query
+        required: false
         schema:
           type: integer
-          default: 50
+          minimum: 1
+          default: 20
+          title: Limit
       - name: offset
         in: query
+        required: false
         schema:
           type: integer
+          minimum: 0
           default: 0
+          title: Offset
       responses:
         '200':
-          description: Список отраслей
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Industry'
-                  total:
-                    type: integer
+                $ref: '#/components/schemas/IndustryListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     post:
       tags:
       - Профессии
-      summary: Создать отрасль
-      description: Требуется staff access-токен редактора контента. Создать новую
-        отрасль (требуются права CMS)
+      summary: Создать индустрию
+      security:
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - name
-              properties:
-                name:
-                  type: string
+              $ref: '#/components/schemas/IndustryCreateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '201':
-          description: Отрасль создана
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Industry'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422).
   /industries/{id}:
+    get:
+      tags:
+      - Профессии
+      summary: Получить индустрию
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Industry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Industry'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     put:
       tags:
       - Профессии
-      summary: Обновить отрасль
-      description: Требуется staff access-токен редактора контента. Обновить отрасль
-        (требуются права CMS)
+      summary: Изменить индустрию
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Industry Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
+              $ref: '#/components/schemas/IndustryUpdateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '200':
-          description: Отрасль обновлена
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Industry'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
     delete:
       tags:
       - Профессии
-      summary: Удалить отрасль
-      description: Требуется staff access-токен редактора контента. Удалить отрасль
-        (требуются права CMS)
+      summary: Удалить индустрию
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Industry Id
       responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
         '403':
           description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
-        '204':
-          description: Отрасль удалена
         '409':
-          description: Нельзя удалить — есть связанные профессии
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404. Ответ 409, если существуют активные профессии или отрасли.
   /directions:
     get:
       tags:
       - Профессии
-      summary: Список направлений
-      security: []
+      summary: Список профессиональных направлений
       parameters:
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
       - name: limit
         in: query
+        required: false
         schema:
           type: integer
-          default: 50
+          minimum: 1
+          default: 20
+          title: Limit
       - name: offset
         in: query
+        required: false
         schema:
           type: integer
+          minimum: 0
           default: 0
+          title: Offset
       responses:
         '200':
-          description: Список направлений
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Direction'
-                  total:
-                    type: integer
+                $ref: '#/components/schemas/DirectionListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     post:
       tags:
       - Профессии
-      summary: Создать направление
-      description: Требуется staff access-токен редактора контента. Создать новое
-        направление (требуются права CMS)
+      summary: Создать профессиональное направление
+      security:
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - name
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
+              $ref: '#/components/schemas/DirectionCreateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '201':
-          description: Направление создано
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Direction'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422).
   /directions/{id}:
+    get:
+      tags:
+      - Профессии
+      summary: Получить профессиональное направление
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Direction Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Direction'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     put:
       tags:
       - Профессии
-      summary: Обновить направление
-      description: Требуется staff access-токен редактора контента. Обновить направление
-        (требуются права CMS)
+      summary: Изменить профессиональное направление
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Direction Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                description:
-                  type: string
+              $ref: '#/components/schemas/DirectionUpdateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '200':
-          description: Направление обновлено
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Direction'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
     delete:
       tags:
       - Профессии
-      summary: Удалить направление
-      description: Требуется staff access-токен редактора контента. Удалить направление
-        (требуются права CMS)
+      summary: Удалить профессиональное направление
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Direction Id
       responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
         '403':
           description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
-        '204':
-          description: Направление удалено
         '409':
-          description: Нельзя удалить — есть связанные профессии
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404. Ответ 409, если существуют активные профессии.
+  /industries/branches:
+    get:
+      tags:
+      - Профессии
+      summary: Список отраслей
+      parameters:
+      - name: industry_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Id
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndustryBranchListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    post:
+      tags:
+      - Профессии
+      summary: Создать отрасль
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndustryBranchCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndustryBranch'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422).
+  /industries/branches/{id}:
+    get:
+      tags:
+      - Профессии
+      summary: Получить отрасль
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Industry Branch Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndustryBranch'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    put:
+      tags:
+      - Профессии
+      summary: Изменить отрасль
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Industry Branch Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndustryBranchUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndustryBranch'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
+    delete:
+      tags:
+      - Профессии
+      summary: Удалить отрасль
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Industry Branch Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404. Ответ 409, если существуют активные организации.
+  /professions/employers:
+    get:
+      tags:
+      - Профессии
+      summary: Список связей профессий с работодателями
+      parameters:
+      - name: profession_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+      - name: employer_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Employer Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEmployerListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    post:
+      tags:
+      - Профессии
+      summary: Создать связь профессии с работодателем
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionEmployerCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEmployer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Повторное создание удалённой пары восстанавливает
+        ту же строку; активная пара возвращает 409.
+  /professions/employers/{id}:
+    get:
+      tags:
+      - Профессии
+      summary: Получить связь профессии с работодателем
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Profession Employer Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEmployer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    put:
+      tags:
+      - Профессии
+      summary: Изменить связь профессии с работодателем
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Profession Employer Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionEmployerUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEmployer'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
+    delete:
+      tags:
+      - Профессии
+      summary: Удалить связь профессии с работодателем
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Profession Employer Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404.
+  /professions/education-programs:
+    get:
+      tags:
+      - Профессии
+      summary: Список связей профессий с направлениями подготовки
+      parameters:
+      - name: profession_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+      - name: education_program_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Education Program Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEducationProgramListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    post:
+      tags:
+      - Профессии
+      summary: Создать связь профессии с направлением подготовки
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionEducationProgramCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEducationProgram'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Повторное создание удалённой пары восстанавливает
+        ту же строку; активная пара возвращает 409.
+  /professions/education-programs/{id}:
+    get:
+      tags:
+      - Профессии
+      summary: Получить связь профессии с направлением подготовки
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Profession Education Program Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEducationProgram'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    put:
+      tags:
+      - Профессии
+      summary: Изменить связь профессии с направлением подготовки
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Profession Education Program Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessionEducationProgramUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessionEducationProgram'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
+    delete:
+      tags:
+      - Профессии
+      summary: Удалить связь профессии с направлением подготовки
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Profession Education Program Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404.
   /competences:
     get:
       tags:
@@ -1653,195 +2407,400 @@ paths:
       tags:
       - Организации
       summary: Список организаций
-      description: Получить справочник организаций с фильтрацией и пагинацией
-      security: []
       parameters:
       - name: type
         in: query
+        required: false
         schema:
-          type: string
-          enum:
-          - education
-          - employer
-        description: Фильтр по типу (education — учебные заведения, employer — работодатели)
+          anyOf:
+          - $ref: '#/components/schemas/OrganizationType'
+          - type: 'null'
+          title: Type
+      - name: industry_branch_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
       - name: search
         in: query
+        required: false
         schema:
-          type: string
-        description: Поиск по названию
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
       - name: limit
         in: query
+        required: false
         schema:
           type: integer
+          minimum: 1
           default: 20
+          title: Limit
       - name: offset
         in: query
+        required: false
         schema:
           type: integer
+          minimum: 0
           default: 0
+          title: Offset
       responses:
         '200':
-          description: Список организаций
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Organization'
-                  total:
-                    type: integer
+                $ref: '#/components/schemas/OrganizationListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     post:
       tags:
       - Организации
       summary: Создать организацию
-      description: Требуется staff access-токен редактора контента. Создать новую
-        организацию (требуются права CMS)
+      security:
+      - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - name
-              - type
-              properties:
-                name:
-                  type: string
-                type:
-                  type: string
-                  enum:
-                  - education
-                  - employer
-                address:
-                  type: string
-                coordinates:
-                  type: object
-                  properties:
-                    lat:
-                      type: number
-                    lng:
-                      type: number
-                description:
-                  type: string
-                website:
-                  type: string
-                phone:
-                  type: string
+              $ref: '#/components/schemas/OrganizationCreateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '201':
-          description: Организация создана
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422).
   /organizations/{id}:
     get:
       tags:
       - Организации
-      summary: Детали организации
-      description: Получить полную информацию об организации
-      security: []
+      summary: Получить организацию
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Organization Id
       responses:
         '200':
-          description: Организация
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
     put:
       tags:
       - Организации
-      summary: Обновить организацию
-      description: Требуется staff access-токен редактора контента. Обновить организацию
-        (требуются права CMS)
+      summary: Изменить организацию
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Organization Id
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                type:
-                  type: string
-                  enum:
-                  - education
-                  - employer
-                address:
-                  type: string
-                coordinates:
-                  type: object
-                  properties:
-                    lat:
-                      type: number
-                    lng:
-                      type: number
-                description:
-                  type: string
-                website:
-                  type: string
-                phone:
-                  type: string
+              $ref: '#/components/schemas/OrganizationUpdateRequest'
       responses:
-        '403':
-          description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
         '200':
-          description: Организация обновлена
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
     delete:
       tags:
       - Организации
       summary: Удалить организацию
-      description: Требуется staff access-токен редактора контента. Удалить организацию
-        (требуются права CMS)
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: integer
-          format: int64
+          title: Organization Id
       responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
         '403':
           description: Недостаточно прав
-        '401':
-          description: Недействительный или отсутствующий токен
-        '204':
-          description: Организация удалена
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
         '404':
-          description: Не найдена
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404. Ответ 409, если существуют активные направления подготовки. Связи с профессиями
+        или организациями также помечаются удалёнными.
+  /organizations/education-programs:
+    get:
+      tags:
+      - Организации
+      summary: Список направлений подготовки
+      parameters:
+      - name: organization_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Organization Id
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Search
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EducationProgramListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    post:
+      tags:
+      - Организации
+      summary: Создать направление подготовки
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationProgramCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EducationProgram'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422).
+  /organizations/education-programs/{id}:
+    get:
+      tags:
+      - Организации
+      summary: Получить направление подготовки
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Education Program Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EducationProgram'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Запись не найдена или удалена
+      security: []
+      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
+        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+    put:
+      tags:
+      - Организации
+      summary: Изменить направление подготовки
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Education Program Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EducationProgramUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EducationProgram'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
+        null очищает nullable-поле.
+    delete:
+      tags:
+      - Организации
+      summary: Удалить направление подготовки
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Education Program Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '401':
+          description: Требуется авторизация сотрудника
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Активные зависимости или конфликт уникальной пары связей
+        '404':
+          description: Запись не найдена или удалена
+      description: Требуется staff access-токен редактора контента или администратора.
+        Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
+        404. Связи с профессиями или организациями также помечаются удалёнными.
   /consents/types:
     get:
       tags:
@@ -6347,7 +7306,8 @@ paths:
       summary: Профессии группы
       operationId: profstart_cms_professions_get
       description: 'Требуется staff access-токен: admin/content_editor/operator. Связи
-        общие для всех версий типа.'
+        общие для всех версий типа. Связи с deleted_at и удалёнными профессиями исключаются
+        из items и total.'
       x-implementation-status: implemented
       security:
       - bearerAuth: []
@@ -6408,7 +7368,9 @@ paths:
       description: 'Требуется staff access-токен: admin/content_editor. Доступно при
         любом статусе теста; сохранённые рекомендации не меняются. Для Соломина профессии
         нужна пара групп subject/labor: неполная пара исключает её из новых рекомендаций
-        и вызывает ошибку /validate и /publish.'
+        и вызывает ошибку /validate и /publish. При удалённой паре восстанавливает
+        прежнюю строку и её ID; для активной пары — 409. profession_id должен указывать
+        на активную профессию.'
       x-implementation-status: implemented
       security:
       - bearerAuth: []
@@ -6459,7 +7421,8 @@ paths:
       description: 'Требуется staff access-токен: admin/content_editor. Доступно при
         любом статусе теста; сохранённые рекомендации не меняются. Неполная пара subject/labor
         исключает профессию из новых рекомендаций Соломина и вызывает ошибку /validate
-        и /publish.'
+        и /publish. Мягкое удаление: устанавливает deleted_at, сохраняет строку. Повторное
+        удаление — 404. Удалённая связь не участвует в выдаче и новых рекомендациях.'
       x-implementation-status: implemented
       security:
       - bearerAuth: []
@@ -9934,53 +10897,110 @@ components:
       - type
       title: ValidationError
     Industry:
-      description: Отрасль экономики
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
         created_at:
           type: string
           format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      title: IndustryResponse
     Direction:
-      description: Профессиональное направление
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
         created_at:
           type: string
           format: date-time
-    Profession:
-      description: Профессия из справочника
+          title: Created At
       type: object
+      required:
+      - id
+      - name
+      - description
+      - created_at
+      title: DirectionResponse
+    Profession:
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
         description:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
         industry_id:
           type: integer
-          format: int64
+          title: Industry Id
         direction_id:
-          type: integer
-          format: int64
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
+        skills:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills
+        prospects:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prospects
+        min_salary:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Min Salary
+        max_salary:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max Salary
         created_at:
           type: string
           format: date-time
+          title: Created At
         updated_at:
           type: string
           format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - industry_id
+      - direction_id
+      - skills
+      - prospects
+      - min_salary
+      - max_salary
+      - created_at
+      - updated_at
+      title: ProfessionResponse
     Competence:
       description: Компетенция (навык/способность)
       type: object
@@ -9997,45 +11017,104 @@ components:
           type: string
           format: date-time
     Organization:
-      description: Организация (учебное заведение или работодатель)
-      type: object
       properties:
         id:
           type: integer
-          format: int64
+          title: Id
         name:
           type: string
+          title: Name
         type:
-          type: string
-          enum:
-          - education
-          - employer
+          $ref: '#/components/schemas/OrganizationType'
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        industry_branch_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
+        employee_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Employee Count
+        scale_or_product:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scale Or Product
+        practice_info:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Practice Info
+        education_level:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Education Level
         address:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
         coordinates:
-          type: object
-          nullable: true
-          properties:
-            lat:
-              type: number
-            lng:
-              type: number
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Coordinates
         description:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
         website:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Website
         phone:
-          type: string
-          nullable: true
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
         created_at:
           type: string
           format: date-time
+          title: Created At
         updated_at:
           type: string
           format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - full_name
+      - location
+      - industry_branch_id
+      - employee_count
+      - scale_or_product
+      - practice_info
+      - education_level
+      - address
+      - coordinates
+      - description
+      - website
+      - phone
+      - created_at
+      - updated_at
+      title: OrganizationResponse
     ConsentType:
       description: Тип согласия
       type: object
@@ -13676,5 +14755,709 @@ components:
       type: object
       description: Элемент полного списка при обновлении вопроса. id — существующий
         вариант своего вопроса; без id добавляется новый.
+    CoordinatesSchema:
+      properties:
+        lat:
+          type: number
+          title: Lat
+        lng:
+          type: number
+          title: Lng
+      type: object
+      required:
+      - lat
+      - lng
+      title: CoordinatesSchema
+    DirectionCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      required:
+      - name
+      title: DirectionCreateRequest
+    DirectionUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+      type: object
+      title: DirectionUpdateRequest
+    EducationProgramCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        organization_id:
+          type: integer
+          title: Organization Id
+        education_level:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Education Level
+        duration:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Duration
+        base_class:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Base Class
+      type: object
+      required:
+      - name
+      - organization_id
+      - education_level
+      - duration
+      title: EducationProgramCreateRequest
+    EducationProgram:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        organization_id:
+          type: integer
+          title: Organization Id
+        education_level:
+          type: string
+          title: Education Level
+        duration:
+          type: string
+          title: Duration
+        base_class:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Base Class
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - name
+      - organization_id
+      - education_level
+      - duration
+      - base_class
+      - created_at
+      - updated_at
+      title: EducationProgramResponse
+    EducationProgramUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        organization_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Organization Id
+        education_level:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 1
+          - type: 'null'
+          title: Education Level
+        duration:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Duration
+        base_class:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Base Class
+      type: object
+      title: EducationProgramUpdateRequest
+    IndustryBranchCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        industry_id:
+          type: integer
+          title: Industry Id
+      type: object
+      required:
+      - name
+      - industry_id
+      title: IndustryBranchCreateRequest
+    IndustryBranch:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        industry_id:
+          type: integer
+          title: Industry Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - name
+      - industry_id
+      - created_at
+      title: IndustryBranchResponse
+    IndustryBranchUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        industry_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Id
+      type: object
+      title: IndustryBranchUpdateRequest
+    IndustryCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+      type: object
+      required:
+      - name
+      title: IndustryCreateRequest
+    IndustryUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+      type: object
+      title: IndustryUpdateRequest
+    OrganizationCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        type:
+          $ref: '#/components/schemas/OrganizationType'
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        industry_branch_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
+        employee_count:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Employee Count
+        scale_or_product:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scale Or Product
+        practice_info:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Practice Info
+        education_level:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Education Level
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        coordinates:
+          anyOf:
+          - $ref: '#/components/schemas/CoordinatesSchema'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        website:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Website
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Phone
+      type: object
+      required:
+      - name
+      - type
+      title: OrganizationCreateRequest
+    OrganizationType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      title: OrganizationType
+    OrganizationUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        type:
+          anyOf:
+          - $ref: '#/components/schemas/OrganizationType'
+          - type: 'null'
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        industry_branch_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Branch Id
+        employee_count:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Employee Count
+        scale_or_product:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scale Or Product
+        practice_info:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Practice Info
+        education_level:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Education Level
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        coordinates:
+          anyOf:
+          - $ref: '#/components/schemas/CoordinatesSchema'
+          - type: 'null'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        website:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Website
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Phone
+      type: object
+      title: OrganizationUpdateRequest
+    DirectionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Direction'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[DirectionResponse]
+    EducationProgramListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/EducationProgram'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[EducationProgramResponse]
+    IndustryBranchListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/IndustryBranch'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[IndustryBranchResponse]
+    IndustryListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Industry'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[IndustryResponse]
+    OrganizationListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Organization'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[OrganizationResponse]
+    ProfessionEducationProgramListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProfessionEducationProgram'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[ProfessionEducationProgramResponse]
+    ProfessionEmployerListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProfessionEmployer'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[ProfessionEmployerResponse]
+    ProfessionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Profession'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[ProfessionResponse]
+    ProfessionCreateRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        industry_id:
+          type: integer
+          title: Industry Id
+        direction_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
+        skills:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills
+        prospects:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prospects
+        min_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Min Salary
+        max_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Max Salary
+      type: object
+      required:
+      - name
+      - industry_id
+      title: ProfessionCreateRequest
+    ProfessionEducationProgramCreateRequest:
+      properties:
+        profession_id:
+          type: integer
+          title: Profession Id
+        education_program_id:
+          type: integer
+          title: Education Program Id
+      type: object
+      required:
+      - profession_id
+      - education_program_id
+      title: ProfessionEducationProgramCreateRequest
+    ProfessionEducationProgram:
+      properties:
+        id:
+          type: integer
+          title: Id
+        profession_id:
+          type: integer
+          title: Profession Id
+        education_program_id:
+          type: integer
+          title: Education Program Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - profession_id
+      - education_program_id
+      - created_at
+      title: ProfessionEducationProgramResponse
+    ProfessionEducationProgramUpdateRequest:
+      properties:
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        education_program_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Education Program Id
+      type: object
+      title: ProfessionEducationProgramUpdateRequest
+    ProfessionEmployerCreateRequest:
+      properties:
+        profession_id:
+          type: integer
+          title: Profession Id
+        employer_id:
+          type: integer
+          title: Employer Id
+      type: object
+      required:
+      - profession_id
+      - employer_id
+      title: ProfessionEmployerCreateRequest
+    ProfessionEmployer:
+      properties:
+        id:
+          type: integer
+          title: Id
+        profession_id:
+          type: integer
+          title: Profession Id
+        employer_id:
+          type: integer
+          title: Employer Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - profession_id
+      - employer_id
+      - created_at
+      title: ProfessionEmployerResponse
+    ProfessionEmployerUpdateRequest:
+      properties:
+        profession_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Profession Id
+        employer_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Employer Id
+      type: object
+      title: ProfessionEmployerUpdateRequest
+    ProfessionUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        industry_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Industry Id
+        direction_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Direction Id
+        skills:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Skills
+        prospects:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Prospects
+        min_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Min Salary
+        max_salary:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Max Salary
+      type: object
+      title: ProfessionUpdateRequest
 security:
 - bearerAuth: []

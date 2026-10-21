@@ -640,7 +640,7 @@ cms-professions:
     - ПрофСтарт - CMS
     summary: Профессии группы
     operationId: profstart_cms_professions_get
-    description: "Требуется staff access-токен: admin/content_editor/operator. Связи общие для всех версий типа."
+    description: "Требуется staff access-токен: admin/content_editor/operator. Связи общие для всех версий типа. Связи с deleted_at и удалёнными профессиями исключаются из items и total."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -698,7 +698,7 @@ cms-professions:
     - ПрофСтарт - CMS
     summary: Привязать профессию
     operationId: profstart_cms_professions_post
-    description: "Требуется staff access-токен: admin/content_editor. Доступно при любом статусе теста; сохранённые рекомендации не меняются. Для Соломина профессии нужна пара групп subject/labor: неполная пара исключает её из новых рекомендаций и вызывает ошибку /validate и /publish."
+    description: "Требуется staff access-токен: admin/content_editor. Доступно при любом статусе теста; сохранённые рекомендации не меняются. Для Соломина профессии нужна пара групп subject/labor: неполная пара исключает её из новых рекомендаций и вызывает ошибку /validate и /publish. При удалённой паре восстанавливает прежнюю строку и её ID; для активной пары — 409. profession_id должен указывать на активную профессию."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -746,7 +746,7 @@ cms-profession:
     - ПрофСтарт - CMS
     summary: Отвязать профессию
     operationId: profstart_cms_profession_delete
-    description: "Требуется staff access-токен: admin/content_editor. Доступно при любом статусе теста; сохранённые рекомендации не меняются. Неполная пара subject/labor исключает профессию из новых рекомендаций Соломина и вызывает ошибку /validate и /publish."
+    description: "Требуется staff access-токен: admin/content_editor. Доступно при любом статусе теста; сохранённые рекомендации не меняются. Неполная пара subject/labor исключает профессию из новых рекомендаций Соломина и вызывает ошибку /validate и /publish. Мягкое удаление: устанавливает deleted_at, сохраняет строку. Повторное удаление — 404. Удалённая связь не участвует в выдаче и новых рекомендациях."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
