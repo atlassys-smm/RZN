@@ -4923,6 +4923,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /quiz/sessions/{id}/questions:
+    get:
+      tags:
+      - Викторина
+      summary: Список вопросов сессии для оператора
+      operationId: quiz_session_questions_get
+      description: Требуется staff access-токен admin/operator. Все вопросы всех раундов
+        конкретной сессии в порядке GameSessionRound.order, GameSessionQuestion.order;
+        повторения одного вопроса различаются по id записи сессии. В waiting все вопросы
+        future. В active ранее пройденные позиции — passed, текущая позиция — current,
+        остальные — future. Reveal, пауза и остановка таймера сохраняют current до
+        next. После finish текущая и прежние позиции — passed, не показанные вопросы
+        остаются future; завершённая до старта сессия содержит только future. Добавленный
+        финальный раунд включается в конец списка. Чтение не изменяет ход сессии.
+      x-implementation-status: implemented
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Упорядоченный список вопросов с вычисленным статусом прохождения.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuizSessionQuestion'
+        '401':
+          description: Требуется действующий staff-токен; User и Device не допускаются.
+        '403':
+          description: Роль сотрудника не admin/operator.
+        '404':
+          description: Сессия не найдена.
+        '422':
+          description: Некорректный ID сессии.
   /quiz/sessions/{id}/final-round:
     post:
       tags:
@@ -6637,8 +6678,9 @@ paths:
       - ПрофСтарт - CMS
       summary: Справочник возрастных групп
       operationId: profstart_cms_age_groups_get
-      description: 'Требуется staff access-токен: admin/content_editor/operator. Возрастные
-        границы включительно; порядок id ASC.'
+      description: 'Требуется staff access-токен: admin/content_editor/operator. Фиксированный
+        enum AgeGroup: 1 — 12–14 лет, 2 — 15–17 лет. Возрастные границы включительно;
+        порядок id ASC.'
       x-implementation-status: implemented
       security:
       - bearerAuth: []
@@ -6662,8 +6704,9 @@ paths:
       summary: Справочник возрастных групп
       operationId: profstart_age_groups_get
       description: Требуется пользовательский access-токен или токен активного устройства.
-        Группы для выбора возраста и фильтра каталога. Границы включительно; порядок
-        id ASC. Для device-токена требуется роль 3; другая группа устройства — 403.
+        Фиксированный enum AgeGroup (1 — 12–14 лет, 2 — 15–17 лет) для выбора возраста
+        и фильтра каталога. Границы включительно; порядок id ASC. Для device-токена
+        требуется роль 3; другая группа устройства — 403.
       x-implementation-status: implemented
       security:
       - bearerAuth: []
@@ -6844,9 +6887,12 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfStartTestCreate'
+            encoding:
+              age_group_ids:
+                contentType: text/plain
   /cms/profstart/tests/{test_id}:
     get:
       description: 'Требуется staff access-токен: admin/content_editor/operator. '
@@ -6922,9 +6968,12 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfStartTestPatch'
+            encoding:
+              age_group_ids:
+                contentType: text/plain
     delete:
       tags:
       - ПрофСтарт - CMS
@@ -7164,7 +7213,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfStartGroupCreate'
   /cms/profstart/test-types/{test_code_type}/groups/{group_id}:
@@ -7257,7 +7306,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfStartGroupPatch'
     delete:
@@ -8019,24 +8068,127 @@ paths:
           description: Конфликт состояния или уникальности.
         '422':
           description: Некорректные параметры, ссылки или состав теста.
+  /profstart/test-types/{test_code_type}/groups:
+    get:
+      tags:
+      - ПрофСтарт - Пользователь
+      summary: Группы результата типа теста
+      operationId: profstart_groups_get
+      description: 'Требуется пользовательский access-токен (включая гостя) или Device
+        JWT активного устройства с ролью 3. QR-привязка и X-Device-Connection-Id не
+        требуются: группы являются общим справочником. Доступны группы всех типов
+        независимо от статуса версии теста; возвращаются актуальные данные CMS. Порядок
+        id ASC, ответ содержит items, total, limit, offset.'
+      x-implementation-status: implemented
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: test_code_type
+        in: path
+        required: true
+        description: Код типа теста, например solomin, holland или dellinger
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: Размер страницы
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '401':
+          description: Отсутствующий или недействительный пользовательский токен либо
+            Device JWT; staff-токен не допускается.
+        '403':
+          description: Устройство не имеет роли ПрофСтарт (3).
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroupPage'
+        '404':
+          description: Тип теста не найден или группа не принадлежит указанному типу.
+        '422':
+          description: Некорректные параметры пути или пагинации.
+  /profstart/test-types/{test_code_type}/groups/{group_id}:
+    get:
+      description: 'Требуется пользовательский access-токен (включая гостя) или Device
+        JWT активного устройства с ролью 3. QR-привязка и X-Device-Connection-Id не
+        требуются: группы являются общим справочником. Доступны группы всех типов
+        независимо от статуса версии теста; возвращаются актуальные данные CMS. Проверяется
+        принадлежность group_id указанному test_code_type.'
+      tags:
+      - ПрофСтарт - Пользователь
+      summary: Карточка группы результата
+      operationId: profstart_group_get
+      x-implementation-status: implemented
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: test_code_type
+        in: path
+        required: true
+        description: Код типа теста, например solomin, holland или dellinger
+        schema:
+          type: string
+      - name: group_id
+        in: path
+        required: true
+        description: Числовой идентификатор ресурса
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        '401':
+          description: Отсутствующий или недействительный пользовательский токен либо
+            Device JWT; staff-токен не допускается.
+        '403':
+          description: Устройство не имеет роли ПрофСтарт (3).
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfStartGroup'
+        '404':
+          description: Тип теста не найден или группа не принадлежит указанному типу.
+        '422':
+          description: Некорректные параметры пути или пагинации.
   /profstart/tests:
     get:
       tags:
       - ПрофСтарт - Пользователь
       summary: Доступные активные тесты
       operationId: profstart_tests_get
-      description: User JWT или Device JWT с ролью 3. Активные версии всех типов,
-        которые пользователь ещё не завершил. Не более одной версии на тип; пустой
-        список допустим. Без X-Device-Connection-Id каталог устройства не персонализируется.
-        С заголовком требуется действующая QR-привязка; завершённые типы подключённого
-        пользователя исключаются.
+      description: User JWT или Device JWT с ролью 3. По умолчанию все активные тесты,
+        включая завершённые и без сессий. session_status — статус последней собственной
+        сессии по типу теста независимо от версии по started_at DESC, id DESC; без
+        сессий — null. Фильтр session_status=1/2/3 оставляет только тесты с соответствующим
+        последним статусом. Без X-Device-Connection-Id устройство получает session_status=null
+        у всех тестов, фильтр любого статуса возвращает пустой список. С заголовком
+        используется действующая QR-привязка. Правило однократного завершения типа
+        при старте не меняется.
       x-implementation-status: implemented
       parameters:
       - $ref: '#/components/parameters/DeviceCatalogConnectionId'
       - name: age_group_id
         in: query
         required: false
-        description: ID из age_groups; неизвестный ID — 422. Возрастная доступность
+        description: ID enum AgeGroup (1 или 2); неизвестный ID — 422. Возрастная
+          доступность
         schema:
           type: integer
           format: int64
@@ -8049,6 +8201,17 @@ paths:
           type: integer
           format: int64
           minimum: 1
+      - name: session_status
+        in: query
+        required: false
+        description: Статус последней сессии пользователя по типу теста среди всех
+          версий; без фильтра возвращаются все активные тесты, включая тесты без сессий.
+        schema:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
       responses:
         '403':
           description: Недостаточно прав устройства или сотрудника.
@@ -8059,7 +8222,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProfStartPublicTest'
+                  $ref: '#/components/schemas/ProfStartCatalogTest'
         '401':
           description: Требуется авторизация.
         '404':
@@ -11552,6 +11715,52 @@ components:
           type: string
           format: date-time
           nullable: true
+    QuizSessionQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - question_id
+      - text
+      - round_id
+      - round_type
+      - round_order
+      - order
+      - status
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID записи GameSessionQuestion, различает повторения одного
+            вопроса.
+        question_id:
+          type: integer
+          format: int64
+          description: ID вопроса в банке GameQuestion.
+        text:
+          type: string
+          description: Текущий текст вопроса из банка.
+        round_id:
+          type: integer
+          format: int64
+          description: ID раунда сессии.
+        round_type:
+          type: integer
+          description: Тип раунда.
+        round_order:
+          type: integer
+          description: Порядок раунда в сессии.
+        order:
+          type: integer
+          description: Порядок вопроса внутри раунда.
+        status:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'GameSessionQuestionStatus: 1 — passed (пройден), 2 — current
+            (текущий), 3 — future (будущий). Вычисляется при чтении, в БД не хранится.'
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от
         параметра select.
@@ -12672,6 +12881,8 @@ components:
           type: string
           format: date-time
     ProfStartAgeGroup:
+      description: Фиксированный справочник из enum AgeGroup; поля и формат ответа
+        сохранены.
       type: object
       additionalProperties: false
       required:
@@ -12736,6 +12947,24 @@ components:
       - test_type_id
       - name
       properties:
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         test_type_id:
           type: integer
           format: int64
@@ -12749,18 +12978,39 @@ components:
           type: string
           default: ''
         age_group_ids:
-          type: array
-          description: ID возрастных групп; пустой массив — без ограничений.
-          items:
-            type: integer
-            format: int64
-          uniqueItems: true
-          default: []
+          type: string
+          description: JSON-массив ID возрастных групп в отдельном текстовом поле
+            формы; [] снимает ограничения.
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
     ProfStartTestPatch:
       type: object
       additionalProperties: false
       required: []
       properties:
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         name:
           type: string
           minLength: 1
@@ -12771,13 +13021,16 @@ components:
           type: string
           default: ''
         age_group_ids:
-          type: array
-          description: ID возрастных групп; пустой массив снимает ограничения.
-          items:
-            type: integer
-            format: int64
-          uniqueItems: true
-          default: []
+          type: string
+          description: JSON-массив ID возрастных групп в отдельном текстовом поле
+            формы; [] снимает ограничения.
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
       minProperties: 1
     ProfStartTest:
       type: object
@@ -12797,7 +13050,14 @@ components:
       - created_at
       - updated_at
       - status
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при
+            отсутствии.
         id:
           type: integer
           format: int64
@@ -12946,7 +13206,14 @@ components:
       - age_group_ids
       - question_count
       - status
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при
+            отсутствии.
         id:
           type: integer
           format: int64
@@ -13014,6 +13281,109 @@ components:
           properties:
             question_count:
               const: 1
+    ProfStartCatalogTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - status
+      - file
+      - session_status
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при
+            отсутствии.
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+        question_count:
+          type: integer
+          minimum: 1
+        test_code_type:
+          type: string
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 2
+          - 3
+          description: 2 — active, 3 — archived.
+        session_status:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - 3
+          - null
+          description: 'Статус последней сессии текущего пользователя по типу теста
+            независимо от версии: 1 — in_progress, 2 — completed, 3 — abandoned; null
+            — сессий нет или устройство без QR-привязки. Последняя определяется по
+            started_at DESC, id DESC.'
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
     ProfStartGroupCreate:
       type: object
       additionalProperties: false
@@ -13021,6 +13391,24 @@ components:
       - code
       - name
       properties:
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         code:
           type: string
           minLength: 1
@@ -13046,6 +13434,24 @@ components:
       additionalProperties: false
       required: []
       properties:
+        file_title:
+          type:
+          - string
+          - 'null'
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type:
+          - string
+          - 'null'
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         code:
           type: string
           minLength: 1
@@ -13076,7 +13482,14 @@ components:
       - name
       - description
       - category
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при
+            отсутствии.
         id:
           type: integer
           format: int64

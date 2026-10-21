@@ -5,7 +5,7 @@ cms-age-groups:
     - ПрофСтарт - CMS
     summary: Справочник возрастных групп
     operationId: profstart_cms_age_groups_get
-    description: "Требуется staff access-токен: admin/content_editor/operator. Возрастные границы включительно; порядок id ASC."
+    description: "Требуется staff access-токен: admin/content_editor/operator. Фиксированный enum AgeGroup: 1 — 12–14 лет, 2 — 15–17 лет. Возрастные границы включительно; порядок id ASC."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -28,7 +28,7 @@ age-groups:
     - ПрофСтарт - Пользователь
     summary: Справочник возрастных групп
     operationId: profstart_age_groups_get
-    description: "Требуется пользовательский access-токен или токен активного устройства. Группы для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC. Для device-токена требуется роль 3; другая группа устройства — 403."
+    description: "Требуется пользовательский access-токен или токен активного устройства. Фиксированный enum AgeGroup (1 — 12–14 лет, 2 — 15–17 лет) для выбора возраста и фильтра каталога. Границы включительно; порядок id ASC. Для device-токена требуется роль 3; другая группа устройства — 403."
     x-implementation-status: implemented
     security:
     - bearerAuth: []
@@ -199,9 +199,12 @@ cms-tests:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartTestCreate'
+          encoding:
+            age_group_ids:
+              contentType: text/plain
 cms-test:
   get:
     description: "Требуется staff access-токен: admin/content_editor/operator. "
@@ -276,9 +279,12 @@ cms-test:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartTestPatch'
+          encoding:
+            age_group_ids:
+              contentType: text/plain
   delete:
     tags:
     - ПрофСтарт - CMS
@@ -505,7 +511,7 @@ cms-groups:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartGroupCreate'
 cms-group:
@@ -594,7 +600,7 @@ cms-group:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfStartGroupPatch'
   delete:
@@ -1339,14 +1345,14 @@ tests:
     - ПрофСтарт - Пользователь
     summary: Доступные активные тесты
     operationId: profstart_tests_get
-    description: "User JWT или Device JWT с ролью 3. Активные версии всех типов, которые пользователь ещё не завершил. Не более одной версии на тип; пустой список допустим. Без X-Device-Connection-Id каталог устройства не персонализируется. С заголовком требуется действующая QR-привязка; завершённые типы подключённого пользователя исключаются."
+    description: "User JWT или Device JWT с ролью 3. По умолчанию все активные тесты, включая завершённые и без сессий. session_status — статус последней собственной сессии по типу теста независимо от версии по started_at DESC, id DESC; без сессий — null. Фильтр session_status=1/2/3 оставляет только тесты с соответствующим последним статусом. Без X-Device-Connection-Id устройство получает session_status=null у всех тестов, фильтр любого статуса возвращает пустой список. С заголовком используется действующая QR-привязка. Правило однократного завершения типа при старте не меняется."
     x-implementation-status: implemented
     parameters:
     - $ref: '#/components/parameters/DeviceCatalogConnectionId'
     - name: age_group_id
       in: query
       required: false
-      description: ID из age_groups; неизвестный ID — 422. Возрастная доступность
+      description: ID enum AgeGroup (1 или 2); неизвестный ID — 422. Возрастная доступность
       schema:
         type: integer
         format: int64
@@ -1359,6 +1365,13 @@ tests:
         type: integer
         format: int64
         minimum: 1
+    - name: session_status
+      in: query
+      required: false
+      description: Статус последней сессии пользователя по типу теста среди всех версий; без фильтра возвращаются все активные тесты, включая тесты без сессий.
+      schema:
+        type: integer
+        enum: [1, 2, 3]
     responses:
       '403':
         description: Недостаточно прав устройства или сотрудника.
@@ -1369,7 +1382,7 @@ tests:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/ProfStartPublicTest'
+                $ref: '#/components/schemas/ProfStartCatalogTest'
       '401':
         description: Требуется авторизация.
       '404':
@@ -1993,3 +2006,96 @@ cms-session-abandon:
         description: Некорректные параметры, ссылки или состав теста.
     security:
     - bearerAuth: []
+groups:
+  get:
+    tags:
+    - ПрофСтарт - Пользователь
+    summary: Группы результата типа теста
+    operationId: profstart_groups_get
+    description: 'Требуется пользовательский access-токен (включая гостя) или Device JWT активного устройства с ролью 3. QR-привязка
+      и X-Device-Connection-Id не требуются: группы являются общим справочником. Доступны группы всех типов независимо от
+      статуса версии теста; возвращаются актуальные данные CMS. Порядок id ASC, ответ содержит items, total, limit, offset.'
+    x-implementation-status: implemented
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: test_code_type
+      in: path
+      required: true
+      description: Код типа теста, например solomin, holland или dellinger
+      schema:
+        type: string
+    - name: limit
+      in: query
+      required: false
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    - name: offset
+      in: query
+      required: false
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    responses:
+      '401':
+        description: Отсутствующий или недействительный пользовательский токен либо Device JWT; staff-токен не допускается.
+      '403':
+        description: Устройство не имеет роли ПрофСтарт (3).
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroupPage'
+      '404':
+        description: Тип теста не найден или группа не принадлежит указанному типу.
+      '422':
+        description: Некорректные параметры пути или пагинации.
+group:
+  get:
+    description: 'Требуется пользовательский access-токен (включая гостя) или Device JWT активного устройства с ролью 3. QR-привязка
+      и X-Device-Connection-Id не требуются: группы являются общим справочником. Доступны группы всех типов независимо от
+      статуса версии теста; возвращаются актуальные данные CMS. Проверяется принадлежность group_id указанному test_code_type.'
+    tags:
+    - ПрофСтарт - Пользователь
+    summary: Карточка группы результата
+    operationId: profstart_group_get
+    x-implementation-status: implemented
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: test_code_type
+      in: path
+      required: true
+      description: Код типа теста, например solomin, holland или dellinger
+      schema:
+        type: string
+    - name: group_id
+      in: path
+      required: true
+      description: Числовой идентификатор ресурса
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    responses:
+      '401':
+        description: Отсутствующий или недействительный пользовательский токен либо Device JWT; staff-токен не допускается.
+      '403':
+        description: Устройство не имеет роли ПрофСтарт (3).
+      '200':
+        description: Успешный ответ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfStartGroup'
+      '404':
+        description: Тип теста не найден или группа не принадлежит указанному типу.
+      '422':
+        description: Некорректные параметры пути или пагинации.
