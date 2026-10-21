@@ -221,6 +221,10 @@ paths:
     $ref: './paths/professions.yaml#/professions'
   /professions/{id}:
     $ref: './paths/professions.yaml#/professions-detail'
+  /professions/{profession_id}/employers:
+    $ref: './paths/professions.yaml#/profession-employer-organizations'
+  /professions/{profession_id}/educations:
+    $ref: './paths/professions.yaml#/profession-education-organizations'
   /industries:
     $ref: './paths/professions.yaml#/industries'
   /industries/{id}:

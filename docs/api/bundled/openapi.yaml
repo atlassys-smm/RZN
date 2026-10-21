@@ -1170,9 +1170,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Профессии
@@ -1234,9 +1239,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Профессии
@@ -1314,6 +1324,116 @@ paths:
       description: Требуется staff access-токен редактора контента или администратора.
         Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
         404. Связи с профессиями или организациями также помечаются удалёнными.
+  /professions/{profession_id}/employers:
+    get:
+      tags:
+      - Профессии
+      summary: Где работать по профессии
+      parameters:
+      - name: profession_id
+        in: path
+        required: true
+        description: ID профессии
+        schema:
+          type: integer
+          format: int64
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Профессия не найдена.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Список организаций-работодателей
+        (type=1), связанных с профессией через profession_employers, для сохранённых
+        рекомендаций. Профессия, связи и организации учитываются независимо от deleted_at.
+        Возвращаются данные организаций, а не строки связей. Неизвестная профессия
+        даёт 404; существующая, включая удалённую, без связей — items=[] и total=0.
+  /professions/{profession_id}/educations:
+    get:
+      tags:
+      - Профессии
+      summary: Где учиться по профессии
+      parameters:
+      - name: profession_id
+        in: path
+        required: true
+        description: ID профессии
+        schema:
+          type: integer
+          format: int64
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Профессия не найдена.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Список учебных заведений (type=2)
+        через profession_education_programs → education_programs → organizations для
+        сохранённых рекомендаций. Профессия, связи, программы и организации учитываются
+        независимо от deleted_at. Каждое заведение возвращается один раз, даже если
+        подходят несколько программ; total и пагинация считаются по уникальным организациям.
+        Неизвестная профессия даёт 404; существующая, включая удалённую, без связей
+        — items=[] и total=0.
   /industries:
     get:
       tags:
@@ -1357,9 +1477,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Профессии
@@ -1421,9 +1546,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Профессии
@@ -1544,9 +1674,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Профессии
@@ -1608,9 +1743,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Профессии
@@ -1739,9 +1879,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Профессии
@@ -1803,9 +1948,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Профессии
@@ -1934,9 +2084,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Профессии
@@ -1999,9 +2154,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Профессии
@@ -2130,9 +2290,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Профессии
@@ -2195,9 +2360,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Профессии
@@ -2461,9 +2631,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Организации
@@ -2525,9 +2700,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Организации
@@ -2657,9 +2837,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     post:
       tags:
       - Организации
@@ -2721,9 +2906,14 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
         '404':
           description: Запись не найдена или удалена
-      security: []
-      description: Возвращаются только записи с deleted_at IS NULL. Удалённая запись
-        по ID возвращает 404. Пагинация и total учитывают только доступные записи.
+        '401':
+          description: Отсутствующий или недействительный JWT.
+      security:
+      - bearerAuth: []
+      description: Требуется действующий Bearer JWT пользователя (включая гостя),
+        сотрудника любой роли или активного устройства. Возвращаются только записи
+        с deleted_at IS NULL. Удалённая запись по ID возвращает 404. Пагинация и total
+        учитывают только доступные записи.
     put:
       tags:
       - Организации
