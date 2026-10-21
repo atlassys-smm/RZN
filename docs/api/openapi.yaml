@@ -254,6 +254,8 @@ paths:
     $ref: './paths/competences.yaml#/competences-detail'
 
   # ── Организации ─────────────────────────────────
+  /organizations/recommendations:
+    $ref: './paths/organizations.yaml#/organization-recommendations'
   /organizations:
     $ref: './paths/organizations.yaml#/organizations'
   /organizations/{id}:
@@ -4962,6 +4964,43 @@ components:
       - position
       - contributions
       type: object
+    OrganizationRecommendations:
+      type: object
+      required: [employers, educations]
+      properties:
+        employers:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/RecommendedOrganization'
+        educations:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/RecommendedOrganization'
+    RecommendedOrganization:
+      type: object
+      required: [organization, profession_ids, profession_count, position]
+      properties:
+        organization:
+          $ref: '#/components/schemas/Organization'
+        profession_ids:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: integer
+          description: ID рекомендованных профессий, с которыми связана организация, по возрастанию.
+        profession_count:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: Число различных рекомендованных профессий, совпадающих с организацией.
+        position:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Позиция в списке организаций своего типа.
     UserRecommendations:
       properties:
         id:
@@ -4995,6 +5034,16 @@ components:
             $ref: '#/components/schemas/RecommendedProfession'
           type: array
           maxItems: 3
+        employers:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/RecommendedOrganization'
+        educations:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/RecommendedOrganization'
       required:
       - id
       - user_id
@@ -5006,6 +5055,8 @@ components:
       - missing_sources
       - sources
       - professions
+      - employers
+      - educations
       type: object
 
     DeviceSessionWebSocketEvent:
