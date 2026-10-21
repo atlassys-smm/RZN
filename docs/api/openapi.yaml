@@ -324,6 +324,8 @@ paths:
     $ref: './paths/quiz.yaml#/session-active'
   /quiz/sessions/{id}:
     $ref: './paths/quiz.yaml#/session-detail'
+  /quiz/sessions/{id}/questions:
+    $ref: './paths/quiz.yaml#/session-questions'
   /quiz/sessions/{id}/final-round:
     $ref: './paths/quiz.yaml#/session-final-round'
   /quiz/sessions/{id}/finish:
@@ -438,6 +440,10 @@ paths:
     $ref: ./paths/profstart.yaml#/cms-options
   /cms/profstart/tests/{test_id}/questions/{question_id}/options/{option_id}:
     $ref: ./paths/profstart.yaml#/cms-option
+  /profstart/test-types/{test_code_type}/groups:
+    $ref: ./paths/profstart.yaml#/groups
+  /profstart/test-types/{test_code_type}/groups/{group_id}:
+    $ref: ./paths/profstart.yaml#/group
   /profstart/tests:
     $ref: ./paths/profstart.yaml#/tests
   /profstart/tests/{test_id}:
@@ -1839,6 +1845,51 @@ components:
           type: string
           format: date-time
           nullable: true
+    QuizSessionQuestion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - question_id
+      - text
+      - round_id
+      - round_type
+      - round_order
+      - order
+      - status
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID записи GameSessionQuestion, различает повторения одного вопроса.
+        question_id:
+          type: integer
+          format: int64
+          description: ID вопроса в банке GameQuestion.
+        text:
+          type: string
+          description: Текущий текст вопроса из банка.
+        round_id:
+          type: integer
+          format: int64
+          description: ID раунда сессии.
+        round_type:
+          type: integer
+          description: Тип раунда.
+        round_order:
+          type: integer
+          description: Порядок раунда в сессии.
+        order:
+          type: integer
+          description: Порядок вопроса внутри раунда.
+        status:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+          description: 'GameSessionQuestionStatus: 1 — passed (пройден), 2 — current (текущий), 3 — future (будущий). Вычисляется
+            при чтении, в БД не хранится.'
     QuizSessionFull:
       description: Сессия викторины со связями. Поля заполняются в зависимости от параметра select.
       type: object
@@ -2800,6 +2851,7 @@ components:
 
     # ── ПрофСтарт: схемы ─────────────
     ProfStartAgeGroup:
+      description: Фиксированный справочник из enum AgeGroup; поля и формат ответа сохранены.
       type: object
       additionalProperties: false
       required: [id, name, min_age, max_age]
@@ -2854,6 +2906,20 @@ components:
       - test_type_id
       - name
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         test_type_id:
           type: integer
           format: int64
@@ -2867,18 +2933,34 @@ components:
           type: string
           default: ''
         age_group_ids:
-          type: array
-          description: ID возрастных групп; пустой массив — без ограничений.
-          items:
-            type: integer
-            format: int64
-          uniqueItems: true
-          default: []
+          type: string
+          description: JSON-массив ID возрастных групп в отдельном текстовом поле формы; [] снимает ограничения.
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
     ProfStartTestPatch:
       type: object
       additionalProperties: false
       required: []
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         name:
           type: string
           minLength: 1
@@ -2889,13 +2971,15 @@ components:
           type: string
           default: ''
         age_group_ids:
-          type: array
-          description: ID возрастных групп; пустой массив снимает ограничения.
-          items:
-            type: integer
-            format: int64
-          uniqueItems: true
-          default: []
+          type: string
+          description: JSON-массив ID возрастных групп в отдельном текстовом поле формы; [] снимает ограничения.
+          contentMediaType: application/json
+          contentSchema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
       minProperties: 1
     ProfStartTest:
       type: object
@@ -2915,7 +2999,13 @@ components:
       - created_at
       - updated_at
       - status
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
         id:
           type: integer
           format: int64
@@ -3064,7 +3154,13 @@ components:
       - age_group_ids
       - question_count
       - status
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
         id:
           type: integer
           format: int64
@@ -3132,6 +3228,106 @@ components:
           properties:
             question_count:
               const: 1
+    ProfStartCatalogTest:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - test_type_id
+      - test_code_type
+      - version
+      - name
+      - description
+      - instructions
+      - age_group_ids
+      - question_count
+      - status
+      - file
+      - session_status
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+        test_type_id:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type: string
+        age_group_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+          uniqueItems: true
+        question_count:
+          type: integer
+          minimum: 1
+        test_code_type:
+          type: string
+        status:
+          type: integer
+          format: int32
+          enum:
+          - 2
+          - 3
+          description: 2 — active, 3 — archived.
+        session_status:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - 3
+          - null
+          description: 'Статус последней сессии текущего пользователя по типу теста независимо от версии: 1 — in_progress, 2 — completed,
+            3 — abandoned; null — сессий нет или устройство без QR-привязки. Последняя определяется по started_at DESC, id DESC.'
+      allOf:
+      - if:
+          properties:
+            test_code_type:
+              const: solomin
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 42
+      - if:
+          properties:
+            test_code_type:
+              const: holland
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 15
+      - if:
+          properties:
+            test_code_type:
+              const: dellinger
+          required:
+          - test_code_type
+        then:
+          properties:
+            question_count:
+              const: 1
     ProfStartGroupCreate:
       type: object
       additionalProperties: false
@@ -3139,6 +3335,20 @@ components:
       - code
       - name
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         code:
           type: string
           minLength: 1
@@ -3164,6 +3374,20 @@ components:
       additionalProperties: false
       required: []
       properties:
+        file_title:
+          type: [string, 'null']
+          description: Название нового файла; по умолчанию имя загруженного файла.
+        file_description:
+          type: [string, 'null']
+          description: Описание нового файла.
+        file:
+          type: string
+          format: binary
+          description: Необязательное изображение; при PATCH заменяет прежний файл.
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без нового file возвращается 422.
         code:
           type: string
           minLength: 1
@@ -3194,7 +3418,13 @@ components:
       - name
       - description
       - category
+      - file
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Изображение с подписанными ссылками и метаданными; null при отсутствии.
         id:
           type: integer
           format: int64

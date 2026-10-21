@@ -1336,6 +1336,46 @@ session-detail:
             schema:
               $ref: '#/components/schemas/Error'
 
+session-questions:
+  get:
+    tags:
+    - Викторина
+    summary: Список вопросов сессии для оператора
+    operationId: quiz_session_questions_get
+    description: Требуется staff access-токен admin/operator. Все вопросы всех раундов конкретной сессии в порядке GameSessionRound.order,
+      GameSessionQuestion.order; повторения одного вопроса различаются по id записи сессии. В waiting все вопросы future.
+      В active ранее пройденные позиции — passed, текущая позиция — current, остальные — future. Reveal, пауза и остановка
+      таймера сохраняют current до next. После finish текущая и прежние позиции — passed, не показанные вопросы остаются future;
+      завершённая до старта сессия содержит только future. Добавленный финальный раунд включается в конец списка. Чтение не
+      изменяет ход сессии.
+    x-implementation-status: implemented
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    responses:
+      '200':
+        description: Упорядоченный список вопросов с вычисленным статусом прохождения.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuizSessionQuestion'
+      '401':
+        description: Требуется действующий staff-токен; User и Device не допускаются.
+      '403':
+        description: Роль сотрудника не admin/operator.
+      '404':
+        description: Сессия не найдена.
+      '422':
+        description: Некорректный ID сессии.
+
 session-final-round:
   post:
     tags: [Викторина - Оператор]
