@@ -230,6 +230,12 @@ ws://host/api/interactive-video/sessions/{sessionId}/ws?token=<jwt>
 `GET /interactive-video/sessions/{id}/state`, мобильный клиент — через
 `GET /interactive-video/sessions/{id}/voting?participant_id=...`.
 
+Для поиска активного показа мобильный клиент с User JWT (включая гостя) может
+вызвать `GET /api/interactive-video/sessions/active?device_id=...`. Без `device_id`
+возвращается любая активная сессия; присоединение к показу и QR-привязка для этого
+запроса не требуются. Если активной сессии нет — 404. Права WebSocket и остальных
+REST-запросов остаются прежними.
+
 ### События от сервера
 
 **Для LED-экрана:**
