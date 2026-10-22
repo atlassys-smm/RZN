@@ -1637,6 +1637,11 @@ components:
           type: string
           format: date-time
           title: Updated At
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Вложение организации с подписанными URL; null, если файла нет.
       type: object
       required:
       - id
@@ -1656,8 +1661,8 @@ components:
       - phone
       - created_at
       - updated_at
+      - file
       title: OrganizationResponse
-
     ConsentType:
       description: Тип согласия
       type: object
@@ -5562,81 +5567,104 @@ components:
     OrganizationCreateRequest:
       properties:
         name:
-          type: string
           maxLength: 255
           minLength: 1
           title: Name
+          type: string
         type:
           $ref: '#/components/schemas/OrganizationType'
         full_name:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Full Name
         location:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Location
         industry_branch_id:
           anyOf:
           - type: integer
           - type: 'null'
+          default: null
           title: Industry Branch Id
         employee_count:
           anyOf:
-          - type: integer
-            minimum: 0.0
+          - minimum: 0
+            type: integer
           - type: 'null'
+          default: null
           title: Employee Count
         scale_or_product:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Scale Or Product
         practice_info:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Practice Info
         education_level:
           anyOf:
-          - type: string
-            maxLength: 100
+          - maxLength: 100
+            type: string
           - type: 'null'
+          default: null
           title: Education Level
         address:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Address
         coordinates:
           anyOf:
           - $ref: '#/components/schemas/CoordinatesSchema'
           - type: 'null'
+          default: null
         description:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Description
         website:
           anyOf:
-          - type: string
-            maxLength: 500
+          - maxLength: 500
+            type: string
           - type: 'null'
+          default: null
           title: Website
         phone:
           anyOf:
-          - type: string
-            maxLength: 50
+          - maxLength: 50
+            type: string
           - type: 'null'
+          default: null
           title: Phone
-      type: object
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
       required:
       - name
       - type
       title: OrganizationCreateRequest
-
+      type: object
     OrganizationType:
       type: integer
       enum:
@@ -5648,81 +5676,106 @@ components:
       properties:
         name:
           anyOf:
-          - type: string
-            maxLength: 255
+          - maxLength: 255
             minLength: 1
+            type: string
           - type: 'null'
+          default: null
           title: Name
         type:
           anyOf:
           - $ref: '#/components/schemas/OrganizationType'
           - type: 'null'
+          default: null
         full_name:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Full Name
         location:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Location
         industry_branch_id:
           anyOf:
           - type: integer
           - type: 'null'
+          default: null
           title: Industry Branch Id
         employee_count:
           anyOf:
-          - type: integer
-            minimum: 0.0
+          - minimum: 0
+            type: integer
           - type: 'null'
+          default: null
           title: Employee Count
         scale_or_product:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Scale Or Product
         practice_info:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Practice Info
         education_level:
           anyOf:
-          - type: string
-            maxLength: 100
+          - maxLength: 100
+            type: string
           - type: 'null'
+          default: null
           title: Education Level
         address:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Address
         coordinates:
           anyOf:
           - $ref: '#/components/schemas/CoordinatesSchema'
           - type: 'null'
+          default: null
         description:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Description
         website:
           anyOf:
-          - type: string
-            maxLength: 500
+          - maxLength: 500
+            type: string
           - type: 'null'
+          default: null
           title: Website
         phone:
           anyOf:
-          - type: string
-            maxLength: 50
+          - maxLength: 50
+            type: string
           - type: 'null'
+          default: null
           title: Phone
-      type: object
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
       title: OrganizationUpdateRequest
-
+      type: object
     DirectionListResponse:
       properties:
         items:

@@ -2992,9 +2992,140 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrganizationCreateRequest'
+              properties:
+                name:
+                  maxLength: 255
+                  minLength: 1
+                  title: Name
+                  type: string
+                type:
+                  enum:
+                  - 1
+                  - 2
+                  title: OrganizationType
+                  type: integer
+                full_name:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Full Name
+                location:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Location
+                industry_branch_id:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Industry Branch Id
+                employee_count:
+                  anyOf:
+                  - minimum: 0
+                    type: integer
+                  - type: 'null'
+                  default: null
+                  title: Employee Count
+                scale_or_product:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Scale Or Product
+                practice_info:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Practice Info
+                education_level:
+                  anyOf:
+                  - maxLength: 100
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Education Level
+                address:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Address
+                coordinates:
+                  type:
+                  - string
+                  - 'null'
+                  title: coordinates
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - properties:
+                        lat:
+                          title: Lat
+                          type: number
+                        lng:
+                          title: Lng
+                          type: number
+                      required:
+                      - lat
+                      - lng
+                      title: CoordinatesSchema
+                      type: object
+                    - type: 'null'
+                    default: null
+                description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Description
+                website:
+                  anyOf:
+                  - maxLength: 500
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Website
+                phone:
+                  anyOf:
+                  - maxLength: 50
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Phone
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                file:
+                  type: string
+                  format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
+              required:
+              - name
+              - type
+              title: OrganizationCreateRequest
+              type: object
+            encoding:
+              coordinates:
+                contentType: text/plain
       responses:
         '201':
           description: Successful Response
@@ -3014,9 +3145,17 @@ paths:
           description: Недостаточно прав
         '409':
           description: Активные зависимости или конфликт уникальной пары связей
-      description: Требуется staff access-токен редактора контента или администратора.
+        '413':
+          description: Файл или превью превышает допустимый размер.
+      description: 'Требуется staff access-токен редактора контента или администратора.
         Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-        на удалённые записи отклоняются (422).
+        на удалённые записи отклоняются (422). Для загрузки вложения используется
+        multipart/form-data: file, необязательные file_preview, file_title и file_description.
+        coordinates передаётся JSON-строкой. В ответе file содержит подписанный URL,
+        preview_url, mime_type, title и description либо null. При PUT без нового
+        file прежнее вложение сохраняется; новый file заменяет привязку. file_preview
+        без нового file возвращает 422. Новая загрузка и организация сохраняются одной
+        транзакцией; при ошибке новые файлы удаляются.'
   /organizations/{id}:
     get:
       tags:
@@ -3067,11 +3206,145 @@ paths:
           type: integer
           title: Organization Id
       requestBody:
-        required: true
+        required: false
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrganizationUpdateRequest'
+              properties:
+                name:
+                  anyOf:
+                  - maxLength: 255
+                    minLength: 1
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Name
+                type:
+                  anyOf:
+                  - enum:
+                    - 1
+                    - 2
+                    title: OrganizationType
+                    type: integer
+                  - type: 'null'
+                  default: null
+                full_name:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Full Name
+                location:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Location
+                industry_branch_id:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                  default: null
+                  title: Industry Branch Id
+                employee_count:
+                  anyOf:
+                  - minimum: 0
+                    type: integer
+                  - type: 'null'
+                  default: null
+                  title: Employee Count
+                scale_or_product:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Scale Or Product
+                practice_info:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Practice Info
+                education_level:
+                  anyOf:
+                  - maxLength: 100
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Education Level
+                address:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Address
+                coordinates:
+                  type:
+                  - string
+                  - 'null'
+                  title: coordinates
+                  description: JSON в отдельном текстовом поле формы.
+                  contentMediaType: application/json
+                  contentSchema:
+                    anyOf:
+                    - properties:
+                        lat:
+                          title: Lat
+                          type: number
+                        lng:
+                          title: Lng
+                          type: number
+                      required:
+                      - lat
+                      - lng
+                      title: CoordinatesSchema
+                      type: object
+                    - type: 'null'
+                    default: null
+                description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: Description
+                website:
+                  anyOf:
+                  - maxLength: 500
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Website
+                phone:
+                  anyOf:
+                  - maxLength: 50
+                    type: string
+                  - type: 'null'
+                  default: null
+                  title: Phone
+                file_title:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Title
+                file_description:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                  default: null
+                  title: File Description
+                file:
+                  type: string
+                  format: binary
+                file_preview:
+                  type: string
+                  format: binary
+                  description: Превью файла; без него для видео создаётся первый кадр.
+              title: OrganizationUpdateRequest
+              type: object
+            encoding:
+              coordinates:
+                contentType: text/plain
       responses:
         '200':
           description: Successful Response
@@ -3093,10 +3366,17 @@ paths:
           description: Активные зависимости или конфликт уникальной пары связей
         '404':
           description: Запись не найдена или удалена
-      description: Требуется staff access-токен редактора контента или администратора.
+        '413':
+          description: Файл или превью превышает допустимый размер.
+      description: 'Требуется staff access-токен редактора контента или администратора.
         Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-        на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
-        null очищает nullable-поле.
+        на удалённые записи отклоняются (422). Пропущенные поля сохраняются. Для загрузки
+        вложения используется multipart/form-data: file, необязательные file_preview,
+        file_title и file_description. coordinates передаётся JSON-строкой. В ответе
+        file содержит подписанный URL, preview_url, mime_type, title и description
+        либо null. При PUT без нового file прежнее вложение сохраняется; новый file
+        заменяет привязку. file_preview без нового file возвращает 422. Новая загрузка
+        и организация сохраняются одной транзакцией; при ошибке новые файлы удаляются.'
     delete:
       tags:
       - Организации
@@ -12058,6 +12338,11 @@ components:
           type: string
           format: date-time
           title: Updated At
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Вложение организации с подписанными URL; null, если файла нет.
       type: object
       required:
       - id
@@ -12077,6 +12362,7 @@ components:
       - phone
       - created_at
       - updated_at
+      - file
       title: OrganizationResponse
     ConsentType:
       description: Тип согласия
@@ -16258,80 +16544,104 @@ components:
     OrganizationCreateRequest:
       properties:
         name:
-          type: string
           maxLength: 255
           minLength: 1
           title: Name
+          type: string
         type:
           $ref: '#/components/schemas/OrganizationType'
         full_name:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Full Name
         location:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Location
         industry_branch_id:
           anyOf:
           - type: integer
           - type: 'null'
+          default: null
           title: Industry Branch Id
         employee_count:
           anyOf:
-          - type: integer
-            minimum: 0.0
+          - minimum: 0
+            type: integer
           - type: 'null'
+          default: null
           title: Employee Count
         scale_or_product:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Scale Or Product
         practice_info:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Practice Info
         education_level:
           anyOf:
-          - type: string
-            maxLength: 100
+          - maxLength: 100
+            type: string
           - type: 'null'
+          default: null
           title: Education Level
         address:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Address
         coordinates:
           anyOf:
           - $ref: '#/components/schemas/CoordinatesSchema'
           - type: 'null'
+          default: null
         description:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Description
         website:
           anyOf:
-          - type: string
-            maxLength: 500
+          - maxLength: 500
+            type: string
           - type: 'null'
+          default: null
           title: Website
         phone:
           anyOf:
-          - type: string
-            maxLength: 50
+          - maxLength: 50
+            type: string
           - type: 'null'
+          default: null
           title: Phone
-      type: object
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
       required:
       - name
       - type
       title: OrganizationCreateRequest
+      type: object
     OrganizationType:
       type: integer
       enum:
@@ -16342,80 +16652,106 @@ components:
       properties:
         name:
           anyOf:
-          - type: string
-            maxLength: 255
+          - maxLength: 255
             minLength: 1
+            type: string
           - type: 'null'
+          default: null
           title: Name
         type:
           anyOf:
           - $ref: '#/components/schemas/OrganizationType'
           - type: 'null'
+          default: null
         full_name:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Full Name
         location:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Location
         industry_branch_id:
           anyOf:
           - type: integer
           - type: 'null'
+          default: null
           title: Industry Branch Id
         employee_count:
           anyOf:
-          - type: integer
-            minimum: 0.0
+          - minimum: 0
+            type: integer
           - type: 'null'
+          default: null
           title: Employee Count
         scale_or_product:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Scale Or Product
         practice_info:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Practice Info
         education_level:
           anyOf:
-          - type: string
-            maxLength: 100
+          - maxLength: 100
+            type: string
           - type: 'null'
+          default: null
           title: Education Level
         address:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Address
         coordinates:
           anyOf:
           - $ref: '#/components/schemas/CoordinatesSchema'
           - type: 'null'
+          default: null
         description:
           anyOf:
           - type: string
           - type: 'null'
+          default: null
           title: Description
         website:
           anyOf:
-          - type: string
-            maxLength: 500
+          - maxLength: 500
+            type: string
           - type: 'null'
+          default: null
           title: Website
         phone:
           anyOf:
-          - type: string
-            maxLength: 50
+          - maxLength: 50
+            type: string
           - type: 'null'
+          default: null
           title: Phone
-      type: object
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
       title: OrganizationUpdateRequest
+      type: object
     DirectionListResponse:
       properties:
         items:

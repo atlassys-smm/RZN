@@ -61,7 +61,9 @@ organizations:
         description: Отсутствующий или недействительный JWT.
     security:
     - bearerAuth: []
-    description: "Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства. Возвращаются только записи с deleted_at IS NULL. Пагинация и total учитывают только доступные записи."
+    description: Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника
+      любой роли или активного устройства. Возвращаются только записи с deleted_at
+      IS NULL. Пагинация и total учитывают только доступные записи.
   post:
     tags:
     - Организации
@@ -71,9 +73,140 @@ organizations:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            $ref: '#/components/schemas/OrganizationCreateRequest'
+            properties:
+              name:
+                maxLength: 255
+                minLength: 1
+                title: Name
+                type: string
+              type:
+                enum:
+                - 1
+                - 2
+                title: OrganizationType
+                type: integer
+              full_name:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Full Name
+              location:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Location
+              industry_branch_id:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Industry Branch Id
+              employee_count:
+                anyOf:
+                - minimum: 0
+                  type: integer
+                - type: 'null'
+                default: null
+                title: Employee Count
+              scale_or_product:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Scale Or Product
+              practice_info:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Practice Info
+              education_level:
+                anyOf:
+                - maxLength: 100
+                  type: string
+                - type: 'null'
+                default: null
+                title: Education Level
+              address:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Address
+              coordinates:
+                type:
+                - string
+                - 'null'
+                title: coordinates
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - properties:
+                      lat:
+                        title: Lat
+                        type: number
+                      lng:
+                        title: Lng
+                        type: number
+                    required:
+                    - lat
+                    - lng
+                    title: CoordinatesSchema
+                    type: object
+                  - type: 'null'
+                  default: null
+              description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Description
+              website:
+                anyOf:
+                - maxLength: 500
+                  type: string
+                - type: 'null'
+                default: null
+                title: Website
+              phone:
+                anyOf:
+                - maxLength: 50
+                  type: string
+                - type: 'null'
+                default: null
+                title: Phone
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              file:
+                type: string
+                format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
+            required:
+            - name
+            - type
+            title: OrganizationCreateRequest
+            type: object
+          encoding:
+            coordinates:
+              contentType: text/plain
     responses:
       '201':
         description: Successful Response
@@ -93,9 +226,17 @@ organizations:
         description: Недостаточно прав
       '409':
         description: Активные зависимости или конфликт уникальной пары связей
-    description: Требуется staff access-токен редактора контента или администратора.
+      '413':
+        description: Файл или превью превышает допустимый размер.
+    description: 'Требуется staff access-токен редактора контента или администратора.
       Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-      на удалённые записи отклоняются (422).
+      на удалённые записи отклоняются (422). Для загрузки вложения используется multipart/form-data:
+      file, необязательные file_preview, file_title и file_description. coordinates
+      передаётся JSON-строкой. В ответе file содержит подписанный URL, preview_url,
+      mime_type, title и description либо null. При PUT без нового file прежнее вложение
+      сохраняется; новый file заменяет привязку. file_preview без нового file возвращает
+      422. Новая загрузка и организация сохраняются одной транзакцией; при ошибке
+      новые файлы удаляются.'
 organizations-detail:
   get:
     tags:
@@ -127,7 +268,10 @@ organizations-detail:
         description: Отсутствующий или недействительный JWT.
     security:
     - bearerAuth: []
-    description: "Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства. Возвращается запись по ID, включая мягко удалённую, независимо от deleted_at связанных сущностей. Неизвестный ID возвращает 404. Изменение и повторное удаление мягко удалённой записи недоступны (404)."
+    description: Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника
+      любой роли или активного устройства. Возвращается запись по ID, включая мягко
+      удалённую, независимо от deleted_at связанных сущностей. Неизвестный ID возвращает
+      404. Изменение и повторное удаление мягко удалённой записи недоступны (404).
   put:
     tags:
     - Организации
@@ -142,11 +286,145 @@ organizations-detail:
         type: integer
         title: Organization Id
     requestBody:
-      required: true
+      required: false
       content:
-        application/json:
+        multipart/form-data:
           schema:
-            $ref: '#/components/schemas/OrganizationUpdateRequest'
+            properties:
+              name:
+                anyOf:
+                - maxLength: 255
+                  minLength: 1
+                  type: string
+                - type: 'null'
+                default: null
+                title: Name
+              type:
+                anyOf:
+                - enum:
+                  - 1
+                  - 2
+                  title: OrganizationType
+                  type: integer
+                - type: 'null'
+                default: null
+              full_name:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Full Name
+              location:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Location
+              industry_branch_id:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                default: null
+                title: Industry Branch Id
+              employee_count:
+                anyOf:
+                - minimum: 0
+                  type: integer
+                - type: 'null'
+                default: null
+                title: Employee Count
+              scale_or_product:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Scale Or Product
+              practice_info:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Practice Info
+              education_level:
+                anyOf:
+                - maxLength: 100
+                  type: string
+                - type: 'null'
+                default: null
+                title: Education Level
+              address:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Address
+              coordinates:
+                type:
+                - string
+                - 'null'
+                title: coordinates
+                description: JSON в отдельном текстовом поле формы.
+                contentMediaType: application/json
+                contentSchema:
+                  anyOf:
+                  - properties:
+                      lat:
+                        title: Lat
+                        type: number
+                      lng:
+                        title: Lng
+                        type: number
+                    required:
+                    - lat
+                    - lng
+                    title: CoordinatesSchema
+                    type: object
+                  - type: 'null'
+                  default: null
+              description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: Description
+              website:
+                anyOf:
+                - maxLength: 500
+                  type: string
+                - type: 'null'
+                default: null
+                title: Website
+              phone:
+                anyOf:
+                - maxLength: 50
+                  type: string
+                - type: 'null'
+                default: null
+                title: Phone
+              file_title:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Title
+              file_description:
+                anyOf:
+                - type: string
+                - type: 'null'
+                default: null
+                title: File Description
+              file:
+                type: string
+                format: binary
+              file_preview:
+                type: string
+                format: binary
+                description: Превью файла; без него для видео создаётся первый кадр.
+            title: OrganizationUpdateRequest
+            type: object
+          encoding:
+            coordinates:
+              contentType: text/plain
     responses:
       '200':
         description: Successful Response
@@ -168,10 +446,17 @@ organizations-detail:
         description: Активные зависимости или конфликт уникальной пары связей
       '404':
         description: Запись не найдена или удалена
-    description: Требуется staff access-токен редактора контента или администратора.
+      '413':
+        description: Файл или превью превышает допустимый размер.
+    description: 'Требуется staff access-токен редактора контента или администратора.
       Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-      на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный null
-      очищает nullable-поле.
+      на удалённые записи отклоняются (422). Пропущенные поля сохраняются. Для загрузки
+      вложения используется multipart/form-data: file, необязательные file_preview,
+      file_title и file_description. coordinates передаётся JSON-строкой. В ответе
+      file содержит подписанный URL, preview_url, mime_type, title и description либо
+      null. При PUT без нового file прежнее вложение сохраняется; новый file заменяет
+      привязку. file_preview без нового file возвращает 422. Новая загрузка и организация
+      сохраняются одной транзакцией; при ошибке новые файлы удаляются.'
   delete:
     tags:
     - Организации
@@ -204,8 +489,8 @@ organizations-detail:
         description: Запись не найдена или удалена
     description: Требуется staff access-токен редактора контента или администратора.
       Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
-      404. Ответ 409, если существуют активные связи с направлениями подготовки. Связи с профессиями
-      или организациями также помечаются удалёнными.
+      404. Ответ 409, если существуют активные связи с направлениями подготовки. Связи
+      с профессиями или организациями также помечаются удалёнными.
 education-programs:
   get:
     tags:
