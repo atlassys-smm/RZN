@@ -103,6 +103,8 @@ x-websocket-channels:
       $ref: '#/components/schemas/InteractiveVideoWebSocketEvent'
 
 tags:
+- name: Заставки LED - CMS
+  description: Управление медиафайлами заставки LED-экрана
 - name: Авторизация пользователей
   description: Гостевой вход, Яндекс ID/VK ID, refresh и logout
   x-displayName: Авторизация - Пользователь
@@ -177,6 +179,10 @@ tags:
   description: Общие справочные данные CMS
 
 paths:
+  /cms/led/screensavers:
+    $ref: './paths/led-screensavers.yaml#/screensavers'
+  /cms/led/screensavers/{screensaver_id}:
+    $ref: './paths/led-screensavers.yaml#/screensaver-detail'
   /device/auth/qr:
     $ref: './paths/device-auth.yaml#/qr'
   /device/auth/qr/{code}:
@@ -590,6 +596,34 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    LedScreensaver:
+      type: object
+      required:
+      - id
+      - name
+      - file
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        file:
+          $ref: '#/components/schemas/FileResponse'
+    LedScreensaverList:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedScreensaver'
+        total:
+          type: integer
     AnalyticsMetabaseObject:
       type: object
       required: [id, type]

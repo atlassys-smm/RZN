@@ -163,6 +163,7 @@ nav:
       - Мой карьерный маршрут: subsystems/digital-profile/recommendations.md
       - Профиль: subsystems/digital-profile/profile.md
   - Сущности:
+    - Заставки LED: entities/led-screensaver.md
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
     - Профессии: entities/professions.md
@@ -275,6 +276,7 @@ nav:
       - Версия 1.0: changelog/docs/v1.0.md
     - Бэкенд:
       - Обзор: changelog/back/index.md
+      - Версия 0.17: changelog/back/v0.17.md
       - Версия 0.16: changelog/back/v0.16.md
       - Версия 0.15: changelog/back/v0.15.md
       - Версия 0.13: changelog/back/v0.13.md
