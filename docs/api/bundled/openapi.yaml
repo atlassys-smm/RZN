@@ -2939,6 +2939,16 @@ paths:
           - type: integer
           - type: 'null'
           title: Industry Branch Id
+      - name: education_program_id
+        in: query
+        required: false
+        description: ID направления подготовки. Учитываются только активные направление,
+          связь и учебное заведение. Неизвестный или удалённый ID даёт пустой список.
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Education Program Id
       - name: search
         in: query
         required: false
@@ -2983,6 +2993,10 @@ paths:
       description: Требуется действующий Bearer JWT пользователя (включая гостя),
         сотрудника любой роли или активного устройства. Возвращаются только записи
         с deleted_at IS NULL. Пагинация и total учитывают только доступные записи.
+        Фильтр education_program_id возвращает полные данные учебных заведений выбранного
+        направления, включая file (или null), без дублей. Учитываются только активные
+        направление и связи. Фильтры type, industry_branch_id, education_program_id
+        и search применяются совместно (AND); limit и offset сохраняются.
     post:
       tags:
       - Организации
