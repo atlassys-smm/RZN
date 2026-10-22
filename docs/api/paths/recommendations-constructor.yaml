@@ -1,0 +1,96 @@
+builder-login:
+  post:
+    tags: [Конструктор рекомендаций]
+    summary: Вход сотрудника в конструктор рекомендаций
+    operationId: recommendation_builder_login
+    description: >-
+      Проверяет логин (email) и пароль существующего активного сотрудника тем же
+      сервисом, что /auth/login. Возвращает access_token без refresh_token и без
+      установки cookie. HTML-страница использует только явный Bearer-токен в памяти
+      вкладки и отправляет запросы с credentials=omit; после истечения токена нужен
+      повторный вход. Для расчёта нужна роль администратора, оператора или редактора.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email: {type: string, format: email}
+              password: {type: string, format: password}
+    responses:
+      '200':
+        description: Токен сотрудника; Cache-Control — no-store
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required: [staff_user_id, role]
+                  properties:
+                    staff_user_id: {type: integer}
+                    role: {type: integer, enum: [1, 2, 3, 4]}
+      '401':
+        description: Неверные учётные данные или сотрудник заблокирован
+      '422':
+        description: Некорректный формат запроса
+
+builder-preview:
+  post:
+    tags: [Конструктор рекомендаций]
+    summary: Предпросмотр рекомендаций пользователя с выбранными весами
+    operationId: recommendation_builder_preview
+    description: >-
+      Staff JWT администратора, оператора или редактора. Вызывает тот же сервис
+      get_recommendations, что /users/me/recommendations, из сохранённых снимков
+      результатов пользователя. Веса действуют только в этом запросе и не меняют
+      SOURCE_WEIGHTS, профиль, источники или их даты. Веса передаются аргументом
+      сервиса; глобальные настройки не подменяются, параллельные запросы независимы.
+      Веса от 0 до 100; хотя бы один
+      должен быть положительным. Сумма не обязана быть 100. Нулевой вес исключает
+      источник; остальные нормализуются по имеющимся результатам. Возвращает до
+      3 профессий, до 5 организаций каждого типа и до 5 направлений, включая файлы
+      организаций. Нет профиля — JSON null; нет пользователя — 404.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [user_id]
+            properties:
+              user_id: {type: integer, minimum: 1}
+              weights:
+                type: object
+                additionalProperties: false
+                properties:
+                  solomin: {type: number, minimum: 0, maximum: 100, default: 40}
+                  holland: {type: number, minimum: 0, maximum: 100, default: 40}
+                  dellinger: {type: number, minimum: 0, maximum: 100, default: 20}
+          example:
+            user_id: 12
+            weights: {solomin: 40, holland: 40, dellinger: 20}
+    responses:
+      '200':
+        description: Предпросмотр профиля или null; Cache-Control — no-store
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: '#/components/schemas/UserRecommendations'
+                - type: 'null'
+      '401':
+        description: Требуется действующий Staff JWT
+      '403':
+        description: Недостаточная роль сотрудника
+      '404':
+        description: Пользователь не найден
+      '422':
+        description: Некорректный ID, веса, неизвестные поля или нулевая сумма весов
+
