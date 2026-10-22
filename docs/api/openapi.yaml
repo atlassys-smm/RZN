@@ -269,6 +269,10 @@ paths:
 
   /organizations/education-programs:
     $ref: './paths/organizations.yaml#/education-programs'
+  /organizations/education-programs/links:
+    $ref: './paths/organizations.yaml#/education-program-links'
+  /organizations/education-programs/links/{id}:
+    $ref: './paths/organizations.yaml#/education-program-links-detail'
   /organizations/education-programs/{id}:
     $ref: './paths/organizations.yaml#/education-programs-detail'
 
@@ -5000,7 +5004,7 @@ components:
       type: object
     OrganizationRecommendations:
       type: object
-      required: [employers, educations]
+      required: [employers, educations, education_programs]
       properties:
         employers:
           type: array
@@ -5012,6 +5016,11 @@ components:
           maxItems: 5
           items:
             $ref: '#/components/schemas/RecommendedOrganization'
+        education_programs:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/RecommendedEducationProgram'
     RecommendedOrganization:
       type: object
       required: [organization, profession_ids, profession_count, position]
@@ -5078,6 +5087,11 @@ components:
           maxItems: 5
           items:
             $ref: '#/components/schemas/RecommendedOrganization'
+        education_programs:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/RecommendedEducationProgram'
       required:
       - id
       - user_id
@@ -5091,6 +5105,7 @@ components:
       - professions
       - employers
       - educations
+      - education_programs
       type: object
 
     DeviceSessionWebSocketEvent:
@@ -5369,9 +5384,6 @@ components:
           maxLength: 255
           minLength: 1
           title: Name
-        organization_id:
-          type: integer
-          title: Organization Id
         education_level:
           type: string
           maxLength: 100
@@ -5388,10 +5400,10 @@ components:
             maxLength: 50
           - type: 'null'
           title: Base Class
+      additionalProperties: false
       type: object
       required:
       - name
-      - organization_id
       - education_level
       - duration
       title: EducationProgramCreateRequest
@@ -5404,9 +5416,6 @@ components:
         name:
           type: string
           title: Name
-        organization_id:
-          type: integer
-          title: Organization Id
         education_level:
           type: string
           title: Education Level
@@ -5430,7 +5439,6 @@ components:
       required:
       - id
       - name
-      - organization_id
       - education_level
       - duration
       - base_class
@@ -5447,11 +5455,6 @@ components:
             minLength: 1
           - type: 'null'
           title: Name
-        organization_id:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Organization Id
         education_level:
           anyOf:
           - type: string
@@ -5462,8 +5465,8 @@ components:
         duration:
           anyOf:
           - type: string
-            minLength: 1
             maxLength: 255
+            minLength: 1
           - type: 'null'
           title: Duration
         base_class:
@@ -5472,6 +5475,7 @@ components:
             maxLength: 50
           - type: 'null'
           title: Base Class
+      additionalProperties: false
       type: object
       title: EducationProgramUpdateRequest
 
@@ -6048,5 +6052,105 @@ components:
       type: object
       title: ProfessionUpdateRequest
 
+    OrganizationEducationProgramCreateRequest:
+      properties:
+        education_program_id:
+          type: integer
+          title: Education Program Id
+        organization_id:
+          type: integer
+          title: Organization Id
+      type: object
+      required:
+      - education_program_id
+      - organization_id
+      title: OrganizationEducationProgramCreateRequest
+
+    OrganizationEducationProgramUpdateRequest:
+      properties:
+        education_program_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Education Program Id
+        organization_id:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Organization Id
+      type: object
+      title: OrganizationEducationProgramUpdateRequest
+
+    OrganizationEducationProgram:
+      properties:
+        id:
+          type: integer
+          title: Id
+        education_program_id:
+          type: integer
+          title: Education Program Id
+        organization_id:
+          type: integer
+          title: Organization Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - education_program_id
+      - organization_id
+      - created_at
+      - updated_at
+      title: OrganizationEducationProgramResponse
+
+    OrganizationEducationProgramListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/OrganizationEducationProgram'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - items
+      - total
+      title: PaginatedResponse[OrganizationEducationProgramResponse]
+
+    RecommendedEducationProgram:
+      type: object
+      required:
+      - education_program
+      - profession_ids
+      - profession_count
+      - position
+      properties:
+        education_program:
+          $ref: '#/components/schemas/EducationProgram'
+        profession_ids:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items:
+            type: integer
+          description: ID выбранных профессий, связанных с направлением, по возрастанию.
+        profession_count:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: Число различных выбранных профессий, связанных с направлением.
+        position:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Позиция в отдельном списке направлений.
 security:
   - bearerAuth: []

@@ -204,7 +204,7 @@ organizations-detail:
         description: Запись не найдена или удалена
     description: Требуется staff access-токен редактора контента или администратора.
       Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
-      404. Ответ 409, если существуют активные направления подготовки. Связи с профессиями
+      404. Ответ 409, если существуют активные связи с направлениями подготовки. Связи с профессиями
       или организациями также помечаются удалёнными.
 education-programs:
   get:
@@ -261,7 +261,11 @@ education-programs:
         description: Отсутствующий или недействительный JWT.
     security:
     - bearerAuth: []
-    description: "Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства. Возвращаются только записи с deleted_at IS NULL. Пагинация и total учитывают только доступные записи."
+    description: Действующий JWT пользователя, гостя, сотрудника или активного устройства. Общий справочник активных направлений
+      без дубликатов по организациям. Фильтр organization_id использует активную связь с активным учебным заведением; total
+      считает направления. Точное сочетание name, education_level, duration и base_class уникально, включая base_class=null.
+      Близкие названия, NULL и пустая строка не объединяются. organization_id отсутствует в теле и ответе направления; неизвестные
+      поля тела отклоняются (422).
   post:
     tags:
     - Организации
@@ -293,9 +297,11 @@ education-programs:
         description: Недостаточно прав
       '409':
         description: Активные зависимости или конфликт уникальной пары связей
-    description: Требуется staff access-токен редактора контента или администратора.
-      Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-      на удалённые записи отклоняются (422).
+    description: Staff JWT admin/content_editor. Точное сочетание name, education_level, duration и base_class уникально,
+      включая base_class=null. Близкие названия, NULL и пустая строка не объединяются. organization_id отсутствует в теле
+      и ответе направления; неизвестные поля тела отклоняются (422). Активный дубликат — 409. POST удалённого сочетания восстанавливает
+      его ID; связи с организациями и профессиями автоматически не восстанавливаются.
+
 education-programs-detail:
   get:
     tags:
@@ -327,7 +333,9 @@ education-programs-detail:
         description: Отсутствующий или недействительный JWT.
     security:
     - bearerAuth: []
-    description: "Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства. Возвращается запись по ID, включая мягко удалённую, независимо от deleted_at связанных сущностей. Неизвестный ID возвращает 404. Изменение и повторное удаление мягко удалённой записи недоступны (404)."
+    description: Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства.
+      Возвращается запись по ID, включая мягко удалённую, независимо от deleted_at связанных сущностей. Неизвестный ID возвращает
+      404. Изменение и повторное удаление мягко удалённой записи недоступны (404).
   put:
     tags:
     - Организации
@@ -368,10 +376,10 @@ education-programs-detail:
         description: Активные зависимости или конфликт уникальной пары связей
       '404':
         description: Запись не найдена или удалена
-    description: Требуется staff access-токен редактора контента или администратора.
-      Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-      на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный null
-      очищает nullable-поле.
+    description: Staff JWT admin/content_editor. Пропущенные поля сохраняются, base_class=null очищает базу приёма. Точное
+      сочетание name, education_level, duration и base_class уникально, включая base_class=null. Близкие названия, NULL и
+      пустая строка не объединяются. organization_id отсутствует в теле и ответе направления; неизвестные поля тела отклоняются
+      (422). Существующее сочетание — 409; удалённое направление — 404.
   delete:
     tags:
     - Организации
@@ -402,15 +410,14 @@ education-programs-detail:
         description: Активные зависимости или конфликт уникальной пары связей
       '404':
         description: Запись не найдена или удалена
-    description: Требуется staff access-токен редактора контента или администратора.
-      Устанавливает deleted_at, сохраняя строку физически. Удалённый ID возвращает
-      404. Связи с профессиями или организациями также помечаются удалёнными.
+    description: Staff JWT admin/content_editor. Мягко удаляет направление, его активные связи с организациями и соответствующие
+      связи профессий. Повторное удаление — 404. Исторические рекомендации остаются доступны.
 
 organization-recommendations:
   get:
     tags: [Организации]
-    summary: Рекомендации организаций по выбранным профессиям
-    description: "Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства. Принимает от 1 до 3 различных ID профессий повторяемым query-параметром profession_ids. Возвращает до 5 работодателей (employers, type=1) и до 5 учебных заведений (educations, type=2). Профессии, связи, программы и организации учитываются независимо от deleted_at. Порядок каждого списка: число различных совпавших профессий DESC, ID организации ASC. Несколько программ одной профессии считаются одним совпадением. Каждый элемент содержит organization, profession_ids, profession_count и position. Профиль пользователя и результаты тестов не требуются; данные не сохраняются. Если связей нет, оба массива пустые. Любой неизвестный ID профессии возвращает 404. Сначала формируется обычный топ-5 по числу различных совпавших профессий DESC и ID организации ASC. Затем проверяется покрытие каждой выбранной профессии в каждом типе организаций. Если для профессии есть связанные организации, но ни одна не попала в топ-5, лучшая из них заменяет последнюю организацию, удаление которой не лишает покрытия другие профессии. Одна организация может покрывать несколько профессий. После замен сохраняется сортировка по рейтингу; лимит — 5 уникальных организаций каждого типа. Если связей данного типа нет, покрытие для этой профессии не требуется."
+    summary: Рекомендации организаций и направлений по выбранным профессиям
+    description: "Требуется действующий Bearer JWT пользователя (включая гостя), сотрудника любой роли или активного устройства. Принимает от 1 до 3 различных ID профессий повторяемым query-параметром profession_ids. Ответ содержит employers, educations и education_programs в том же формате и с теми же правилами ранжирования, что и /users/me/recommendations: до пяти организаций каждого типа и отдельно до пяти направлений. Выше больше различных совпавших профессий, затем ID организации или направления по возрастанию. Направления выбираются по прямым связям с профессиями, независимо от организаций; поле education_program содержит полные данные направления, рядом возвращаются profession_ids, profession_count и position. Учитываются профессии, связи, программы и организации с deleted_at. Результат не сохраняется. Правило покрытия применяется отдельно к каждому из трёх списков: employers, educations, education_programs. Сначала формируется топ-5 по числу различных совпавших профессий DESC и ID организации или направления ASC. Затем проверяется покрытие каждой выбранной профессии. Если для неё есть связанные записи, но ни одна не попала в топ-5, лучшая из них заменяет последнюю запись, удаление которой не лишает покрытия другие профессии. Одна запись может покрывать несколько профессий. После замен сохраняется сортировка по рейтингу; лимит — 5 уникальных записей в каждом списке. Если соответствующих связей нет, покрытие этой профессии в данном списке не требуется. Профиль пользователя и результаты тестов не требуются. Если соответствующих связей нет, массивы пустые. Любой неизвестный ID профессии возвращает 404."
     security:
     - bearerAuth: []
     parameters:
@@ -445,3 +452,213 @@ organization-recommendations:
           application/json:
             schema:
               $ref: '#/components/schemas/HTTPValidationError'
+
+education-program-links:
+  get:
+    tags:
+    - Организации
+    summary: Список связей направлений с организациями
+    operationId: get_organization_education_programs_api_organizations_education_programs_links_get
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: education_program_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Education Program Id
+    - name: organization_id
+      in: query
+      required: false
+      schema:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Organization Id
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        title: Limit
+    - name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        title: Offset
+    responses:
+      '200':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationEducationProgramListResponse'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Отсутствующий или недействительный JWT.
+    description: Действующий JWT пользователя, гостя, сотрудника или активного устройства. Список и total учитывают только
+      активные связи с активным направлением и активным учебным заведением типа 2. Фильтры education_program_id и organization_id.
+  post:
+    tags:
+    - Организации
+    summary: Привязать направление к организации
+    operationId: create_organization_education_program_api_organizations_education_programs_links_post
+    security:
+    - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrganizationEducationProgramCreateRequest'
+    responses:
+      '201':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationEducationProgram'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Отсутствующий или недействительный JWT.
+      '403':
+        description: Недостаточная роль сотрудника.
+      '409':
+        description: Пара уже существует или конфликт ссылок.
+    description: Staff JWT admin/content_editor. Пара education_program_id/organization_id уникальна. Ссылки должны вести
+      на активное направление и активное учебное заведение типа 2; иначе 422. POST удалённой пары восстанавливает её ID. PUT
+      на занятую пару возвращает 409. DELETE мягко удаляет только связь с организацией; направление и его связи с профессиями
+      не изменяются. PUT и повторный DELETE удалённой связи возвращают 404.
+
+education-program-links-detail:
+  get:
+    tags:
+    - Организации
+    summary: Связь направления с организацией
+    operationId: get_organization_education_program_api_organizations_education_programs_links__link_id__get
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Link Id
+    responses:
+      '200':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationEducationProgram'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Отсутствующий или недействительный JWT.
+      '404':
+        description: Связь не найдена или недоступна для изменения.
+    description: Действующий JWT пользователя, гостя, сотрудника или активного устройства. GET по ID возвращает также удалённую
+      связь независимо от удаления связанных сущностей; неизвестный ID — 404.
+  put:
+    tags:
+    - Организации
+    summary: Изменить связь направления с организацией
+    operationId: update_organization_education_program_api_organizations_education_programs_links__link_id__put
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Link Id
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrganizationEducationProgramUpdateRequest'
+    responses:
+      '200':
+        description: Successful Response
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationEducationProgram'
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Отсутствующий или недействительный JWT.
+      '403':
+        description: Недостаточная роль сотрудника.
+      '409':
+        description: Пара уже существует или конфликт ссылок.
+      '404':
+        description: Связь не найдена или недоступна для изменения.
+    description: Staff JWT admin/content_editor. Пара education_program_id/organization_id уникальна. Ссылки должны вести
+      на активное направление и активное учебное заведение типа 2; иначе 422. POST удалённой пары восстанавливает её ID. PUT
+      на занятую пару возвращает 409. DELETE мягко удаляет только связь с организацией; направление и его связи с профессиями
+      не изменяются. PUT и повторный DELETE удалённой связи возвращают 404.
+  delete:
+    tags:
+    - Организации
+    summary: Удалить связь направления с организацией
+    operationId: delete_organization_education_program_api_organizations_education_programs_links__link_id__delete
+    security:
+    - bearerAuth: []
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        title: Link Id
+    responses:
+      '204':
+        description: Successful Response
+      '422':
+        description: Validation Error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HTTPValidationError'
+      '401':
+        description: Отсутствующий или недействительный JWT.
+      '403':
+        description: Недостаточная роль сотрудника.
+      '409':
+        description: Пара уже существует или конфликт ссылок.
+      '404':
+        description: Связь не найдена или недоступна для изменения.
+    description: Staff JWT admin/content_editor. Пара education_program_id/organization_id уникальна. Ссылки должны вести
+      на активное направление и активное учебное заведение типа 2; иначе 422. POST удалённой пары восстанавливает её ID. PUT
+      на занятую пару возвращает 409. DELETE мягко удаляет только связь с организацией; направление и его связи с профессиями
+      не изменяются. PUT и повторный DELETE удалённой связи возвращают 404.
