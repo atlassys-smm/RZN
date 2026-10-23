@@ -6265,7 +6265,10 @@ paths:
       summary: Завершить сессию
       description: Завершить сессию. Статус меняется на `3` (finished). Возвращает
         состояние завершённой сессии. После первого завершения устройство получает
-        session_finished в /api/device/sessions/ws с module=quiz.
+        session_finished в /api/device/sessions/ws с module=quiz. Для индивидуального
+        режима SESSION_FINISHED аналитики содержит results[{participant_id,user_id,total_score}]
+        — снимок сохранённых личных баллов, включая нули, отправляемый после commit;
+        повтор finish не создаёт событие. Командный payload не меняется.
       parameters:
       - name: id
         in: path
@@ -7154,7 +7157,11 @@ paths:
       - Профессии в действии - CMS
       summary: Список видеосценариев
       description: Требуется staff access-токен редактора контента или оператора.
-        Получить список видеосценариев с фильтрацией и пагинацией
+        Получить список видеосценариев с фильтрацией и пагинацией. Каждый элемент
+        содержит profession_id. При select=profession добавляется вложенный profession
+        с полными данными профессии; без привязки profession=null. Без select=profession
+        поле profession отсутствует. Мягко удалённая профессия существующего сценария
+        также возвращается при выборе profession.
       parameters:
       - name: profession_id
         in: query
@@ -7162,6 +7169,18 @@ paths:
           type: integer
           format: int64
         description: Фильтр по профессии
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию.
+          Параметр можно повторять; неизвестные значения игнорируются. По умолчанию
+          дополнительные данные не загружаются.'
       - name: limit
         in: query
         schema:
@@ -7187,7 +7206,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/InteractiveVideoScenario'
+                      $ref: '#/components/schemas/InteractiveVideoScenarioListItem'
                   total:
                     type: integer
     post:
@@ -13627,6 +13646,33 @@ components:
         updated_at:
           type: string
           format: date-time
+    InteractiveVideoScenarioListItem:
+      description: Элемент списка видеосценариев CMS с полными данными связанной профессии
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - profession_id
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        profession_id:
+          type: integer
+          format: int64
+          nullable: true
+        profession:
+          description: Возвращается только при select=profession; null, если у сценария
+            нет привязки
+          anyOf:
+          - $ref: '#/components/schemas/Profession'
+          - type: 'null'
     InteractiveVideoScenarioFull:
       description: Видеосценарий с деревом веток
       allOf:

@@ -80,7 +80,7 @@ UUID5 создаётся из модуля, сессии, действия и с
 | 1 | SESSION_STARTED | participant_count, team_count, participants[{participant_id,user_id,is_guest}], teams[{team_id,participant_count}]; для командной игры tracks_participant_answers=true |
 | 2 | PARTICIPANT_JOINED | participant_id, team_id |
 | 3 | ANSWER_EVALUATED | session_question_id, participant_id, team_id, is_correct |
-| 4 | SESSION_FINISHED | duration_ms, finish_reason; для командной игры participants[{participant_id,team_id}] — состав на окончание |
+| 4 | SESSION_FINISHED | duration_ms, finish_reason; для индивидуальной викторины results[{participant_id,user_id,total_score}]; для командной игры participants[{participant_id,team_id}] — состав на окончание |
 | 6 | ANSWER_SUBMITTED | Только командная игра: session_question_id, participant_id, team_id — факт принятого личного ответа, без содержимого |
 
 Личный ответ командной игры отправляется после commit через синхронную
@@ -94,7 +94,9 @@ UUID5 создаётся из модуля, сессии, действия и с
 Количество участников и непустых команд фиксируется на старте. Повторное
 подключение не создаёт регистрации. Ответ оценивается при раскрытии вопроса;
 командный ответ учитывается один раз от команды. Неотвеченные вопросы не входят
-в процент ошибок. Тексты, сложность, тип, варианты, ответы и баллы не отправляются.
+в процент ошибок. Тексты, сложность, тип, варианты и содержимое ответов не отправляются.
+Итоговые личные баллы передаются только в results[] индивидуального SESSION_FINISHED;
+ANSWER_EVALUATED не меняется.
 Завершение определяется переходом сессии в `FINISHED` и записью `finished_at`
 через `/finish`. Для этого события `finish_reason="completed"`: пропуски вопросов,
 число обработанных ответов и позиция в игре на завершённость не влияют.
@@ -302,3 +304,35 @@ education_level, duration или base_class не объединяет запис
 Справочник directions и profession.direction_id не участвуют в этом расчёте.
 Миграция ClickHouse 0011 создаёт profession_views и education_program_views;
 таблицы PostgreSQL не меняются.
+
+### Итоговые баллы индивидуальной викторины
+
+При завершении игры `module_id=1`, `event_id=4` payload дополнен `results`:
+
+```json
+{
+  "results": [
+    {"participant_id": 123, "user_id": 22, "total_score": 450}
+  ]
+}
+```
+
+В массив включаются все участники с сохранённым individual_score, включая нули.
+Снимок простых значений строится до commit завершения, событие отправляется
+после успешного commit с occurred_at=finished_at и прежним
+event_key=quiz_finished:<session_id>. Повтор finish не создаёт новый снимок.
+Имена и содержимое ответов не передаются. Для командных игр прежний payload
+с participants[] сохраняется, results[] не добавляется.
+
+Представление quiz_individual_results (миграция ClickHouse 0012) читает results[]
+из events_unique. Старые окончания без массива/total_score, неизвестный user_id,
+отрицательные и нечисловые баллы исключаются; явный ноль остаётся результатом.
+Топ-5 выбирает лучший результат пользователя среди завершённых в периоде сессий;
+повторные прохождения не суммируются. Без фильтров берётся полный вчерашний день
+по Europe/Moscow; явные date_from/date_to задают период по дате завершения,
+конец включителен. Поддерживается фильтр device_id. При равенстве баллов выше
+более раннее завершение, затем порядок определяется session_id и user_id.
+На графике используются обезличенные подписи по позиции «Участник 1»…«Участник 5».
+Карточка — в [разделе индивидуальной викторины](../subsystems/analytics/dashboards/pak-detail/led-platform.md#индивидуальная-викторина).
+История автоматически не выгружается; отсутствие события окончания при
+best-effort доставке исключает результат целиком.

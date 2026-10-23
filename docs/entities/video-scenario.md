@@ -31,6 +31,12 @@
 - **CMS** — создание и управление видеосценариями
 - **LED-медиаплатформа** — воспроизведение видеосценариев с интерактивными выборами
 
+### Данные профессии в списке CMS
+
+`GET /api/cms/video-scenarios` возвращает `items` и `total`. Каждый элемент списка
+сохраняет `id`, `title`, `description`, `profession_id`. Только при запросе
+`GET /api/cms/video-scenarios?select=profession` добавляется поле `profession`.
+
 ---
 
 ## InteractiveVideoScenarioBranch (Ветка видеосценария)

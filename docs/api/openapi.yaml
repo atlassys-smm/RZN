@@ -2567,6 +2567,29 @@ components:
           type: string
           format: date-time
 
+    InteractiveVideoScenarioListItem:
+      description: Элемент списка видеосценариев CMS с полными данными связанной профессии
+      type: object
+      required: [id, title, description, profession_id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        profession_id:
+          type: integer
+          format: int64
+          nullable: true
+        profession:
+          description: Возвращается только при select=profession; null, если у сценария нет привязки
+          anyOf:
+            - $ref: '#/components/schemas/Profession'
+            - type: 'null'
+
     InteractiveVideoScenarioFull:
       description: Видеосценарий с деревом веток
       allOf:
