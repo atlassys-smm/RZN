@@ -7263,7 +7263,9 @@ paths:
       - Профессии в действии - CMS
       summary: Получить видеосценарий
       description: Требуется staff access-токен редактора контента или оператора.
-        Получить видеосценарий с деревом веток
+        Получить видеосценарий с деревом веток. При select=profession добавляется
+        полная связанная профессия (включая мягко удалённую), без привязки — profession=null.
+        Без этого параметра поле profession отсутствует и данные профессии не загружаются.
       parameters:
       - name: id
         in: path
@@ -7271,6 +7273,17 @@ paths:
         schema:
           type: integer
           format: int64
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию.
+          Параметр можно повторять; неизвестные значения игнорируются.'
       responses:
         '403':
           description: Недостаточно прав
@@ -13674,11 +13687,17 @@ components:
           - $ref: '#/components/schemas/Profession'
           - type: 'null'
     InteractiveVideoScenarioFull:
-      description: Видеосценарий с деревом веток
+      description: Видеосценарий с деревом веток и опциональной профессией
       allOf:
       - $ref: '#/components/schemas/InteractiveVideoScenario'
       - type: object
         properties:
+          profession:
+            description: Возвращается только при select=profession; null, если у сценария
+              нет привязки
+            anyOf:
+            - $ref: '#/components/schemas/Profession'
+            - type: 'null'
           branches:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
             nullable: true

@@ -2591,11 +2591,16 @@ components:
             - type: 'null'
 
     InteractiveVideoScenarioFull:
-      description: Видеосценарий с деревом веток
+      description: Видеосценарий с деревом веток и опциональной профессией
       allOf:
         - $ref: '#/components/schemas/InteractiveVideoScenario'
         - type: object
           properties:
+            profession:
+              description: Возвращается только при select=profession; null, если у сценария нет привязки
+              anyOf:
+                - $ref: '#/components/schemas/Profession'
+                - type: 'null'
             branches:
               $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
               nullable: true

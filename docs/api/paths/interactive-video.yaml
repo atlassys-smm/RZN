@@ -98,7 +98,7 @@ cms-scenarios-detail:
   get:
     tags: [Профессии в действии - CMS]
     summary: Получить видеосценарий
-    description: Требуется staff access-токен редактора контента или оператора. Получить видеосценарий с деревом веток
+    description: Требуется staff access-токен редактора контента или оператора. Получить видеосценарий с деревом веток. При select=profession добавляется полная связанная профессия (включая мягко удалённую), без привязки — profession=null. Без этого параметра поле profession отсутствует и данные профессии не загружаются.
     parameters:
       - name: id
         in: path
@@ -106,6 +106,16 @@ cms-scenarios-detail:
         schema:
           type: integer
           format: int64
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию. Параметр можно повторять; неизвестные значения игнорируются.'
     responses:
       '403':
         description: Недостаточно прав
