@@ -221,6 +221,10 @@ paths:
   # ── Пользователи ─────────────────────────────────
   /users/me/recommendations:
     $ref: './paths/user-recommendations.yaml#/me-recommendations'
+  /recommendations_constructor/login:
+    $ref: './paths/recommendations-constructor.yaml#/builder-login'
+  /recommendations_constructor/preview:
+    $ref: './paths/recommendations-constructor.yaml#/builder-preview'
 
   # ── Профессии ────────────────────────────────────
   /professions:
