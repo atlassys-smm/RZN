@@ -186,6 +186,14 @@ user-info:
                   type: string
                   nullable: true
                   description: URL аватара (только для авторизованных)
+                gender:
+                  type: [integer, 'null']
+                  enum: [1, 2, null]
+                  description: 1 — мужской, 2 — женский; null — не указан.
+                birth_date:
+                  type: [string, 'null']
+                  format: date
+                  description: Дата рождения YYYY-MM-DD или null.
       '401':
         description: Недействительный токен
 user-logout:
