@@ -652,7 +652,7 @@ professions:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfessionCreateRequest'
     responses:
@@ -677,6 +677,7 @@ professions:
     description: Требуется staff access-токен редактора контента или администратора.
       Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
       на удалённые записи отклоняются (422).
+      Принимает multipart/form-data по образцу организаций; поля профессии передаются отдельно, необязательные поля файла — file, file_preview, file_title и file_description. Без нового file текущий файл сохраняется; file_preview без file отклоняется.
 professions-detail:
   get:
     tags:
@@ -725,7 +726,7 @@ professions-detail:
     requestBody:
       required: true
       content:
-        application/json:
+        multipart/form-data:
           schema:
             $ref: '#/components/schemas/ProfessionUpdateRequest'
     responses:
@@ -753,6 +754,7 @@ professions-detail:
       Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
       на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный null
       очищает nullable-поле.
+      Принимает multipart/form-data по образцу организаций; поля профессии передаются отдельно, необязательные поля файла — file, file_preview, file_title и file_description. Без нового file текущий файл сохраняется; file_preview без file отклоняется.
   delete:
     tags:
     - Профессии

@@ -11,10 +11,12 @@ GET `/api/users/me/recommendations` принимает User JWT либо Device 
 | `weights` | Модуль source_module, код source_code и вес weight из кода |
 | `missing_sources` | Недостающие источники с положительным весом: объекты source_module и source_code |
 | `sources` | Использованные источники: id, source_module, source_code, source_reference, weight и effective_weight_percent |
-| `professions` | До трёх профессий: profession_id/name, score, position, contributions |
+| `professions` | До трёх профессий: profession_id/name, description, file, score, position, contributions |
 | `employers` | До пяти работодателей по профессиям итогового рейтинга |
 | `educations` | До пяти учебных заведений по профессиям итогового рейтинга |
 | `education_programs` | До пяти направлений подготовки по профессиям итогового рейтинга |
+
+В каждой профессии `description` — текущее описание из справочника профессий или `null`, если оно не заполнено. Изменение описания видно в следующем GET без пересчёта баллов и изменения снимков источников. Описание возвращается также для мягко удалённых профессий из сохранённых рекомендаций.
 
 contributions содержит source_id, source_module, source_code, weight, effective_weight_percent, test_score, contribution и reasons каждого источника. reasons — снимок объяснений поставщика источника; ПрофСтарт сохраняет группы и нормированные показатели. Десятичные поля этих вложенных объяснений могут быть строками. Нулевая оценка профессии в пройденном источнике не исключает его вес из знаменателя.
 
@@ -50,3 +52,5 @@ GET `/api/organizations/recommendations?profession_ids=1&profession_ids=2&profes
 Правило действует для `/users/me/recommendations` и `/organizations/recommendations`, в том числе для профессий, связей, программ и организаций с `deleted_at`.
 
 Профессия связана с общим направлением независимо от организации. Для каждого выбранного направления учитываются все его учебные заведения через organization_education_programs; отдельная привязка профессии к каждому заведению не требуется.
+
+В каждой профессии возвращается `file`: собственный файл, а при пустом media_id — male_photo_file_id её шаблона аватара; если файлов нет, null. Правило совпадает с карточкой профессии. Данные файла читаются при GET, в снимки источников не записываются.

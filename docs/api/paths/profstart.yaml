@@ -1667,7 +1667,7 @@ result:
     - ПрофСтарт - Пользователь
     summary: Сохранённый результат своей сессии
     operationId: profstart_result_get
-    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Результат своей завершённой сессии: answers и scores для любого типа. До завершения и после abandoned — 409. Для любого типа создаётся источник с показателями групп и профессий; участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS."
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Результат своей завершённой сессии: answers, scores и professions для любого типа. professions — весь сохранённый список из profession_scores источника этого прохождения: profession_id, profession_name, description, file, score, position, reasons. file использует собственный media_id профессии, при его отсутствии — male_photo_file_id шаблона аватара, без обоих возвращает null. Название, балл, позиция и пояснения берутся из снимка без применения SOURCE_WEIGHTS и ограничения до трёх; description — текущее описание из справочника или null. Мягко удалённые профессии сохраняются в ответе. Нет рекомендаций — professions=[]. До завершения и после abandoned — 409. Для любого типа создаётся источник с показателями групп и профессий; участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели не меняются при редактировании CMS."
     x-implementation-status: implemented
     parameters:
     - $ref: '#/components/parameters/DeviceConnectionId'
@@ -1702,7 +1702,7 @@ me-results:
     - ПрофСтарт - Пользователь
     summary: История своих результатов
     operationId: profstart_me_results_get
-    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Порядок created_at DESC, id DESC; фильтр периода применяется ко времени результата."
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Порядок created_at DESC, id DESC; фильтр периода применяется ко времени результата. Каждый элемент содержит professions — полный сохранённый список профессий своего прохождения с баллами, позициями, пояснениями и актуальным description, как в запросе отдельного результата."
     x-implementation-status: implemented
     parameters:
     - $ref: '#/components/parameters/DeviceConnectionId'

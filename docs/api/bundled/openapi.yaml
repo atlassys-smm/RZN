@@ -1308,39 +1308,43 @@ paths:
       operationId: user_recommendations_get
       description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
         для устройства обязателен X-Device-Connection-Id. Профиль с максимум тремя
-        профессиями и вкладами источников. До первого сохранённого источника — JSON
-        null. В расчёте участвуют только источники с положительным весом в SOURCE_WEIGHTS.
-        Рейтинг рассчитывается при каждом запросе из снимков источников; веса заданы
-        в коде, итог не сохраняется. Мягкое удаление профессии (`deleted_at`) не исключает
-        её из ранее сохранённых рекомендаций: ID, название и исходные баллы берутся
-        из снимка источника. При новом прохождении подбираются только активные профессии
-        по активным связям. По максимум трём профессиям из итогового рейтинга рассчитываются
-        три отдельных списка: `employers` (до 5 работодателей типа 1), `educations`
-        (до 5 учебных заведений типа 2) и `education_programs` (до 5 направлений подготовки).
-        Работодатели определяются через profession_employers, учебные заведения —
-        через profession_education_programs → education_programs → organization_education_programs
-        → organizations. Направления подбираются непосредственно через profession_education_programs
-        → education_programs, независимо от наличия организаций. В каждом списке сначала
-        идут записи с большим числом различных совпавших профессий, затем с меньшим
-        ID. Несколько программ одной профессии не увеличивают её вклад в рейтинг организации.
-        Элементы списков организаций содержат `organization` (полные данные организации),
-        `profession_ids` (по возрастанию ID), `profession_count` и `position` (1–5).
-        В списке направлений вместо `organization` возвращается `education_program`:
-        id, name, education_level, duration, base_class, created_at, updated_at; остальные
-        поля совпадают. Общее направление возвращается один раз независимо от числа
-        его организаций. Профессии, связи, программы и организации с deleted_at участвуют
-        в расчёте для сохранённых рекомендаций. Данные и связи читаются в текущем
-        состоянии при каждом GET; снимки этих трёх списков не сохраняются. При отсутствии
-        профессий или соответствующих связей массивы пустые; до создания профиля ответ
-        остаётся null. Правило покрытия применяется отдельно к каждому из трёх списков:
-        employers, educations, education_programs. Сначала формируется топ-5 по числу
-        различных совпавших профессий DESC и ID организации или направления ASC. Затем
-        проверяется покрытие каждой выбранной профессии. Если для неё есть связанные
-        записи, но ни одна не попала в топ-5, лучшая из них заменяет последнюю запись,
-        удаление которой не лишает покрытия другие профессии. Одна запись может покрывать
-        несколько профессий. После замен сохраняется сортировка по рейтингу; лимит
-        — 5 уникальных записей в каждом списке. Если соответствующих связей нет, покрытие
-        этой профессии в данном списке не требуется.'
+        профессиями и вкладами источников. Каждая профессия содержит description —
+        текущее описание из справочника или null, а также file: собственный файл;
+        при пустом media_id — male_photo_file_id шаблона аватара; без обоих — null.
+        Название и баллы сохраняют значения из снимков источников. До первого сохранённого
+        источника — JSON null. В расчёте участвуют только источники с положительным
+        весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при каждом запросе из снимков
+        источников; веса заданы в коде, итог не сохраняется. Мягкое удаление профессии
+        (`deleted_at`) не исключает её из ранее сохранённых рекомендаций: ID, название
+        и исходные баллы берутся из снимка источника. При новом прохождении подбираются
+        только активные профессии по активным связям. По максимум трём профессиям
+        из итогового рейтинга рассчитываются три отдельных списка: `employers` (до
+        5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2) и `education_programs`
+        (до 5 направлений подготовки). Работодатели определяются через profession_employers,
+        учебные заведения — через profession_education_programs → education_programs
+        → organization_education_programs → organizations. Направления подбираются
+        непосредственно через profession_education_programs → education_programs,
+        независимо от наличия организаций. В каждом списке сначала идут записи с большим
+        числом различных совпавших профессий, затем с меньшим ID. Несколько программ
+        одной профессии не увеличивают её вклад в рейтинг организации. Элементы списков
+        организаций содержат `organization` (полные данные организации), `profession_ids`
+        (по возрастанию ID), `profession_count` и `position` (1–5). В списке направлений
+        вместо `organization` возвращается `education_program`: id, name, education_level,
+        duration, base_class, created_at, updated_at; остальные поля совпадают. Общее
+        направление возвращается один раз независимо от числа его организаций. Профессии,
+        связи, программы и организации с deleted_at участвуют в расчёте для сохранённых
+        рекомендаций. Данные и связи читаются в текущем состоянии при каждом GET;
+        снимки этих трёх списков не сохраняются. При отсутствии профессий или соответствующих
+        связей массивы пустые; до создания профиля ответ остаётся null. Правило покрытия
+        применяется отдельно к каждому из трёх списков: employers, educations, education_programs.
+        Сначала формируется топ-5 по числу различных совпавших профессий DESC и ID
+        организации или направления ASC. Затем проверяется покрытие каждой выбранной
+        профессии. Если для неё есть связанные записи, но ни одна не попала в топ-5,
+        лучшая из них заменяет последнюю запись, удаление которой не лишает покрытия
+        другие профессии. Одна запись может покрывать несколько профессий. После замен
+        сохраняется сортировка по рейтингу; лимит — 5 уникальных записей в каждом
+        списке. Если соответствующих связей нет, покрытие этой профессии в данном
+        списке не требуется.'
       security:
       - bearerAuth: []
       parameters:
@@ -1564,7 +1568,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfessionCreateRequest'
       responses:
@@ -1588,7 +1592,10 @@ paths:
           description: Активные зависимости или конфликт уникальной пары связей
       description: Требуется staff access-токен редактора контента или администратора.
         Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-        на удалённые записи отклоняются (422).
+        на удалённые записи отклоняются (422). Принимает multipart/form-data по образцу
+        организаций; поля профессии передаются отдельно, необязательные поля файла
+        — file, file_preview, file_title и file_description. Без нового file текущий
+        файл сохраняется; file_preview без file отклоняется.
   /professions/{id}:
     get:
       tags:
@@ -1645,7 +1652,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfessionUpdateRequest'
       responses:
@@ -1672,7 +1679,10 @@ paths:
       description: Требуется staff access-токен редактора контента или администратора.
         Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
         на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
-        null очищает nullable-поле.
+        null очищает nullable-поле. Принимает multipart/form-data по образцу организаций;
+        поля профессии передаются отдельно, необязательные поля файла — file, file_preview,
+        file_title и file_description. Без нового file текущий файл сохраняется; file_preview
+        без file отклоняется.
     delete:
       tags:
       - Профессии
@@ -9748,7 +9758,14 @@ paths:
       operationId: profstart_result_get
       description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
         для устройства обязателен X-Device-Connection-Id. Результат своей завершённой
-        сессии: answers и scores для любого типа. До завершения и после abandoned
+        сессии: answers, scores и professions для любого типа. professions — весь
+        сохранённый список из profession_scores источника этого прохождения: profession_id,
+        profession_name, description, file, score, position, reasons. file использует
+        собственный media_id профессии, при его отсутствии — male_photo_file_id шаблона
+        аватара, без обоих возвращает null. Название, балл, позиция и пояснения берутся
+        из снимка без применения SOURCE_WEIGHTS и ограничения до трёх; description
+        — текущее описание из справочника или null. Мягко удалённые профессии сохраняются
+        в ответе. Нет рекомендаций — professions=[]. До завершения и после abandoned
         — 409. Для любого типа создаётся источник с показателями групп и профессий;
         участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели
         не меняются при редактировании CMS.'
@@ -9789,7 +9806,10 @@ paths:
       operationId: profstart_me_results_get
       description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
         устройства обязателен X-Device-Connection-Id. Порядок created_at DESC, id
-        DESC; фильтр периода применяется ко времени результата.
+        DESC; фильтр периода применяется ко времени результата. Каждый элемент содержит
+        professions — полный сохранённый список профессий своего прохождения с баллами,
+        позициями, пояснениями и актуальным description, как в запросе отдельного
+        результата.
       x-implementation-status: implemented
       parameters:
       - $ref: '#/components/parameters/DeviceConnectionId'
@@ -12414,6 +12434,12 @@ components:
       title: DirectionResponse
     Profession:
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id
+            шаблона аватара; без обоих — null
         id:
           type: integer
           title: Id
@@ -12463,6 +12489,7 @@ components:
           title: Updated At
       type: object
       required:
+      - file
       - id
       - name
       - description
@@ -15803,6 +15830,69 @@ components:
         is_leading:
           type: boolean
       description: Общий показатель группы; у Соломина объединяет want и can.
+    ProfStartProfessionReason:
+      type: object
+      additionalProperties: false
+      required:
+      - group_id
+      - group_code
+      - group_name
+      - normalized_score
+      - contribution
+      properties:
+        group_id:
+          type: integer
+          format: int64
+        group_code:
+          type: string
+        group_name:
+          type: string
+        normalized_score:
+          type: number
+          description: Сохранённый нормированный показатель группы
+        contribution:
+          type: number
+          description: Сохранённый вклад группы в балл профессии этого теста
+    ProfStartRecommendedProfession:
+      type: object
+      additionalProperties: false
+      required:
+      - file
+      - profession_id
+      - profession_name
+      - description
+      - score
+      - position
+      - reasons
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id
+            шаблона аватара; без обоих — null
+        profession_id:
+          type: integer
+          format: int64
+        profession_name:
+          type: string
+          description: Название из снимка источника на дату прохождения
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Текущее описание из справочника; null, если отсутствует
+        score:
+          type: number
+          description: Сохранённый балл профессии по этому тесту без весов общего
+            рейтинга
+        position:
+          type: integer
+          description: Сохранённая позиция в полном списке профессий этого теста
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartProfessionReason'
     ProfStartResult:
       type: object
       additionalProperties: false
@@ -15818,6 +15908,7 @@ components:
       - created_at
       - scores
       - answers
+      - professions
       properties:
         session_id:
           type: integer
@@ -15855,6 +15946,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartSavedAnswer'
+        professions:
+          type: array
+          description: Полный сохранённый список профессий этого прохождения; пустой
+            список, если рекомендаций нет
+          items:
+            $ref: '#/components/schemas/ProfStartRecommendedProfession'
         test_code_type:
           type: string
       allOf:
@@ -16236,10 +16333,21 @@ components:
       type: object
     RecommendedProfession:
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id
+            шаблона аватара; без обоих — null
         profession_id:
           type: integer
         profession_name:
           type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Текущее описание профессии из справочника; null, если не заполнено
         score:
           type: number
         position:
@@ -16249,8 +16357,10 @@ components:
             $ref: '#/components/schemas/RecommendationContribution'
           type: array
       required:
+      - file
       - profession_id
       - profession_name
+      - description
       - score
       - position
       - contributions
@@ -17145,6 +17255,18 @@ components:
       title: PaginatedResponse[ProfessionResponse]
     ProfessionCreateRequest:
       properties:
+        file:
+          type: string
+          format: binary
+          description: Необязательный собственный файл профессии
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без file не принимается
+        file_title:
+          type: string
+        file_description:
+          type: string
         name:
           type: string
           maxLength: 255
@@ -17290,6 +17412,18 @@ components:
       title: ProfessionEmployerUpdateRequest
     ProfessionUpdateRequest:
       properties:
+        file:
+          type: string
+          format: binary
+          description: Необязательный собственный файл профессии
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без file не принимается
+        file_title:
+          type: string
+        file_description:
+          type: string
         name:
           anyOf:
           - type: string
