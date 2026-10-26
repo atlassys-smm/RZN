@@ -2607,7 +2607,7 @@ components:
               description: Корневая ветка дерева (стартовая, с рекурсивно вложенными дочерними через children). null если сценарий не имеет веток.
 
     InteractiveVideoScenarioBranch:
-      description: Ветка видеосценария (видеофрагмент с вариантами выбора)
+      description: Ветка видеосценария — видеофрагмент или ссылка на общее продолжение того же сценария
       type: object
       properties:
         id:
@@ -2621,6 +2621,11 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
+        reference_branch_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID целевой ветки того же сценария. При выборе используются её видео, вопрос и переходы; text остаётся собственным
         file:
           anyOf:
             - $ref: '#/components/schemas/FileResponse'

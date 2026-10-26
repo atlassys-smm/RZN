@@ -7369,7 +7369,17 @@ paths:
 
         Добавить дочернюю ветку к указанному родителю.
 
-        `parent_id` обязателен. Файл передаётся в поле `file` multipart/form-data.
+        `parent_id` и `text` обязательны. Для обычной ветки обязателен `file` multipart/form-data.
+
+        Ссылочной ветке достаточно `reference_branch_id` существующей ветки того же
+        сценария:
+
+        сохраняется собственный `text`, показ сразу переходит к видео, вопросу и вариантам
+        цели.
+
+        Цепочки ссылок допустимы; отсутствующая цель, другой сценарий и циклы — 400.
+
+        Ссылочная ветка не может быть родителем. Без файла и ссылки — 422.
 
         '
       parameters:
@@ -7386,6 +7396,12 @@ paths:
           multipart/form-data:
             schema:
               properties:
+                reference_branch_id:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: ID существующей ветки того же сценария; без ссылки
+                    требуется file
                 parent_id:
                   type: integer
                   title: Parent Id
@@ -7421,7 +7437,6 @@ paths:
               required:
               - parent_id
               - text
-              - file
               title: Body_create_branch_api_cms_video_scenarios__scenario_id__branches_post
       responses:
         '403':
@@ -7434,6 +7449,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+        '422':
+          description: Для ветки без ссылки требуется видеофайл или неверный формат
+            поля
         '400':
           description: Ошибка валидации
           content:
@@ -7445,8 +7463,23 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Обновить ветку
-      description: Требуется staff access-токен редактора контента. Обновить текст
-        вопроса, текст варианта или видеофайл
+      description: 'Требуется staff access-токен редактора контента. Обновляет текст
+        вопроса, текст варианта, видео или ссылку.
+
+        reference_branch_id отсутствует — сохранить ссылку; пустое значение — снять
+        ссылку.
+
+        При снятии ссылки нужно собственное сохранённое видео или новый file, иначе
+        422.
+
+        При выборе ссылки используются видео, вопрос и дальнейшие варианты конечной
+        цели; собственные видео и prompt игнорируются.
+
+        Стартовая ветка и ветка с детьми не могут стать ссылочными.
+
+        Циклы, отсутствующая цель и ссылка на другой сценарий — 400.
+
+        '
       parameters:
       - name: id
         in: path
@@ -7465,6 +7498,12 @@ paths:
           multipart/form-data:
             schema:
               properties:
+                reference_branch_id:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: ID цели; пустое значение снимает ссылку, отсутствие
+                    сохраняет её
                 text:
                   anyOf:
                   - type: string
@@ -7510,6 +7549,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+        '400':
+          description: Недопустимая ссылка или цикл переходов
+        '422':
+          description: Для ветки без ссылки требуется видеофайл или неверный формат
+            поля
         '404':
           description: Ветка не найдена
   /interactive-video/sessions:
@@ -13704,7 +13748,8 @@ components:
             description: Корневая ветка дерева (стартовая, с рекурсивно вложенными
               дочерними через children). null если сценарий не имеет веток.
     InteractiveVideoScenarioBranch:
-      description: Ветка видеосценария (видеофрагмент с вариантами выбора)
+      description: Ветка видеосценария — видеофрагмент или ссылка на общее продолжение
+        того же сценария
       type: object
       properties:
         id:
@@ -13718,6 +13763,12 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
+        reference_branch_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID целевой ветки того же сценария. При выборе используются
+            её видео, вопрос и переходы; text остаётся собственным
         file:
           anyOf:
           - $ref: '#/components/schemas/FileResponse'
