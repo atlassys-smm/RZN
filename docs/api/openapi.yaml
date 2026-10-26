@@ -4704,7 +4704,7 @@ components:
             $ref: '#/components/schemas/ProfStartSavedAnswer'
         professions:
           type: array
-          description: Полный сохранённый список профессий этого прохождения; пустой список, если рекомендаций нет
+          description: Наиболее подходящие профессии этого прохождения; score DESC, profession_id ASC; пустой список, если рекомендаций нет
           items:
             $ref: '#/components/schemas/ProfStartRecommendedProfession'
         test_code_type:
