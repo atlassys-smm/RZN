@@ -1484,6 +1484,11 @@ components:
 
     Profession:
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id шаблона аватара; без обоих — null
         id:
           type: integer
           title: Id
@@ -1533,6 +1538,7 @@ components:
           title: Updated At
       type: object
       required:
+      - file
       - id
       - name
       - description
@@ -2567,19 +2573,47 @@ components:
           type: string
           format: date-time
 
+    InteractiveVideoScenarioListItem:
+      description: Элемент списка видеосценариев CMS с полными данными связанной профессии
+      type: object
+      required: [id, title, description, profession_id]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        profession_id:
+          type: integer
+          format: int64
+          nullable: true
+        profession:
+          description: Возвращается только при select=profession; null, если у сценария нет привязки
+          anyOf:
+            - $ref: '#/components/schemas/Profession'
+            - type: 'null'
+
     InteractiveVideoScenarioFull:
-      description: Видеосценарий с деревом веток
+      description: Видеосценарий с деревом веток и опциональной профессией
       allOf:
         - $ref: '#/components/schemas/InteractiveVideoScenario'
         - type: object
           properties:
+            profession:
+              description: Возвращается только при select=profession; null, если у сценария нет привязки
+              anyOf:
+                - $ref: '#/components/schemas/Profession'
+                - type: 'null'
             branches:
               $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
               nullable: true
               description: Корневая ветка дерева (стартовая, с рекурсивно вложенными дочерними через children). null если сценарий не имеет веток.
 
     InteractiveVideoScenarioBranch:
-      description: Ветка видеосценария (видеофрагмент с вариантами выбора)
+      description: Ветка видеосценария — видеофрагмент или ссылка на общее продолжение того же сценария
       type: object
       properties:
         id:
@@ -2593,6 +2627,11 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
+        reference_branch_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID целевой ветки того же сценария. При выборе используются её видео, вопрос и переходы; text остаётся собственным
         file:
           anyOf:
             - $ref: '#/components/schemas/FileResponse'
@@ -4561,6 +4600,55 @@ components:
         is_leading:
           type: boolean
       description: Общий показатель группы; у Соломина объединяет want и can.
+    ProfStartProfessionReason:
+      type: object
+      additionalProperties: false
+      required: [group_id, group_code, group_name, normalized_score, contribution]
+      properties:
+        group_id:
+          type: integer
+          format: int64
+        group_code:
+          type: string
+        group_name:
+          type: string
+        normalized_score:
+          type: number
+          description: Сохранённый нормированный показатель группы
+        contribution:
+          type: number
+          description: Сохранённый вклад группы в балл профессии этого теста
+    ProfStartRecommendedProfession:
+      type: object
+      additionalProperties: false
+      required: [file, profession_id, profession_name, description, score, position, reasons]
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id шаблона аватара; без обоих — null
+        profession_id:
+          type: integer
+          format: int64
+        profession_name:
+          type: string
+          description: Название из снимка источника на дату прохождения
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Текущее описание из справочника; null, если отсутствует
+        score:
+          type: number
+          description: Сохранённый балл профессии по этому тесту без весов общего рейтинга
+        position:
+          type: integer
+          description: Сохранённая позиция в полном списке профессий этого теста
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartProfessionReason'
     ProfStartResult:
       type: object
       additionalProperties: false
@@ -4576,6 +4664,7 @@ components:
       - created_at
       - scores
       - answers
+      - professions
       properties:
         session_id:
           type: integer
@@ -4613,6 +4702,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartSavedAnswer'
+        professions:
+          type: array
+          description: Наиболее подходящие профессии этого прохождения; score DESC, profession_id ASC; пустой список, если рекомендаций нет
+          items:
+            $ref: '#/components/schemas/ProfStartRecommendedProfession'
         test_code_type:
           type: string
       allOf:
@@ -4992,10 +5086,20 @@ components:
       type: object
     RecommendedProfession:
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id шаблона аватара; без обоих — null
         profession_id:
           type: integer
         profession_name:
           type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Текущее описание профессии из справочника; null, если не заполнено
         score:
           type: number
         position:
@@ -5005,8 +5109,10 @@ components:
             $ref: '#/components/schemas/RecommendationContribution'
           type: array
       required:
+      - file
       - profession_id
       - profession_name
+      - description
       - score
       - position
       - contributions
@@ -5910,6 +6016,18 @@ components:
 
     ProfessionCreateRequest:
       properties:
+        file:
+          type: string
+          format: binary
+          description: Необязательный собственный файл профессии
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без file не принимается
+        file_title:
+          type: string
+        file_description:
+          type: string
         name:
           type: string
           maxLength: 255
@@ -6062,6 +6180,18 @@ components:
 
     ProfessionUpdateRequest:
       properties:
+        file:
+          type: string
+          format: binary
+          description: Необязательный собственный файл профессии
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без file не принимается
+        file_title:
+          type: string
+        file_description:
+          type: string
         name:
           anyOf:
           - type: string

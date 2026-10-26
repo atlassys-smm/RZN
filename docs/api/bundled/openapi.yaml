@@ -1308,39 +1308,43 @@ paths:
       operationId: user_recommendations_get
       description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
         для устройства обязателен X-Device-Connection-Id. Профиль с максимум тремя
-        профессиями и вкладами источников. До первого сохранённого источника — JSON
-        null. В расчёте участвуют только источники с положительным весом в SOURCE_WEIGHTS.
-        Рейтинг рассчитывается при каждом запросе из снимков источников; веса заданы
-        в коде, итог не сохраняется. Мягкое удаление профессии (`deleted_at`) не исключает
-        её из ранее сохранённых рекомендаций: ID, название и исходные баллы берутся
-        из снимка источника. При новом прохождении подбираются только активные профессии
-        по активным связям. По максимум трём профессиям из итогового рейтинга рассчитываются
-        три отдельных списка: `employers` (до 5 работодателей типа 1), `educations`
-        (до 5 учебных заведений типа 2) и `education_programs` (до 5 направлений подготовки).
-        Работодатели определяются через profession_employers, учебные заведения —
-        через profession_education_programs → education_programs → organization_education_programs
-        → organizations. Направления подбираются непосредственно через profession_education_programs
-        → education_programs, независимо от наличия организаций. В каждом списке сначала
-        идут записи с большим числом различных совпавших профессий, затем с меньшим
-        ID. Несколько программ одной профессии не увеличивают её вклад в рейтинг организации.
-        Элементы списков организаций содержат `organization` (полные данные организации),
-        `profession_ids` (по возрастанию ID), `profession_count` и `position` (1–5).
-        В списке направлений вместо `organization` возвращается `education_program`:
-        id, name, education_level, duration, base_class, created_at, updated_at; остальные
-        поля совпадают. Общее направление возвращается один раз независимо от числа
-        его организаций. Профессии, связи, программы и организации с deleted_at участвуют
-        в расчёте для сохранённых рекомендаций. Данные и связи читаются в текущем
-        состоянии при каждом GET; снимки этих трёх списков не сохраняются. При отсутствии
-        профессий или соответствующих связей массивы пустые; до создания профиля ответ
-        остаётся null. Правило покрытия применяется отдельно к каждому из трёх списков:
-        employers, educations, education_programs. Сначала формируется топ-5 по числу
-        различных совпавших профессий DESC и ID организации или направления ASC. Затем
-        проверяется покрытие каждой выбранной профессии. Если для неё есть связанные
-        записи, но ни одна не попала в топ-5, лучшая из них заменяет последнюю запись,
-        удаление которой не лишает покрытия другие профессии. Одна запись может покрывать
-        несколько профессий. После замен сохраняется сортировка по рейтингу; лимит
-        — 5 уникальных записей в каждом списке. Если соответствующих связей нет, покрытие
-        этой профессии в данном списке не требуется.'
+        профессиями и вкладами источников. Каждая профессия содержит description —
+        текущее описание из справочника или null, а также file: собственный файл;
+        при пустом media_id — male_photo_file_id шаблона аватара; без обоих — null.
+        Название и баллы сохраняют значения из снимков источников. До первого сохранённого
+        источника — JSON null. В расчёте участвуют только источники с положительным
+        весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при каждом запросе из снимков
+        источников; веса заданы в коде, итог не сохраняется. Мягкое удаление профессии
+        (`deleted_at`) не исключает её из ранее сохранённых рекомендаций: ID, название
+        и исходные баллы берутся из снимка источника. При новом прохождении подбираются
+        только активные профессии по активным связям. По максимум трём профессиям
+        из итогового рейтинга рассчитываются три отдельных списка: `employers` (до
+        5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2) и `education_programs`
+        (до 5 направлений подготовки). Работодатели определяются через profession_employers,
+        учебные заведения — через profession_education_programs → education_programs
+        → organization_education_programs → organizations. Направления подбираются
+        непосредственно через profession_education_programs → education_programs,
+        независимо от наличия организаций. В каждом списке сначала идут записи с большим
+        числом различных совпавших профессий, затем с меньшим ID. Несколько программ
+        одной профессии не увеличивают её вклад в рейтинг организации. Элементы списков
+        организаций содержат `organization` (полные данные организации), `profession_ids`
+        (по возрастанию ID), `profession_count` и `position` (1–5). В списке направлений
+        вместо `organization` возвращается `education_program`: id, name, education_level,
+        duration, base_class, created_at, updated_at; остальные поля совпадают. Общее
+        направление возвращается один раз независимо от числа его организаций. Профессии,
+        связи, программы и организации с deleted_at участвуют в расчёте для сохранённых
+        рекомендаций. Данные и связи читаются в текущем состоянии при каждом GET;
+        снимки этих трёх списков не сохраняются. При отсутствии профессий или соответствующих
+        связей массивы пустые; до создания профиля ответ остаётся null. Правило покрытия
+        применяется отдельно к каждому из трёх списков: employers, educations, education_programs.
+        Сначала формируется топ-5 по числу различных совпавших профессий DESC и ID
+        организации или направления ASC. Затем проверяется покрытие каждой выбранной
+        профессии. Если для неё есть связанные записи, но ни одна не попала в топ-5,
+        лучшая из них заменяет последнюю запись, удаление которой не лишает покрытия
+        другие профессии. Одна запись может покрывать несколько профессий. После замен
+        сохраняется сортировка по рейтингу; лимит — 5 уникальных записей в каждом
+        списке. Если соответствующих связей нет, покрытие этой профессии в данном
+        списке не требуется.'
       security:
       - bearerAuth: []
       parameters:
@@ -1564,7 +1568,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfessionCreateRequest'
       responses:
@@ -1588,7 +1592,10 @@ paths:
           description: Активные зависимости или конфликт уникальной пары связей
       description: Требуется staff access-токен редактора контента или администратора.
         Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
-        на удалённые записи отклоняются (422).
+        на удалённые записи отклоняются (422). Принимает multipart/form-data по образцу
+        организаций; поля профессии передаются отдельно, необязательные поля файла
+        — file, file_preview, file_title и file_description. Без нового file текущий
+        файл сохраняется; file_preview без file отклоняется.
   /professions/{id}:
     get:
       tags:
@@ -1624,7 +1631,11 @@ paths:
         сотрудника любой роли или активного устройства. Возвращается запись по ID,
         включая мягко удалённую, независимо от deleted_at связанных сущностей. Неизвестный
         ID возвращает 404. Изменение и повторное удаление мягко удалённой записи недоступны
-        (404).
+        (404). Успешный GET с JWT пользователя (type=user, включая гостя) создаёт
+        PROFESSION_VIEWED=11, module_id=14. Сохраняются снимки профессии и её отрасли
+        через industry_id. Сотрудники, устройства и ошибки не создают просмотров.
+        Каждый повторный GET считается отдельно, без view_id. Доставка best effort
+        не меняет ответ API.
     put:
       tags:
       - Профессии
@@ -1641,7 +1652,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/ProfessionUpdateRequest'
       responses:
@@ -1668,7 +1679,10 @@ paths:
       description: Требуется staff access-токен редактора контента или администратора.
         Удалённая запись недоступна для изменения и повторного удаления (404). Ссылки
         на удалённые записи отклоняются (422). Пропущенные поля сохраняются; явный
-        null очищает nullable-поле.
+        null очищает nullable-поле. Принимает multipart/form-data по образцу организаций;
+        поля профессии передаются отдельно, необязательные поля файла — file, file_preview,
+        file_title и file_description. Без нового file текущий файл сохраняется; file_preview
+        без file отклоняется.
     delete:
       tags:
       - Профессии
@@ -3333,7 +3347,12 @@ paths:
         сотрудника любой роли или активного устройства. Возвращается запись по ID,
         включая мягко удалённую, независимо от deleted_at связанных сущностей. Неизвестный
         ID возвращает 404. Изменение и повторное удаление мягко удалённой записи недоступны
-        (404).
+        (404). Успешный GET с JWT пользователя (type=user, включая гостя) создаёт
+        событие просмотра организации ORGANIZATION_VIEWED=10. JWT сотрудника или устройства
+        не создаёт просмотров. Каждый повторный GET считается отдельно; view_id не
+        требуется. Событие содержит ID, название и тип организации, ID пользователя
+        и is_guest. Отправка асинхронная, best effort; отключение аналитики не меняет
+        ответ.
     put:
       tags:
       - Организации
@@ -3903,7 +3922,11 @@ paths:
         сотрудника любой роли или активного устройства. Возвращается запись по ID,
         включая мягко удалённую, независимо от deleted_at связанных сущностей. Неизвестный
         ID возвращает 404. Изменение и повторное удаление мягко удалённой записи недоступны
-        (404).
+        (404). Успешный GET с JWT пользователя (type=user, включая гостя) создаёт
+        EDUCATION_PROGRAM_VIEWED=12, module_id=15. Сотрудники, устройства и ошибки
+        не создают просмотров. Каждый повторный GET считается отдельно, без view_id.
+        Направление учитывается по education_program_id, независимо от числа связанных
+        организаций. Доставка best effort не меняет ответ API.
     put:
       tags:
       - Организации
@@ -6252,7 +6275,10 @@ paths:
       summary: Завершить сессию
       description: Завершить сессию. Статус меняется на `3` (finished). Возвращает
         состояние завершённой сессии. После первого завершения устройство получает
-        session_finished в /api/device/sessions/ws с module=quiz.
+        session_finished в /api/device/sessions/ws с module=quiz. Для индивидуального
+        режима SESSION_FINISHED аналитики содержит results[{participant_id,user_id,total_score}]
+        — снимок сохранённых личных баллов, включая нули, отправляемый после commit;
+        повтор finish не создаёт событие. Командный payload не меняется.
       parameters:
       - name: id
         in: path
@@ -7141,7 +7167,11 @@ paths:
       - Профессии в действии - CMS
       summary: Список видеосценариев
       description: Требуется staff access-токен редактора контента или оператора.
-        Получить список видеосценариев с фильтрацией и пагинацией
+        Получить список видеосценариев с фильтрацией и пагинацией. Каждый элемент
+        содержит profession_id. При select=profession добавляется вложенный profession
+        с полными данными профессии; без привязки profession=null. Без select=profession
+        поле profession отсутствует. Мягко удалённая профессия существующего сценария
+        также возвращается при выборе profession.
       parameters:
       - name: profession_id
         in: query
@@ -7149,6 +7179,18 @@ paths:
           type: integer
           format: int64
         description: Фильтр по профессии
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию.
+          Параметр можно повторять; неизвестные значения игнорируются. По умолчанию
+          дополнительные данные не загружаются.'
       - name: limit
         in: query
         schema:
@@ -7174,7 +7216,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/InteractiveVideoScenario'
+                      $ref: '#/components/schemas/InteractiveVideoScenarioListItem'
                   total:
                     type: integer
     post:
@@ -7231,7 +7273,9 @@ paths:
       - Профессии в действии - CMS
       summary: Получить видеосценарий
       description: Требуется staff access-токен редактора контента или оператора.
-        Получить видеосценарий с деревом веток
+        Получить видеосценарий с деревом веток. При select=profession добавляется
+        полная связанная профессия (включая мягко удалённую), без привязки — profession=null.
+        Без этого параметра поле profession отсутствует и данные профессии не загружаются.
       parameters:
       - name: id
         in: path
@@ -7239,6 +7283,17 @@ paths:
         schema:
           type: integer
           format: int64
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию.
+          Параметр можно повторять; неизвестные значения игнорируются.'
       responses:
         '403':
           description: Недостаточно прав
@@ -7324,7 +7379,17 @@ paths:
 
         Добавить дочернюю ветку к указанному родителю.
 
-        `parent_id` обязателен. Файл передаётся в поле `file` multipart/form-data.
+        `parent_id` и `text` обязательны. Для обычной ветки обязателен `file` multipart/form-data.
+
+        Ссылочной ветке достаточно `reference_branch_id` существующей ветки того же
+        сценария:
+
+        сохраняется собственный `text`, показ сразу переходит к видео, вопросу и вариантам
+        цели.
+
+        Цепочки ссылок допустимы; отсутствующая цель, другой сценарий и циклы — 400.
+
+        Ссылочная ветка не может быть родителем. Без файла и ссылки — 422.
 
         '
       parameters:
@@ -7341,6 +7406,12 @@ paths:
           multipart/form-data:
             schema:
               properties:
+                reference_branch_id:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: ID существующей ветки того же сценария; без ссылки
+                    требуется file
                 parent_id:
                   type: integer
                   title: Parent Id
@@ -7376,7 +7447,6 @@ paths:
               required:
               - parent_id
               - text
-              - file
               title: Body_create_branch_api_cms_video_scenarios__scenario_id__branches_post
       responses:
         '403':
@@ -7389,6 +7459,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+        '422':
+          description: Для ветки без ссылки требуется видеофайл или неверный формат
+            поля
         '400':
           description: Ошибка валидации
           content:
@@ -7400,8 +7473,23 @@ paths:
       tags:
       - Профессии в действии - CMS
       summary: Обновить ветку
-      description: Требуется staff access-токен редактора контента. Обновить текст
-        вопроса, текст варианта или видеофайл
+      description: 'Требуется staff access-токен редактора контента. Обновляет текст
+        вопроса, текст варианта, видео или ссылку.
+
+        reference_branch_id отсутствует — сохранить ссылку; пустое значение — снять
+        ссылку.
+
+        При снятии ссылки нужно собственное сохранённое видео или новый file, иначе
+        422.
+
+        При выборе ссылки используются видео, вопрос и дальнейшие варианты конечной
+        цели; собственные видео и prompt игнорируются.
+
+        Стартовая ветка и ветка с детьми не могут стать ссылочными.
+
+        Циклы, отсутствующая цель и ссылка на другой сценарий — 400.
+
+        '
       parameters:
       - name: id
         in: path
@@ -7420,6 +7508,12 @@ paths:
           multipart/form-data:
             schema:
               properties:
+                reference_branch_id:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: ID цели; пустое значение снимает ссылку, отсутствие
+                    сохраняет её
                 text:
                   anyOf:
                   - type: string
@@ -7465,6 +7559,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+        '400':
+          description: Недопустимая ссылка или цикл переходов
+        '422':
+          description: Для ветки без ссылки требуется видеофайл или неверный формат
+            поля
         '404':
           description: Ветка не найдена
   /interactive-video/sessions:
@@ -9659,7 +9758,15 @@ paths:
       operationId: profstart_result_get
       description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
         для устройства обязателен X-Device-Connection-Id. Результат своей завершённой
-        сессии: answers и scores для любого типа. До завершения и после abandoned
+        сессии: answers, scores и professions для любого типа. professions — до 10
+        наиболее подходящих профессий из profession_scores источника этого прохождения
+        в порядке score DESC, profession_id ASC: profession_id, profession_name, description,
+        file, score, position, reasons. file использует собственный media_id профессии,
+        при его отсутствии — male_photo_file_id шаблона аватара, без обоих возвращает
+        null. Название, балл, позиция и пояснения берутся из снимка без применения
+        SOURCE_WEIGHTS; полный снимок источника сохраняется для общего рейтинга; description
+        — текущее описание из справочника или null. Мягко удалённые профессии сохраняются
+        в ответе. Нет рекомендаций — professions=[]. До завершения и после abandoned
         — 409. Для любого типа создаётся источник с показателями групп и профессий;
         участие в итоговом рейтинге определяется SOURCE_WEIGHTS. Сохранённые показатели
         не меняются при редактировании CMS.'
@@ -9700,7 +9807,10 @@ paths:
       operationId: profstart_me_results_get
       description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
         устройства обязателен X-Device-Connection-Id. Порядок created_at DESC, id
-        DESC; фильтр периода применяется ко времени результата.
+        DESC; фильтр периода применяется ко времени результата. Каждый элемент содержит
+        professions — до 10 наиболее подходящих профессий своего прохождения в порядке
+        score DESC, profession_id ASC с баллами, позициями, пояснениями и актуальным
+        description, как в запросе отдельного результата.
       x-implementation-status: implemented
       parameters:
       - $ref: '#/components/parameters/DeviceConnectionId'
@@ -12325,6 +12435,12 @@ components:
       title: DirectionResponse
     Profession:
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id
+            шаблона аватара; без обоих — null
         id:
           type: integer
           title: Id
@@ -12374,6 +12490,7 @@ components:
           title: Updated At
       type: object
       required:
+      - file
       - id
       - name
       - description
@@ -13614,19 +13731,53 @@ components:
         updated_at:
           type: string
           format: date-time
+    InteractiveVideoScenarioListItem:
+      description: Элемент списка видеосценариев CMS с полными данными связанной профессии
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - profession_id
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        profession_id:
+          type: integer
+          format: int64
+          nullable: true
+        profession:
+          description: Возвращается только при select=profession; null, если у сценария
+            нет привязки
+          anyOf:
+          - $ref: '#/components/schemas/Profession'
+          - type: 'null'
     InteractiveVideoScenarioFull:
-      description: Видеосценарий с деревом веток
+      description: Видеосценарий с деревом веток и опциональной профессией
       allOf:
       - $ref: '#/components/schemas/InteractiveVideoScenario'
       - type: object
         properties:
+          profession:
+            description: Возвращается только при select=profession; null, если у сценария
+              нет привязки
+            anyOf:
+            - $ref: '#/components/schemas/Profession'
+            - type: 'null'
           branches:
             $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
             nullable: true
             description: Корневая ветка дерева (стартовая, с рекурсивно вложенными
               дочерними через children). null если сценарий не имеет веток.
     InteractiveVideoScenarioBranch:
-      description: Ветка видеосценария (видеофрагмент с вариантами выбора)
+      description: Ветка видеосценария — видеофрагмент или ссылка на общее продолжение
+        того же сценария
       type: object
       properties:
         id:
@@ -13640,6 +13791,12 @@ components:
           format: int64
           nullable: true
           description: ID родительской ветки (null для стартовой)
+        reference_branch_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID целевой ветки того же сценария. При выборе используются
+            её видео, вопрос и переходы; text остаётся собственным
         file:
           anyOf:
           - $ref: '#/components/schemas/FileResponse'
@@ -15674,6 +15831,69 @@ components:
         is_leading:
           type: boolean
       description: Общий показатель группы; у Соломина объединяет want и can.
+    ProfStartProfessionReason:
+      type: object
+      additionalProperties: false
+      required:
+      - group_id
+      - group_code
+      - group_name
+      - normalized_score
+      - contribution
+      properties:
+        group_id:
+          type: integer
+          format: int64
+        group_code:
+          type: string
+        group_name:
+          type: string
+        normalized_score:
+          type: number
+          description: Сохранённый нормированный показатель группы
+        contribution:
+          type: number
+          description: Сохранённый вклад группы в балл профессии этого теста
+    ProfStartRecommendedProfession:
+      type: object
+      additionalProperties: false
+      required:
+      - file
+      - profession_id
+      - profession_name
+      - description
+      - score
+      - position
+      - reasons
+      properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id
+            шаблона аватара; без обоих — null
+        profession_id:
+          type: integer
+          format: int64
+        profession_name:
+          type: string
+          description: Название из снимка источника на дату прохождения
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Текущее описание из справочника; null, если отсутствует
+        score:
+          type: number
+          description: Сохранённый балл профессии по этому тесту без весов общего
+            рейтинга
+        position:
+          type: integer
+          description: Сохранённая позиция в полном списке профессий этого теста
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfStartProfessionReason'
     ProfStartResult:
       type: object
       additionalProperties: false
@@ -15689,6 +15909,7 @@ components:
       - created_at
       - scores
       - answers
+      - professions
       properties:
         session_id:
           type: integer
@@ -15726,6 +15947,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProfStartSavedAnswer'
+        professions:
+          type: array
+          description: Наиболее подходящие профессии этого прохождения; score DESC,
+            profession_id ASC; пустой список, если рекомендаций нет
+          items:
+            $ref: '#/components/schemas/ProfStartRecommendedProfession'
         test_code_type:
           type: string
       allOf:
@@ -16107,10 +16334,21 @@ components:
       type: object
     RecommendedProfession:
       properties:
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+          description: Собственный файл профессии; при пустом media_id — male_photo_file_id
+            шаблона аватара; без обоих — null
         profession_id:
           type: integer
         profession_name:
           type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Текущее описание профессии из справочника; null, если не заполнено
         score:
           type: number
         position:
@@ -16120,8 +16358,10 @@ components:
             $ref: '#/components/schemas/RecommendationContribution'
           type: array
       required:
+      - file
       - profession_id
       - profession_name
+      - description
       - score
       - position
       - contributions
@@ -17016,6 +17256,18 @@ components:
       title: PaginatedResponse[ProfessionResponse]
     ProfessionCreateRequest:
       properties:
+        file:
+          type: string
+          format: binary
+          description: Необязательный собственный файл профессии
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без file не принимается
+        file_title:
+          type: string
+        file_description:
+          type: string
         name:
           type: string
           maxLength: 255
@@ -17161,6 +17413,18 @@ components:
       title: ProfessionEmployerUpdateRequest
     ProfessionUpdateRequest:
       properties:
+        file:
+          type: string
+          format: binary
+          description: Необязательный собственный файл профессии
+        file_preview:
+          type: string
+          format: binary
+          description: Превью нового файла; без file не принимается
+        file_title:
+          type: string
+        file_description:
+          type: string
         name:
           anyOf:
           - type: string

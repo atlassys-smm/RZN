@@ -1444,7 +1444,7 @@ session-finish:
   post:
     tags: [Викторина - Оператор]
     summary: Завершить сессию
-    description: Завершить сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой сессии. После первого завершения устройство получает session_finished в /api/device/sessions/ws с module=quiz.
+    description: Завершить сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой сессии. После первого завершения устройство получает session_finished в /api/device/sessions/ws с module=quiz. Для индивидуального режима SESSION_FINISHED аналитики содержит results[{participant_id,user_id,total_score}] — снимок сохранённых личных баллов, включая нули, отправляемый после commit; повтор finish не создаёт событие. Командный payload не меняется.
     parameters:
       - name: id
         in: path

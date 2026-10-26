@@ -6,7 +6,7 @@ cms-scenarios:
   get:
     tags: [Профессии в действии - CMS]
     summary: Список видеосценариев
-    description: Требуется staff access-токен редактора контента или оператора. Получить список видеосценариев с фильтрацией и пагинацией
+    description: Требуется staff access-токен редактора контента или оператора. Получить список видеосценариев с фильтрацией и пагинацией. Каждый элемент содержит profession_id. При select=profession добавляется вложенный profession с полными данными профессии; без привязки profession=null. Без select=profession поле profession отсутствует. Мягко удалённая профессия существующего сценария также возвращается при выборе profession.
     parameters:
       - name: profession_id
         in: query
@@ -14,6 +14,16 @@ cms-scenarios:
           type: integer
           format: int64
         description: Фильтр по профессии
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию. Параметр можно повторять; неизвестные значения игнорируются. По умолчанию дополнительные данные не загружаются.'
       - name: limit
         in: query
         schema:
@@ -39,7 +49,7 @@ cms-scenarios:
                 items:
                   type: array
                   items:
-                    $ref: '#/components/schemas/InteractiveVideoScenario'
+                    $ref: '#/components/schemas/InteractiveVideoScenarioListItem'
                 total:
                   type: integer
   post:
@@ -88,7 +98,7 @@ cms-scenarios-detail:
   get:
     tags: [Профессии в действии - CMS]
     summary: Получить видеосценарий
-    description: Требуется staff access-токен редактора контента или оператора. Получить видеосценарий с деревом веток
+    description: Требуется staff access-токен редактора контента или оператора. Получить видеосценарий с деревом веток. При select=profession добавляется полная связанная профессия (включая мягко удалённую), без привязки — profession=null. Без этого параметра поле profession отсутствует и данные профессии не загружаются.
     parameters:
       - name: id
         in: path
@@ -96,6 +106,16 @@ cms-scenarios-detail:
         schema:
           type: integer
           format: int64
+      - name: select
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+        description: 'Дополнительные данные: select=profession включает полную профессию. Параметр можно повторять; неизвестные значения игнорируются.'
     responses:
       '403':
         description: Недостаточно прав
@@ -178,7 +198,11 @@ cms-branches-create:
     description: |
       Требуется staff access-токен редактора контента.
       Добавить дочернюю ветку к указанному родителю.
-      `parent_id` обязателен. Файл передаётся в поле `file` multipart/form-data.
+      `parent_id` и `text` обязательны. Для обычной ветки обязателен `file` multipart/form-data.
+      Ссылочной ветке достаточно `reference_branch_id` существующей ветки того же сценария:
+      сохраняется собственный `text`, показ сразу переходит к видео, вопросу и вариантам цели.
+      Цепочки ссылок допустимы; отсутствующая цель, другой сценарий и циклы — 400.
+      Ссылочная ветка не может быть родителем. Без файла и ссылки — 422.
     parameters:
       - name: id
         in: path
@@ -193,6 +217,11 @@ cms-branches-create:
         multipart/form-data:
           schema:
             properties:
+              reference_branch_id:
+                type: integer
+                format: int64
+                nullable: true
+                description: ID существующей ветки того же сценария; без ссылки требуется file
               parent_id:
                 type: integer
                 title: Parent Id
@@ -228,7 +257,6 @@ cms-branches-create:
             required:
             - parent_id
             - text
-            - file
             title: Body_create_branch_api_cms_video_scenarios__scenario_id__branches_post
     responses:
       '403':
@@ -241,6 +269,8 @@ cms-branches-create:
           application/json:
             schema:
               $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+      '422':
+        description: Для ветки без ссылки требуется видеофайл или неверный формат поля
       '400':
         description: Ошибка валидации
         content:
@@ -253,8 +283,13 @@ cms-branches-update:
     tags:
     - Профессии в действии - CMS
     summary: Обновить ветку
-    description: Требуется staff access-токен редактора контента. Обновить текст вопроса,
-      текст варианта или видеофайл
+    description: |
+      Требуется staff access-токен редактора контента. Обновляет текст вопроса, текст варианта, видео или ссылку.
+      reference_branch_id отсутствует — сохранить ссылку; пустое значение — снять ссылку.
+      При снятии ссылки нужно собственное сохранённое видео или новый file, иначе 422.
+      При выборе ссылки используются видео, вопрос и дальнейшие варианты конечной цели; собственные видео и prompt игнорируются.
+      Стартовая ветка и ветка с детьми не могут стать ссылочными.
+      Циклы, отсутствующая цель и ссылка на другой сценарий — 400.
     parameters:
     - name: id
       in: path
@@ -273,6 +308,11 @@ cms-branches-update:
         multipart/form-data:
           schema:
             properties:
+              reference_branch_id:
+                type: integer
+                format: int64
+                nullable: true
+                description: ID цели; пустое значение снимает ссылку, отсутствие сохраняет её
               text:
                 anyOf:
                 - type: string
@@ -318,6 +358,10 @@ cms-branches-update:
           application/json:
             schema:
               $ref: '#/components/schemas/InteractiveVideoScenarioBranch'
+      '400':
+        description: Недопустимая ссылка или цикл переходов
+      '422':
+        description: Для ветки без ссылки требуется видеофайл или неверный формат поля
       '404':
         description: Ветка не найдена
 
