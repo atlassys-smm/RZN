@@ -62,15 +62,28 @@ user-avatars-create:
 
 user-avatars-list:
   get:
+    security:
+    - bearerAuth: []
     tags: [Аватары пользователей]
     summary: Список моих аватаров
-    description: Получить свои аватары. Пользователь определяется по user access-токену.
+    description: |
+      Получить свои аватары, включая результаты FaceAI, от новых к старым.
+      Пользователь определяется по user access-токену. Необязательный profession_id
+      фильтрует список по профессии. total учитывает владельца и фильтр до пагинации.
+      Без совпадений возвращаются items — пустой массив и total — 0.
     parameters:
+      - name: profession_id
+        in: query
+        required: false
+        description: Профессия аватара; без параметра возвращаются все свои аватары.
+        schema:
+          type: integer
+          format: int64
       - name: limit
         in: query
         schema:
           type: integer
-          default: 50
+          default: 20
       - name: offset
         in: query
         schema:
@@ -95,6 +108,8 @@ user-avatars-list:
 
 user-avatars-detail:
   get:
+    security:
+    - bearerAuth: []
     tags: [Аватары пользователей]
     summary: Детали моего аватара
     description: Проверка владельца по user access-токену; чужой аватар возвращает 404.
@@ -117,9 +132,15 @@ user-avatars-detail:
       '404':
         description: Не найден
   delete:
+    security:
+    - bearerAuth: []
     tags: [Аватары пользователей]
     summary: Удалить мой аватар
-    description: Проверка владельца по user access-токену; чужой аватар возвращает 404.
+    description: |
+      Удалить собственный аватар по его числовому id из списка или avatar_id
+      результата генерации. Требуется user access-токен; чужой аватар — 404.
+      Удаляются аватар и итоговый файл, исходники генерации сохраняются.
+      Повторный webhook завершённого задания не восстанавливает удалённый аватар.
     parameters:
       - name: avatar_id
         in: path

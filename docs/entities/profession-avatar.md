@@ -55,7 +55,7 @@
 
 ### Где используется
 
-- **ПАК «Аватар профессий»** — терминал сохраняет сгенерированный аватар
+- **ПАК «Аватар профессий»** — Kernel сохраняет результат FaceAI и отдаёт терминалу общий объект файла
 - **Личный кабинет** — пользователь просматривает свои аватары (`GET /me/avatars`)
 - **Публичный доступ** — по QR-коду (`GET /avatars/qr/{qr_token}`)
 
@@ -116,8 +116,11 @@
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| `POST` | `/users/{user_id}/avatars` | Терминал сохраняет аватар (multipart) |
-| `GET` | `/me/avatars` | Список своих аватаров (с signed URLs) |
+| `POST` | `/users/avatar-generations` | Создать задание FaceAI (device + QR, multipart) |
+| `GET` | `/users/avatar-generations/{request_id}` | Статус задания и сохранённый результат |
+| `POST` | `/faceai/webhook` | Сервисный результат FaceAI с отдельным Bearer-токеном |
+| `POST` | `/users/avatars` | Прежняя загрузка готового аватара терминалом (device + QR, multipart) |
+| `GET` | `/me/avatars` | Список своих аватаров с signed URLs; необязательный фильтр profession_id |
 | `GET` | `/me/avatars/{avatar_id}` | Детали своего аватара |
 | `DELETE` | `/me/avatars/{avatar_id}` | Удалить свой аватар |
 | `GET` | `/avatars/qr/{qr_token}` | Публичный доступ по QR |
@@ -127,3 +130,5 @@
 | Метод | Путь | Описание |
 |-------|------|----------|
 | `GET` | `/files/{uuid}?expires=...&sig=...` | Скачать файл по подписанному URL |
+
+Задания, сроки и повторы: [AvatarGeneration](avatar-generations.md).

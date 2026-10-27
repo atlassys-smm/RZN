@@ -14,6 +14,38 @@ servers:
 - url: http://localhost:8000/api
   description: Локальная разработка
 x-websocket-channels:
+  avatar:
+    url: /api/avatar/ws?token={device_jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema:
+          type: string
+        description: JWT активного устройства с ролью 2, без Bearer.
+    description: 'Смена статуса генераций своего терминала; User и StaffUser не допускаются.
+
+      JWT и Origin проверяются до accept; ошибка — close 1008 (HTTP handshake 403).
+
+      Событие generation_status_changed отправляется после коммита создания
+
+      и фактической смены статуса. Повторы, откат и опрос без изменения — без события.
+
+      В payload передаются user_id, generation_id, request_id, job_id, device_id,
+      status.
+
+      Сокет подключается до POST создания. Для получения файла и восстановления
+
+      после reconnect используется GET /users/avatar-generations/{request_id}.
+
+      Начального снимка и воспроизведения событий нет. Авторизация — при подключении.
+
+      Рассылка в текущем процессе; сокет, запрос и worker должны попасть в один процесс
+      API.
+
+      '
+    message:
+      $ref: '#/components/schemas/AvatarGenerationWebSocketEvent'
   device-auth:
     url: /api/device/auth/ws?token={device_jwt}
     parameters:
@@ -4485,10 +4517,13 @@ paths:
       tags:
       - Аватары профессий
       summary: Создать аватар профессии
-      description: Требуется staff access-токен admin/content_editor. Добавить аватар
-        для активной профессии — мужской и женский образ. Неизвестная или мягко удалённая
-        профессия возвращает 422 до сохранения файлов. Повторное создание шаблона
-        для активной профессии также возвращает 422.
+      description: Исходные male_photo/female_photo — JPEG или PNG с проверкой MIME-типа
+        и сигнатуры. Превью необязательны; при обновлении нужны вместе с соответствующим
+        исходником. Применяется общий лимит загрузки файлов. Требуется staff access-токен
+        admin/content_editor. Добавить аватар для активной профессии — мужской и женский
+        образ. Неизвестная или мягко удалённая профессия возвращает 422 до сохранения
+        файлов. Повторное создание шаблона для активной профессии также возвращает
+        422.
       requestBody:
         required: true
         content:
@@ -4506,6 +4541,16 @@ paths:
                   type: string
                   contentMediaType: application/octet-stream
                   title: Female Photo
+                male_file_preview:
+                  type: string
+                  format: binary
+                  description: Необязательное превью; при обновлении передаётся вместе
+                    с male_photo.
+                female_file_preview:
+                  type: string
+                  format: binary
+                  description: Необязательное превью; при обновлении передаётся вместе
+                    с female_photo.
                 male_file_title:
                   anyOf:
                   - type: string
@@ -4582,9 +4627,11 @@ paths:
       tags:
       - Аватары профессий
       summary: Обновить аватар профессии
-      description: Требуется staff access-токен admin/content_editor. Обновить фото
-        мужского или женского образа, в том числе у мягко удалённой профессии (требуются
-        права CMS)
+      description: Исходные male_photo/female_photo — JPEG или PNG с проверкой MIME-типа
+        и сигнатуры. Превью необязательны; при обновлении нужны вместе с соответствующим
+        исходником. Применяется общий лимит загрузки файлов. Требуется staff access-токен
+        admin/content_editor. Обновить фото мужского или женского образа, в том числе
+        у мягко удалённой профессии (требуются права CMS)
       parameters:
       - name: profession_id
         in: path
@@ -4609,6 +4656,16 @@ paths:
                     contentMediaType: application/octet-stream
                   - type: 'null'
                   title: Female Photo
+                male_file_preview:
+                  type: string
+                  format: binary
+                  description: Необязательное превью; при обновлении передаётся вместе
+                    с male_photo.
+                female_file_preview:
+                  type: string
+                  format: binary
+                  description: Необязательное превью; при обновлении передаётся вместе
+                    с female_photo.
                 male_file_title:
                   anyOf:
                   - type: string
@@ -4650,8 +4707,11 @@ paths:
       tags:
       - Аватары профессий
       summary: Удалить аватар профессии
-      description: Требуется staff access-токен admin/content_editor. Удалить аватар
-        профессии, в том числе мягко удалённой (требуются права CMS)
+      description: Исходные male_photo/female_photo — JPEG или PNG с проверкой MIME-типа
+        и сигнатуры. Превью необязательны; при обновлении нужны вместе с соответствующим
+        исходником. Применяется общий лимит загрузки файлов. Требуется staff access-токен
+        admin/content_editor. Удалить аватар профессии, в том числе мягко удалённой
+        (требуются права CMS)
       parameters:
       - name: profession_id
         in: path
@@ -11400,16 +11460,33 @@ paths:
           description: Файл не найден
   /me/avatars:
     get:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары пользователей
       summary: Список моих аватаров
-      description: Получить свои аватары. Пользователь определяется по user access-токену.
+      description: 'Получить свои аватары, включая результаты FaceAI, от новых к старым.
+
+        Пользователь определяется по user access-токену. Необязательный profession_id
+
+        фильтрует список по профессии. total учитывает владельца и фильтр до пагинации.
+
+        Без совпадений возвращаются items — пустой массив и total — 0.
+
+        '
       parameters:
+      - name: profession_id
+        in: query
+        required: false
+        description: Профессия аватара; без параметра возвращаются все свои аватары.
+        schema:
+          type: integer
+          format: int64
       - name: limit
         in: query
         schema:
           type: integer
-          default: 50
+          default: 20
       - name: offset
         in: query
         schema:
@@ -11433,6 +11510,8 @@ paths:
                     type: integer
   /me/avatars/{avatar_id}:
     get:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары пользователей
       summary: Детали моего аватара
@@ -11457,11 +11536,20 @@ paths:
         '404':
           description: Не найден
     delete:
+      security:
+      - bearerAuth: []
       tags:
       - Аватары пользователей
       summary: Удалить мой аватар
-      description: Проверка владельца по user access-токену; чужой аватар возвращает
-        404.
+      description: 'Удалить собственный аватар по его числовому id из списка или avatar_id
+
+        результата генерации. Требуется user access-токен; чужой аватар — 404.
+
+        Удаляются аватар и итоговый файл, исходники генерации сохраняются.
+
+        Повторный webhook завершённого задания не восстанавливает удалённый аватар.
+
+        '
       parameters:
       - name: avatar_id
         in: path
@@ -11476,6 +11564,242 @@ paths:
           description: Аватар удалён
         '404':
           description: Не найден
+  /users/avatar-generations:
+    post:
+      tags:
+      - Генерация аватаров
+      summary: Создать задание FaceAI
+      description: 'Активное устройство с ролью 2 и пользователь, подключённый по
+        QR.
+
+        Каждый POST создаёт отдельное задание с новым request_id; пользователь
+
+        может иметь несколько активных генераций. Срок задания — 24 часа.
+
+        Селфи сохраняется отдельно; reference_file_id указывает на исходный файл шаблона
+        без копирования.
+
+        До настройки FACEAI_BASE_URL и FACEAI_API_KEY задание создаётся, но ожидает
+        отправки.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: X-Device-Connection-Id
+        in: header
+        required: true
+        schema:
+          type: string
+        description: ID действующей QR-привязки пользователя к устройству.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - template_id
+              - gender
+              - photo
+              properties:
+                template_id:
+                  type: integer
+                  description: ID комплекта ProfessionAvatarTemplate, не профессии.
+                gender:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  description: 1 — мужской образ, 2 — женский.
+                photo:
+                  type: string
+                  format: binary
+                  description: Селфи JPEG или PNG с проверкой MIME-типа и сигнатуры;
+                    применяется общий лимит загрузки файлов.
+      responses:
+        '202':
+          description: Задание сохранено, отправляется в FaceAI фоновым обработчиком.
+            Cache-Control — no-store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvatarGenerationResponse'
+        '401':
+          description: Недействительный device-токен или QR-привязка.
+        '403':
+          description: Устройство без роли 2 либо токен другого типа.
+        '404':
+          description: Комплект образов не найден.
+        '413':
+          description: Недопустимый размер файла.
+        '422':
+          description: Ошибка параметров
+          изображения или недоступная профессия.: null
+  /users/avatar-generations/{request_id}:
+    get:
+      tags:
+      - Генерация аватаров
+      summary: Статус генерации и сохранённый результат
+      description: 'Активное устройство с ролью 2 и действующая QR-привязка владельца
+        задания.
+
+        Другому пользователю возвращается 404. Для онлайн-уведомлений используется
+
+        /api/avatar/ws; GET загружает состояние, результат и восстанавливает данные
+
+        после переподключения. Ответ содержит Cache-Control — no-store.
+
+        Просроченное активное задание переводится в статус 6 при чтении.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Device-Connection-Id
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Текущий статус; при успехе — avatar_id, qr_token и общий объект
+            file из Kernel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvatarGenerationResponse'
+        '401':
+          description: Недействительный device-токен или QR-привязка.
+        '403':
+          description: Недостаточно прав устройства или токен другого типа.
+        '404':
+          description: Задание отсутствует или принадлежит другому пользователю.
+        '422':
+          description: Некорректный UUID.
+  /faceai/webhook:
+    post:
+      tags:
+      - Генерация аватаров
+      summary: Результат FaceAI
+      description: 'Сервисный webhook с отдельным FACEAI_WEBHOOK_TOKEN; JWT здесь
+        не используется.
+
+        Проверяются request_id, job_id, user_ref, avatar_id, avatar_version и
+
+        совпадение X-FaceAI-Event-ID с event_id. Повтор определяется по статусу
+
+        записи avatar_generations под блокировкой. Для завершённого задания — 200
+
+        без изменения результата, независимо от event_id. Успех сохраняет JPEG,
+
+        UserAvatar и статус задания одной транзакцией. Допускается webhook до ответа
+        POST FaceAI.
+
+        '
+      security:
+      - faceaiWebhookAuth: []
+      parameters:
+      - name: X-FaceAI-Event-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - event_id
+              - event
+              - job_id
+              - request_id
+              - user_ref
+              - avatar_id
+              - avatar_version
+              - status
+              properties:
+                event_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                event:
+                  type: string
+                  enum:
+                  - generation.completed
+                  - generation.failed
+                job_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                request_id:
+                  type: string
+                  format: uuid
+                user_ref:
+                  type: integer
+                avatar_id:
+                  type: string
+                  maxLength: 64
+                  description: <template_id>_male или <template_id>_female.
+                avatar_version:
+                  type: integer
+                  enum:
+                  - 1
+                status:
+                  type: string
+                  enum:
+                  - done
+                  - failed
+                image:
+                  type: string
+                  format: binary
+                  description: JPEG, обязателен при generation.completed, отсутствует
+                    при generation.failed.
+                expires_at:
+                  type: string
+                  format: date-time
+                  description: С часовым поясом; обязателен при успехе, отсутствует
+                    при ошибке.
+                error:
+                  type: string
+                  maxLength: 128
+                  description: Непустой код ошибки, обязателен при generation.failed
+                    и отсутствует при успехе.
+      responses:
+        '200':
+          description: Событие обработано или подтверждено повторно.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                properties:
+                  status:
+                    type: string
+                    const: ok
+        '401':
+          description: Неверный Bearer-токен webhook.
+        '404':
+          description: Неизвестный request_id.
+        '409':
+          description: Данные не соответствуют заданию либо конфликт идентификаторов.
+        '413':
+          description: Недопустимый размер результата.
+        '422':
+          description: Некорректное событие или JPEG.
+        '503':
+          description: Токен webhook не настроен в Kernel.
   /users/avatars:
     post:
       security:
@@ -11591,6 +11915,10 @@ components:
       schema:
         type: string
   securitySchemes:
+    faceaiWebhookAuth:
+      type: http
+      scheme: bearer
+      description: Отдельный FACEAI_WEBHOOK_TOKEN, заданный в FaceAI как KERNEL_WEBHOOK_TOKEN.
     bearerAuth:
       type: http
       scheme: bearer
@@ -11604,6 +11932,113 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    AvatarGenerationWebSocketEvent:
+      type: object
+      required:
+      - type
+      - payload
+      properties:
+        type:
+          type: string
+          const: generation_status_changed
+        payload:
+          type: object
+          required:
+          - user_id
+          - generation_id
+          - request_id
+          - job_id
+          - device_id
+          - status
+          properties:
+            user_id:
+              type: integer
+              format: int64
+            generation_id:
+              type: integer
+              format: int64
+            request_id:
+              type: string
+              format: uuid
+            job_id:
+              type:
+              - string
+              - 'null'
+              description: ID FaceAI, null до получения ответа или webhook.
+            device_id:
+              type: integer
+              format: int64
+            status:
+              $ref: '#/components/schemas/AvatarGenerationStatus'
+    AvatarGenerationStatus:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      description: 1 — ожидает отправки; 2 — в очереди FaceAI; 3 — обработка; 4 —
+        готово; 5 — ошибка; 6 — истекло время.
+    AvatarGenerationResponse:
+      type: object
+      required:
+      - request_id
+      - status
+      - template_id
+      - profession_id
+      - gender
+      - created_at
+      - updated_at
+      - deadline_at
+      - error_code
+      - avatar_id
+      - qr_token
+      - file
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/AvatarGenerationStatus'
+        template_id:
+          type: integer
+          format: int64
+        profession_id:
+          type: integer
+          format: int64
+        gender:
+          type: integer
+          enum:
+          - 1
+          - 2
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deadline_at:
+          type: string
+          format: date-time
+        error_code:
+          type:
+          - string
+          - 'null'
+        avatar_id:
+          type:
+          - integer
+          - 'null'
+          format: int64
+        qr_token:
+          type:
+          - string
+          - 'null'
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
     LedScreensaver:
       type: object
       required:

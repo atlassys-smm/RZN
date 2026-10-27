@@ -43,7 +43,7 @@ avatars:
     - bearerAuth: []
     tags: [Аватары профессий]
     summary: Создать аватар профессии
-    description: "Требуется staff access-токен admin/content_editor. Добавить аватар для активной профессии — мужской и женский образ. Неизвестная или мягко удалённая профессия возвращает 422 до сохранения файлов. Повторное создание шаблона для активной профессии также возвращает 422."
+    description: "Исходные male_photo/female_photo — JPEG или PNG с проверкой MIME-типа и сигнатуры. Превью необязательны; при обновлении нужны вместе с соответствующим исходником. Применяется общий лимит загрузки файлов. Требуется staff access-токен admin/content_editor. Добавить аватар для активной профессии — мужской и женский образ. Неизвестная или мягко удалённая профессия возвращает 422 до сохранения файлов. Повторное создание шаблона для активной профессии также возвращает 422."
     requestBody:
       required: true
       content:
@@ -61,6 +61,14 @@ avatars:
                 type: string
                 contentMediaType: application/octet-stream
                 title: Female Photo
+              male_file_preview:
+                type: string
+                format: binary
+                description: Необязательное превью; при обновлении передаётся вместе с male_photo.
+              female_file_preview:
+                type: string
+                format: binary
+                description: Необязательное превью; при обновлении передаётся вместе с female_photo.
               male_file_title:
                 anyOf:
                 - type: string
@@ -133,7 +141,7 @@ avatars-detail:
     - bearerAuth: []
     tags: [Аватары профессий]
     summary: Обновить аватар профессии
-    description: "Требуется staff access-токен admin/content_editor. Обновить фото мужского или женского образа, в том числе у мягко удалённой профессии (требуются права CMS)"
+    description: "Исходные male_photo/female_photo — JPEG или PNG с проверкой MIME-типа и сигнатуры. Превью необязательны; при обновлении нужны вместе с соответствующим исходником. Применяется общий лимит загрузки файлов. Требуется staff access-токен admin/content_editor. Обновить фото мужского или женского образа, в том числе у мягко удалённой профессии (требуются права CMS)"
     parameters:
       - name: profession_id
         in: path
@@ -158,6 +166,14 @@ avatars-detail:
                   contentMediaType: application/octet-stream
                 - type: 'null'
                 title: Female Photo
+              male_file_preview:
+                type: string
+                format: binary
+                description: Необязательное превью; при обновлении передаётся вместе с male_photo.
+              female_file_preview:
+                type: string
+                format: binary
+                description: Необязательное превью; при обновлении передаётся вместе с female_photo.
               male_file_title:
                 anyOf:
                 - type: string
@@ -198,7 +214,7 @@ avatars-detail:
     - bearerAuth: []
     tags: [Аватары профессий]
     summary: Удалить аватар профессии
-    description: "Требуется staff access-токен admin/content_editor. Удалить аватар профессии, в том числе мягко удалённой (требуются права CMS)"
+    description: "Исходные male_photo/female_photo — JPEG или PNG с проверкой MIME-типа и сигнатуры. Превью необязательны; при обновлении нужны вместе с соответствующим исходником. Применяется общий лимит загрузки файлов. Требуется staff access-токен admin/content_editor. Удалить аватар профессии, в том числе мягко удалённой (требуются права CMS)"
     parameters:
       - name: profession_id
         in: path

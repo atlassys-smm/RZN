@@ -13,6 +13,26 @@ servers:
     description: Локальная разработка
 
 x-websocket-channels:
+  avatar:
+    url: /api/avatar/ws?token={device_jwt}
+    parameters:
+      token:
+        in: query
+        required: true
+        schema: {type: string}
+        description: JWT активного устройства с ролью 2, без Bearer.
+    description: |
+      Смена статуса генераций своего терминала; User и StaffUser не допускаются.
+      JWT и Origin проверяются до accept; ошибка — close 1008 (HTTP handshake 403).
+      Событие generation_status_changed отправляется после коммита создания
+      и фактической смены статуса. Повторы, откат и опрос без изменения — без события.
+      В payload передаются user_id, generation_id, request_id, job_id, device_id, status.
+      Сокет подключается до POST создания. Для получения файла и восстановления
+      после reconnect используется GET /users/avatar-generations/{request_id}.
+      Начального снимка и воспроизведения событий нет. Авторизация — при подключении.
+      Рассылка в текущем процессе; сокет, запрос и worker должны попасть в один процесс API.
+    message:
+      $ref: '#/components/schemas/AvatarGenerationWebSocketEvent'
   device-auth:
     url: /api/device/auth/ws?token={device_jwt}
     parameters:
@@ -564,6 +584,12 @@ paths:
     $ref: './paths/user-avatars.yaml#/user-avatars-list'
   /me/avatars/{avatar_id}:
     $ref: './paths/user-avatars.yaml#/user-avatars-detail'
+  /users/avatar-generations:
+    $ref: './paths/avatar-generations.yaml#/generations'
+  /users/avatar-generations/{request_id}:
+    $ref: './paths/avatar-generations.yaml#/generation-detail'
+  /faceai/webhook:
+    $ref: './paths/avatar-generations.yaml#/webhook'
   /users/avatars:
     $ref: './paths/user-avatars.yaml#/user-avatars-create'
   /avatars/qr/{qr_token}:
@@ -593,6 +619,10 @@ components:
       schema:
         type: string
   securitySchemes:
+    faceaiWebhookAuth:
+      type: http
+      scheme: bearer
+      description: Отдельный FACEAI_WEBHOOK_TOKEN, заданный в FaceAI как KERNEL_WEBHOOK_TOKEN.
     bearerAuth:
       type: http
       scheme: bearer
@@ -606,6 +636,49 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    AvatarGenerationWebSocketEvent:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          const: generation_status_changed
+        payload:
+          type: object
+          required: [user_id, generation_id, request_id, job_id, device_id, status]
+          properties:
+            user_id: {type: integer, format: int64}
+            generation_id: {type: integer, format: int64}
+            request_id: {type: string, format: uuid}
+            job_id:
+              type: [string, 'null']
+              description: ID FaceAI, null до получения ответа или webhook.
+            device_id: {type: integer, format: int64}
+            status:
+              $ref: '#/components/schemas/AvatarGenerationStatus'
+    AvatarGenerationStatus:
+      type: integer
+      enum: [1, 2, 3, 4, 5, 6]
+      description: 1 — ожидает отправки; 2 — в очереди FaceAI; 3 — обработка; 4 — готово; 5 — ошибка; 6 — истекло время.
+    AvatarGenerationResponse:
+      type: object
+      required: [request_id, status, template_id, profession_id, gender, created_at, updated_at, deadline_at, error_code, avatar_id, qr_token, file]
+      properties:
+        request_id: {type: string, format: uuid}
+        status: {$ref: '#/components/schemas/AvatarGenerationStatus'}
+        template_id: {type: integer, format: int64}
+        profession_id: {type: integer, format: int64}
+        gender: {type: integer, enum: [1, 2]}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        deadline_at: {type: string, format: date-time}
+        error_code: {type: [string, 'null']}
+        avatar_id: {type: [integer, 'null'], format: int64}
+        qr_token: {type: [string, 'null']}
+        file:
+          anyOf:
+            - $ref: '#/components/schemas/FileResponse'
+            - type: 'null'
     LedScreensaver:
       type: object
       required:

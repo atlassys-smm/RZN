@@ -1,0 +1,134 @@
+generations:
+  post:
+    tags: [Генерация аватаров]
+    summary: Создать задание FaceAI
+    description: |
+      Активное устройство с ролью 2 и пользователь, подключённый по QR.
+      Каждый POST создаёт отдельное задание с новым request_id; пользователь
+      может иметь несколько активных генераций. Срок задания — 24 часа.
+      Селфи сохраняется отдельно; reference_file_id указывает на исходный файл шаблона без копирования.
+      До настройки FACEAI_BASE_URL и FACEAI_API_KEY задание создаётся, но ожидает отправки.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: X-Device-Connection-Id
+        in: header
+        required: true
+        schema: {type: string}
+        description: ID действующей QR-привязки пользователя к устройству.
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [template_id, gender, photo]
+            properties:
+              template_id:
+                type: integer
+                description: ID комплекта ProfessionAvatarTemplate, не профессии.
+              gender:
+                type: integer
+                enum: [1, 2]
+                description: 1 — мужской образ, 2 — женский.
+              photo:
+                type: string
+                format: binary
+                description: Селфи JPEG или PNG с проверкой MIME-типа и сигнатуры; применяется общий лимит загрузки файлов.
+    responses:
+      '202':
+        description: Задание сохранено, отправляется в FaceAI фоновым обработчиком. Cache-Control — no-store.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AvatarGenerationResponse'}
+      '401': {description: Недействительный device-токен или QR-привязка.}
+      '403': {description: Устройство без роли 2 либо токен другого типа.}
+      '404': {description: Комплект образов не найден.}
+      '413': {description: Недопустимый размер файла.}
+      '422': {description: Ошибка параметров, изображения или недоступная профессия.}
+
+generation-detail:
+  get:
+    tags: [Генерация аватаров]
+    summary: Статус генерации и сохранённый результат
+    description: |
+      Активное устройство с ролью 2 и действующая QR-привязка владельца задания.
+      Другому пользователю возвращается 404. Для онлайн-уведомлений используется
+      /api/avatar/ws; GET загружает состояние, результат и восстанавливает данные
+      после переподключения. Ответ содержит Cache-Control — no-store.
+      Просроченное активное задание переводится в статус 6 при чтении.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: request_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: X-Device-Connection-Id
+        in: header
+        required: true
+        schema: {type: string}
+    responses:
+      '200':
+        description: Текущий статус; при успехе — avatar_id, qr_token и общий объект file из Kernel.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AvatarGenerationResponse'}
+      '401': {description: Недействительный device-токен или QR-привязка.}
+      '403': {description: Недостаточно прав устройства или токен другого типа.}
+      '404': {description: Задание отсутствует или принадлежит другому пользователю.}
+      '422': {description: Некорректный UUID.}
+
+webhook:
+  post:
+    tags: [Генерация аватаров]
+    summary: Результат FaceAI
+    description: |
+      Сервисный webhook с отдельным FACEAI_WEBHOOK_TOKEN; JWT здесь не используется.
+      Проверяются request_id, job_id, user_ref, avatar_id, avatar_version и
+      совпадение X-FaceAI-Event-ID с event_id. Повтор определяется по статусу
+      записи avatar_generations под блокировкой. Для завершённого задания — 200
+      без изменения результата, независимо от event_id. Успех сохраняет JPEG,
+      UserAvatar и статус задания одной транзакцией. Допускается webhook до ответа POST FaceAI.
+    security:
+      - faceaiWebhookAuth: []
+    parameters:
+      - name: X-FaceAI-Event-ID
+        in: header
+        required: true
+        schema: {type: string, minLength: 1, maxLength: 128}
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [event_id, event, job_id, request_id, user_ref, avatar_id, avatar_version, status]
+            properties:
+              event_id: {type: string, minLength: 1, maxLength: 128}
+              event: {type: string, enum: [generation.completed, generation.failed]}
+              job_id: {type: string, minLength: 1, maxLength: 128}
+              request_id: {type: string, format: uuid}
+              user_ref: {type: integer}
+              avatar_id: {type: string, maxLength: 64, description: '<template_id>_male или <template_id>_female.'}
+              avatar_version: {type: integer, enum: [1]}
+              status: {type: string, enum: [done, failed]}
+              image: {type: string, format: binary, description: 'JPEG, обязателен при generation.completed, отсутствует при generation.failed.'}
+              expires_at: {type: string, format: date-time, description: 'С часовым поясом; обязателен при успехе, отсутствует при ошибке.'}
+              error: {type: string, maxLength: 128, description: 'Непустой код ошибки, обязателен при generation.failed и отсутствует при успехе.'}
+    responses:
+      '200':
+        description: Событие обработано или подтверждено повторно.
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string, const: ok}
+      '401': {description: Неверный Bearer-токен webhook.}
+      '404': {description: Неизвестный request_id.}
+      '409': {description: Данные не соответствуют заданию либо конфликт идентификаторов.}
+      '413': {description: Недопустимый размер результата.}
+      '422': {description: Некорректное событие или JPEG.}
+      '503': {description: Токен webhook не настроен в Kernel.}
