@@ -1234,6 +1234,21 @@ paths:
                     type: string
                     nullable: true
                     description: URL аватара (только для авторизованных)
+                  gender:
+                    type:
+                    - integer
+                    - 'null'
+                    enum:
+                    - 1
+                    - 2
+                    - null
+                    description: 1 — мужской, 2 — женский; null — не указан.
+                  birth_date:
+                    type:
+                    - string
+                    - 'null'
+                    format: date
+                    description: Дата рождения YYYY-MM-DD или null.
         '401':
           description: Недействительный токен
     patch:
@@ -1243,13 +1258,17 @@ paths:
       description: 'Частично обновляет данные текущего пользователя по Bearer-токену,
         включая
 
-        гостя с действующей сессией. Принимает first_name и last_name: хотя бы одно
+        гостя с действующей сессией. Принимает first_name, last_name, gender и birth_date:
 
-        поле обязательно. Пропущенные поля сохраняются. Пробелы по краям удаляются
+        хотя бы одно поле обязательно. Пропущенные поля сохраняются. Пробелы по краям
 
-        до проверки длины; null не принимается. При следующем OAuth-входе имя
+        имени и фамилии удаляются до проверки длины; null для них не принимается.
 
-        и фамилия могут быть обновлены данными провайдера.
+        Пол: 1 — мужской, 2 — женский. Дата рождения — YYYY-MM-DD. Пол и дату
+
+        рождения можно очистить значением null. При следующем OAuth-входе эти
+
+        данные могут быть обновлены данными провайдера.
 
         '
       security:
@@ -1273,9 +1292,26 @@ paths:
                   minLength: 1
                   maxLength: 255
                   description: Непустая фамилия после удаления пробелов по краям.
+                gender:
+                  type:
+                  - integer
+                  - 'null'
+                  enum:
+                  - 1
+                  - 2
+                  - null
+                  description: 1 — мужской, 2 — женский; null очищает значение.
+                birth_date:
+                  type:
+                  - string
+                  - 'null'
+                  format: date
+                  description: Дата рождения YYYY-MM-DD; null очищает значение.
             example:
               first_name: Анна
               last_name: Иванова
+              gender: 2
+              birth_date: '2000-05-17'
       responses:
         '200':
           description: Обновлённые данные текущего пользователя
@@ -1299,31 +1335,37 @@ paths:
             устройств не принимаются
         '422':
           description: Не передано ни одного поля; имя или фамилия null, не строка,
-            пустые, длиннее 255 символов; переданы лишние поля
+            пустые, длиннее 255 символов; недопустимый пол или дата рождения; переданы
+            лишние поля
   /users/me/recommendations:
     get:
       tags:
       - Рекомендации пользователя
       summary: Общий профиль рекомендаций текущего пользователя
       operationId: user_recommendations_get
-      description: 'User JWT или Device JWT с ролью 3 и действующей QR-привязкой;
-        для устройства обязателен X-Device-Connection-Id. Профиль с максимум тремя
-        профессиями и вкладами источников. Каждая профессия содержит description —
-        текущее описание из справочника или null, а также file: собственный файл;
-        при пустом media_id — male_photo_file_id шаблона аватара; без обоих — null.
-        Название и баллы сохраняют значения из снимков источников. До первого сохранённого
-        источника — JSON null. В расчёте участвуют только источники с положительным
-        весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при каждом запросе из снимков
-        источников; веса заданы в коде, итог не сохраняется. Мягкое удаление профессии
-        (`deleted_at`) не исключает её из ранее сохранённых рекомендаций: ID, название
-        и исходные баллы берутся из снимка источника. При новом прохождении подбираются
-        только активные профессии по активным связям. По максимум трём профессиям
-        из итогового рейтинга рассчитываются три отдельных списка: `employers` (до
-        5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2) и `education_programs`
-        (до 5 направлений подготовки). Работодатели определяются через profession_employers,
-        учебные заведения — через profession_education_programs → education_programs
-        → organization_education_programs → organizations. Направления подбираются
-        непосредственно через profession_education_programs → education_programs,
+      description: 'Источник professions/views обновляется перед расчётом при отсутствии
+        записи или возрасте более 6 часов: первый импорт за 30 суток, далее прибавление
+        событий [updated_at, начало выборки). Счётчики в group_scores, оценки в profession_scores
+        — 100 × просмотры / максимум. Пустой views не участвует в расчёте; views необязателен
+        для is_complete и не входит в missing_sources. Ошибка ClickHouse сохраняет
+        прежние данные и updated_at. User JWT или Device JWT с ролью 3 и действующей
+        QR-привязкой; для устройства обязателен X-Device-Connection-Id. Профиль с
+        максимум тремя профессиями и вкладами источников. Каждая профессия содержит
+        description — текущее описание из справочника или null, а также file: собственный
+        файл; при пустом media_id — male_photo_file_id шаблона аватара; без обоих
+        — null. Название и баллы сохраняют значения из снимков источников. До первого
+        сохранённого источника — JSON null. В расчёте участвуют только источники с
+        положительным весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при каждом запросе
+        из снимков источников; веса заданы в коде, итог не сохраняется. Мягкое удаление
+        профессии (`deleted_at`) не исключает её из ранее сохранённых рекомендаций:
+        ID, название и исходные баллы берутся из снимка источника. При новом прохождении
+        подбираются только активные профессии по активным связям. По максимум трём
+        профессиям из итогового рейтинга рассчитываются три отдельных списка: `employers`
+        (до 5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2)
+        и `education_programs` (до 5 направлений подготовки). Работодатели определяются
+        через profession_employers, учебные заведения — через profession_education_programs
+        → education_programs → organization_education_programs → organizations. Направления
+        подбираются непосредственно через profession_education_programs → education_programs,
         независимо от наличия организаций. В каждом списке сначала идут записи с большим
         числом различных совпавших профессий, затем с меньшим ID. Несколько программ
         одной профессии не увеличивают её вклад в рейтинг организации. Элементы списков
@@ -1429,7 +1471,9 @@ paths:
       description: Staff JWT администратора, оператора или редактора. Вызывает тот
         же сервис get_recommendations, что /users/me/recommendations, из сохранённых
         снимков результатов пользователя. Веса действуют только в этом запросе и не
-        меняют SOURCE_WEIGHTS, профиль, источники или их даты. Веса передаются аргументом
+        меняют SOURCE_WEIGHTS или сохранённые результаты тестов. Общий сервис может
+        обновить снимок просмотров professions/views по правилу 6 часов независимо
+        от выбранных весов; эти обновления сохраняются. Веса передаются аргументом
         сервиса; глобальные настройки не подменяются, параллельные запросы независимы.
         Веса от 0 до 100; хотя бы один должен быть положительным. Сумма не обязана
         быть 100. Нулевой вес исключает источник; остальные нормализуются по имеющимся
@@ -1469,13 +1513,19 @@ paths:
                       type: number
                       minimum: 0
                       maximum: 100
-                      default: 20
+                      default: 15
+                    views:
+                      type: number
+                      minimum: 0
+                      maximum: 100
+                      default: 5
             example:
               user_id: 12
               weights:
                 solomin: 40
                 holland: 40
-                dellinger: 20
+                dellinger: 15
+                views: 5
       responses:
         '200':
           description: Предпросмотр профиля или null; Cache-Control — no-store
@@ -7566,6 +7616,35 @@ paths:
             поля
         '404':
           description: Ветка не найдена
+  /interactive-video/scenarios:
+    get:
+      security:
+      - bearerAuth: []
+      tags:
+      - Профессии в действии - LED
+      summary: Все сценарии с первой веткой и файлом
+      description: 'Требуется staff access-токен admin/operator или device-токен активного
+        устройства с ролью 1 (QUIZ_VIDEO). Возвращает все сценарии без пагинации,
+        по ID по возрастанию, независимо от наличия сессии. Формат элемента совпадает
+        с /interactive-video/sessions/{id}/scenarios: id, title, description, profession_id
+        и first_branch. Первая ветка определяется по parent_id=null; при нескольких
+        стартовых ветках выбирается ветка с наименьшим ID. first_branch.file содержит
+        url, preview_url, mime_type, title, description либо null при отсутствии файла.
+        Если стартовой ветки нет, first_branch=null. Список не меняет состояние показа
+        и не создаёт сессию.'
+      responses:
+        '200':
+          description: Все сценарии; пустой массив при отсутствии сценариев
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InteractiveVideoSessionScenario'
+        '401':
+          description: Отсутствующий или недействительный токен
+        '403':
+          description: Недостаточно прав сотрудника или другая роль устройства
   /interactive-video/sessions:
     post:
       tags:
@@ -11636,6 +11715,8 @@ components:
       - first_name
       - last_name
       - avatar_url
+      - gender
+      - birth_date
       properties:
         id:
           type: integer
@@ -11657,6 +11738,20 @@ components:
           type:
           - string
           - 'null'
+        gender:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - null
+          description: 1 — мужской, 2 — женский; null — не указан.
+        birth_date:
+          type:
+          - string
+          - 'null'
+          format: date
     AuthTokenResponse:
       type: object
       required:
@@ -16309,6 +16404,9 @@ components:
         source_reference:
           additionalProperties: true
           type: object
+        updated_at:
+          type: string
+          format: date-time
         effective_weight_percent:
           type: number
       required:
@@ -16317,6 +16415,7 @@ components:
       - weight
       - id
       - source_reference
+      - updated_at
       - effective_weight_percent
       type: object
     RecommendationWeight:

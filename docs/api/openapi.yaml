@@ -422,6 +422,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/cms-branches-update'
 
   # ── Профессии в действии — Показ ────────────────
+  /interactive-video/scenarios:
+    $ref: './paths/interactive-video.yaml#/available-scenarios'
   /interactive-video/sessions:
     $ref: './paths/interactive-video.yaml#/session-create'
   /interactive-video/sessions/active:
@@ -686,7 +688,7 @@ components:
           description: 1 — активен, 2 — заблокирован.
     UserInfoResponse:
       type: object
-      required: [id, is_guest, email, first_name, last_name, avatar_url]
+      required: [id, is_guest, email, first_name, last_name, avatar_url, gender, birth_date]
       properties:
         id:
           type: integer
@@ -700,6 +702,13 @@ components:
           type: [string, 'null']
         avatar_url:
           type: [string, 'null']
+        gender:
+          type: [integer, 'null']
+          enum: [1, 2, null]
+          description: 1 — мужской, 2 — женский; null — не указан.
+        birth_date:
+          type: [string, 'null']
+          format: date
     AuthTokenResponse:
       type: object
       required: [access_token, token_type, expires_in]
@@ -5061,6 +5070,9 @@ components:
         source_reference:
           additionalProperties: true
           type: object
+        updated_at:
+          type: string
+          format: date-time
         effective_weight_percent:
           type: number
       required:
@@ -5069,6 +5081,7 @@ components:
       - weight
       - id
       - source_reference
+      - updated_at
       - effective_weight_percent
       type: object
     RecommendationWeight:

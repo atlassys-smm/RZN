@@ -492,6 +492,36 @@ session-stop:
 # Состояние показа (LED-экран)
 # ═══════════════════════════════════════════════════════════════
 
+available-scenarios:
+  get:
+    security:
+      - bearerAuth: []
+    tags: [Профессии в действии - LED]
+    summary: Все сценарии с первой веткой и файлом
+    description: >-
+      Требуется staff access-токен admin/operator или device-токен активного
+      устройства с ролью 1 (QUIZ_VIDEO). Возвращает все сценарии без пагинации,
+      по ID по возрастанию, независимо от наличия сессии. Формат элемента совпадает
+      с /interactive-video/sessions/{id}/scenarios: id, title, description,
+      profession_id и first_branch. Первая ветка определяется по parent_id=null;
+      при нескольких стартовых ветках выбирается ветка с наименьшим ID.
+      first_branch.file содержит url, preview_url, mime_type, title, description
+      либо null при отсутствии файла. Если стартовой ветки нет, first_branch=null.
+      Список не меняет состояние показа и не создаёт сессию.
+    responses:
+      '200':
+        description: Все сценарии; пустой массив при отсутствии сценариев
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/InteractiveVideoSessionScenario'
+      '401':
+        description: Отсутствующий или недействительный токен
+      '403':
+        description: Недостаточно прав сотрудника или другая роль устройства
+
 session-scenarios:
   get:
     security:

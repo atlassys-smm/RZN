@@ -125,6 +125,7 @@ QR открывает страницу фронтенда с ID сессии. П
 | Изменение типов, тестов, групп, вопросов, вариантов и связей профессий ПрофСтарта; публикация и проверка состава | CONTENT_EDITOR |
 | Просмотр и прерывание сессий ПрофСтарта `/cms/profstart/sessions` | OPERATOR |
 | Создание, замена и удаление аватаров профессий | CONTENT_EDITOR |
+| Все видеосценарии `/interactive-video/scenarios` | OPERATOR или активное устройство с ролью QUIZ_VIDEO (1) |
 | Сценарии видеосессии `/interactive-video/sessions/{id}/scenarios` | OPERATOR или активное устройство; проверяется только токен и роль |
 | Чтение CMS анкет | CONTENT_EDITOR, ANALYST |
 | Ответы на анкеты `/cms/surveys/responses` | ANALYST |
