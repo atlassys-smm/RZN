@@ -47,7 +47,9 @@ builder-preview:
       Staff JWT администратора, оператора или редактора. Вызывает тот же сервис
       get_recommendations, что /users/me/recommendations, из сохранённых снимков
       результатов пользователя. Веса действуют только в этом запросе и не меняют
-      SOURCE_WEIGHTS, профиль, источники или их даты. Веса передаются аргументом
+      SOURCE_WEIGHTS или сохранённые результаты тестов. Общий сервис может обновить
+      снимок просмотров professions/views по правилу 6 часов независимо от выбранных
+      весов; эти обновления сохраняются. Веса передаются аргументом
       сервиса; глобальные настройки не подменяются, параллельные запросы независимы.
       Веса от 0 до 100; хотя бы один
       должен быть положительным. Сумма не обязана быть 100. Нулевой вес исключает
@@ -72,10 +74,11 @@ builder-preview:
                 properties:
                   solomin: {type: number, minimum: 0, maximum: 100, default: 40}
                   holland: {type: number, minimum: 0, maximum: 100, default: 40}
-                  dellinger: {type: number, minimum: 0, maximum: 100, default: 20}
+                  dellinger: {type: number, minimum: 0, maximum: 100, default: 15}
+                  views: {type: number, minimum: 0, maximum: 100, default: 5}
           example:
             user_id: 12
-            weights: {solomin: 40, holland: 40, dellinger: 20}
+            weights: {solomin: 40, holland: 40, dellinger: 15, views: 5}
     responses:
       '200':
         description: Предпросмотр профиля или null; Cache-Control — no-store

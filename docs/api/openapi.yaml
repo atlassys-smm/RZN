@@ -5068,6 +5068,9 @@ components:
         source_reference:
           additionalProperties: true
           type: object
+        updated_at:
+          type: string
+          format: date-time
         effective_weight_percent:
           type: number
       required:
@@ -5076,6 +5079,7 @@ components:
       - weight
       - id
       - source_reference
+      - updated_at
       - effective_weight_percent
       type: object
     RecommendationWeight:
