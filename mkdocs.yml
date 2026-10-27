@@ -156,6 +156,7 @@ nav:
         - Деллингер: subsystems/profstart/questions/dellinger.md
       - Процесс прохождения: subsystems/profstart/test-flow.md
       - Результаты: subsystems/profstart/results.md
+    - Аватар профессий: subsystems/profession-avatars/index.md
     - Цифровой профиль и личный кабинет:
       - Обзор: subsystems/digital-profile/index.md
       - Дашборд: subsystems/digital-profile/dashboard.md
@@ -244,6 +245,7 @@ nav:
     - Обзор: changelog/index.md
     - Документация:
       - Обзор: changelog/docs/index.md
+      - Версия 1.35: changelog/docs/v1.35.md
       - Версия 1.34: changelog/docs/v1.34.md
       - Версия 1.33: changelog/docs/v1.33.md
       - Версия 1.32: changelog/docs/v1.32.md
