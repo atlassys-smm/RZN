@@ -422,6 +422,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/cms-branches-update'
 
   # ── Профессии в действии — Показ ────────────────
+  /interactive-video/scenarios:
+    $ref: './paths/interactive-video.yaml#/available-scenarios'
   /interactive-video/sessions:
     $ref: './paths/interactive-video.yaml#/session-create'
   /interactive-video/sessions/active:
