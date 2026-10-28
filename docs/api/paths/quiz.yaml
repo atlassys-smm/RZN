@@ -64,7 +64,7 @@ cms-questions:
   post:
     tags: [Викторина - CMS]
     summary: Создать вопрос
-    description: Требуется staff access-токен редактора контента. Создать новый вопрос с вариантами ответов
+    description: Требуется staff access-токен редактора контента. Создать новый вопрос с вариантами ответов. profession_id необязателен; привязка разрешена только к активной профессии.
     requestBody:
       required: true
       content:
@@ -72,6 +72,10 @@ cms-questions:
           schema:
             additionalProperties: false
             properties:
+              profession_id:
+                type: [integer, 'null']
+                minimum: 1
+                description: Необязательная привязка к активной профессии. Пустое поле или строка null снимает привязку при PUT; отсутствие поля сохраняет её.
               text:
                 title: Text
                 type: string
@@ -227,6 +231,8 @@ cms-questions:
         description: Недостаточно прав
       '401':
         description: Недействительный или отсутствующий токен
+      '404':
+        description: Привязанная профессия не найдена или удалена
       '201':
         description: Вопрос создан
         content:
@@ -279,6 +285,10 @@ cms-questions-update:
           schema:
             additionalProperties: false
             properties:
+              profession_id:
+                type: [integer, 'null']
+                minimum: 1
+                description: Необязательная привязка к активной профессии. Пустое поле или строка null снимает привязку при PUT; отсутствие поля сохраняет её.
               text:
                 anyOf:
                 - type: string
@@ -403,7 +413,7 @@ cms-questions-update:
             schema:
               $ref: '#/components/schemas/QuizQuestion'
       '404':
-        description: Вопрос не найден
+        description: Вопрос или привязанная активная профессия не найдены
       '409':
         description: Вопрос используется незавершённой сессией
 
@@ -1444,7 +1454,7 @@ session-finish:
   post:
     tags: [Викторина - Оператор]
     summary: Завершить сессию
-    description: Завершить сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой сессии. После первого завершения устройство получает session_finished в /api/device/sessions/ws с module=quiz. Для индивидуального режима SESSION_FINISHED аналитики содержит results[{participant_id,user_id,total_score}] — снимок сохранённых личных баллов, включая нули, отправляемый после commit; повтор finish не создаёт событие. Командный payload не меняется.
+    description: После раскрытия последнего вопроса последнего раунда переносит счётчики личных правильных ответов из Redis в quiz/answers одной транзакцией со статусом сессии. Повторный finish не начисляет повторно; досрочный finish не начисляет ответы. Завершить сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой сессии. После первого завершения устройство получает session_finished в /api/device/sessions/ws с module=quiz. Для индивидуального режима SESSION_FINISHED аналитики содержит results[{participant_id,user_id,total_score}] — снимок сохранённых личных баллов, включая нули, отправляемый после commit; повтор finish не создаёт событие. Командный payload не меняется.
     parameters:
       - name: id
         in: path

@@ -75,10 +75,11 @@ builder-preview:
                   solomin: {type: number, minimum: 0, maximum: 100, default: 40}
                   holland: {type: number, minimum: 0, maximum: 100, default: 40}
                   dellinger: {type: number, minimum: 0, maximum: 100, default: 15}
-                  views: {type: number, minimum: 0, maximum: 100, default: 5}
+                  views: {type: number, minimum: 0, maximum: 100, default: 4}
+                  quiz: {type: number, minimum: 0, maximum: 100, default: 1}
           example:
             user_id: 12
-            weights: {solomin: 40, holland: 40, dellinger: 15, views: 5}
+            weights: {solomin: 40, holland: 40, dellinger: 15, views: 4, quiz: 1}
     responses:
       '200':
         description: Предпросмотр профиля или null; Cache-Control — no-store

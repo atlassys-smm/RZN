@@ -1869,6 +1869,10 @@ components:
       description: В CMS доступны ключи ответов. В состоянии сессии для LED и игрока поля is_correct и answer_key опускаются до раскрытия правильного ответа.
       type: object
       properties:
+        profession_id:
+          type: [integer, 'null']
+          format: int64
+          description: Необязательная привязка вопроса к профессии (CMS).
         id:
           type: integer
           format: int64

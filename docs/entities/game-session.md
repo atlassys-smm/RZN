@@ -154,6 +154,7 @@ REST-состояние содержит вычисляемый `can_start_final
 | `id` | integer (int64, автоинкремент) | Уникальный идентификатор |
 | `round_id` | integer (int64) | ID раунда сессии |
 | `question_id` | integer (int64) | ID исходного вопроса ([GameQuestion](quiz.md)) |
+| `profession_id` | bigint, nullable | FK → professions.id; снимок привязки профессии при создании вопроса сессии |
 | `order` | integer | Порядок вопроса в раунде |
 
 ### Операторский список и прогресс
@@ -310,3 +311,11 @@ GET `/quiz/sessions/{id}/questions` возвращает вопросы всех
 - Рейтинг формируется по `GameSessionTeam.score`
 
 → [Шаблоны сценариев](scenario-template.md) | [CMS: Викторина](../subsystems/cms/quiz.md)
+
+
+Для рекомендаций Redis также хранит `quiz:session:{id}:recommendation_counts`
+(hash user_id:profession_id → количество) и `quiz:session:{id}:recommendation_answers`
+(hash session_question_id:participant_id → 1). Инкремент и дедупликация атомарны.
+Перенос в PostgreSQL выполняется один раз при полном finish вместе со статусом
+сессии; при досрочном finish начисления нет. После commit эти ключи очищаются
+вместе с остальным состоянием сессии.
