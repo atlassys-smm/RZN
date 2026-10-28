@@ -283,6 +283,7 @@ nav:
       - Версия 1.0: changelog/docs/v1.0.md
     - Бэкенд:
       - Обзор: changelog/back/index.md
+      - Версия 0.24: changelog/back/v0.24.md
       - Версия 0.21: changelog/back/v0.21.md
       - Версия 0.20: changelog/back/v0.20.md
       - Версия 0.19: changelog/back/v0.19.md
