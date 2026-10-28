@@ -1,0 +1,47 @@
+metabase-query:
+  post:
+    tags: [Демонстрация аналитики]
+    summary: Данные графика Metabase по токену встраивания
+    operationId: queryMetabaseDemo
+    description: |
+      Используется проектной страницей GET /demo/metabase.
+      Принимает выданный POST /analytics/embed-tokens токен и отдельные filters.
+      Авторизацию на конкретный график выполняет Metabase по подписи и сроку JWT;
+      дополнительный Bearer-токен проекта для этого запроса не требуется.
+      JWT передаётся в JSON, чтобы он не попадал в access log URL нашего API.
+      Бэкенд выполняет GET /api/embed/card/{token}/query по фиксированному
+      METABASE_INTERNAL_URL; произвольный upstream URL не принимается.
+      Даты обязательны, начало не позже конца; date_to включителен.
+      Cookie, пароль администратора и административная сессия Metabase не используются.
+      Успешный ответ содержит исходный результат Metabase с data.cols/data.rows;
+      Cache-Control: no-store. Диагностика и URL Metabase с токеном не раскрываются.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MetabaseDemoQuery'
+    responses:
+      '200':
+        description: Успешный результат Metabase; status=completed
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status, data]
+              properties:
+                status: {type: string, const: completed}
+                data:
+                  type: object
+                  properties:
+                    cols: {type: array, items: {type: object}}
+                    rows: {type: array, items: {type: array, items: {}}}
+      '401':
+        description: Metabase отклонил токен встраивания
+      '422':
+        description: Некорректный запрос или период
+      '502':
+        description: Metabase недоступен или не выполнил запрос
+      default:
+        description: Metabase отклонил токен или параметры; исходная диагностика не раскрывается

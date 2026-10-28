@@ -28,3 +28,60 @@ catalog:
         description: Токен отсутствует, недействителен или срок его действия истёк; сессия или сущность недействительна
       '503':
         description: Реестр Metabase не развёрнут или недоступен
+
+embed-tokens:
+  post:
+    tags: [Аналитика]
+    summary: Получить токены встраивания графиков Metabase
+    operationId: createAnalyticsEmbedTokens
+    description: |
+      Требуется действующий staff access-токен ADMIN или ANALYST.
+      Принимает только keys: от 1 до 100 постоянных ключей charts из справочника.
+      Возвращает items с key/token в порядке запроса и общий expires_at (UTC).
+      Повторяющиеся ключи сохраняются. Фильтры и params не принимаются.
+      Подписываются только развёрнутые графики, у которых в шаблоне
+      enable_embedding=true. Произвольные ID, коллекции и дашборды не принимаются.
+      Весь пакет проверяется до подписи: ошибка одного ключа отклоняет весь запрос.
+      JWT HS256 содержит resource.question, пустой params и exp; срок до 24 часов,
+      не дольше сессии сотрудника. Ответ Cache-Control: no-store.
+      date_from/date_to, time_grain, device_id, module_id, survey_id и source_id
+      настроены как редактируемые фильтры Metabase и передаются отдельно при
+      получении данных графика. Их изменение не требует перевыпуска JWT.
+      Без фильтров используются SQL-значения по умолчанию; date_to включителен,
+      часовой пояс Europe/Moscow. Секрет подписи фронтенду не передаётся.
+      iframe URL: {METABASE_URL}/embed/question/{token}.
+      Данные: GET {METABASE_URL}/api/embed/card/{token}/query?date_from=2026-10-22&date_to=2026-10-28.
+      Токен предоставляет доступ к графику до exp, в том числе после выхода
+      сотрудника из нашего API.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AnalyticsEmbedTokensRequest'
+          example:
+            keys: [led.common.sessions, led.common.sessions_daily]
+    responses:
+      '200':
+        description: Токены для всех запрошенных графиков
+        headers:
+          Cache-Control:
+            schema:
+              type: string
+              const: no-store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsEmbedTokensResponse'
+      '401':
+        description: Недействительный staff access-токен или сессия; пользователь и устройство не допускаются
+      '403':
+        description: У сотрудника нет роли ADMIN или ANALYST
+      '404':
+        description: Ключ графика отсутствует в развёрнутом реестре
+      '422':
+        description: Некорректный пакет или встраивание графика не разрешено
+      '503':
+        description: Секрет подписи не настроен, реестр или шаблоны графиков недоступны

@@ -518,6 +518,10 @@ paths:
   # ── Аналитика ────────────────────────────────────
   /analytics/catalog:
     $ref: './paths/analytics.yaml#/catalog'
+  /analytics/embed-tokens:
+    $ref: './paths/analytics.yaml#/embed-tokens'
+  /demo/metabase/query:
+    $ref: './paths/demo.yaml#/metabase-query'
 
   # ── CMS ──────────────────────────────────────────
   /cms/references:
@@ -666,6 +670,122 @@ components:
           description: Сохранённые вопросы по cards[].key; текстовые заготовки без SQL сюда не входят
           additionalProperties:
             $ref: '#/components/schemas/AnalyticsMetabaseObject'
+    AnalyticsEmbedTokensRequest:
+      additionalProperties: false
+      properties:
+        keys:
+          items:
+            maxLength: 255
+            minLength: 1
+            type: string
+          maxItems: 100
+          minItems: 1
+          title: Keys
+          type: array
+      required:
+      - keys
+      title: AnalyticsEmbedTokensRequest
+      type: object
+    AnalyticsEmbedToken:
+      properties:
+        key:
+          title: Key
+          type: string
+        token:
+          title: Token
+          type: string
+      required:
+      - key
+      - token
+      title: AnalyticsEmbedToken
+      type: object
+    AnalyticsEmbedTokensResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AnalyticsEmbedToken'
+          title: Items
+          type: array
+        expires_at:
+          format: date-time
+          title: Expires At
+          type: string
+      required:
+      - items
+      - expires_at
+      title: AnalyticsEmbedTokensResponse
+      type: object
+    MetabaseDemoFilters:
+      additionalProperties: false
+      properties:
+        date_from:
+          format: date
+          title: Date From
+          type: string
+        date_to:
+          format: date
+          title: Date To
+          type: string
+        module_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Module Id
+        device_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Device Id
+        survey_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Survey Id
+        source_id:
+          anyOf:
+          - maxLength: 255
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Source Id
+        time_grain:
+          anyOf:
+          - enum:
+            - day
+            - week
+            type: string
+          - type: 'null'
+          default: null
+          title: Time Grain
+      required:
+      - date_from
+      - date_to
+      title: MetabaseDemoFilters
+      type: object
+    MetabaseDemoQuery:
+      additionalProperties: false
+      properties:
+        token:
+          format: password
+          maxLength: 4096
+          minLength: 1
+          title: Token
+          type: string
+          writeOnly: true
+        filters:
+          $ref: '#/components/schemas/MetabaseDemoFilters'
+      required:
+      - token
+      - filters
+      title: MetabaseDemoQuery
+      type: object
     StaffInfoResponse:
       type: object
       required: [id, email, first_name, last_name, role, status]
