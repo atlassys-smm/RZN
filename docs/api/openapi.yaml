@@ -761,7 +761,7 @@ components:
           description: 1 — активен, 2 — заблокирован.
     UserInfoResponse:
       type: object
-      required: [id, is_guest, email, first_name, last_name, avatar_url, gender, birth_date]
+      required: [id, is_guest, email, first_name, last_name, file, gender, birth_date]
       properties:
         id:
           type: integer
@@ -773,8 +773,10 @@ components:
           type: [string, 'null']
         last_name:
           type: [string, 'null']
-        avatar_url:
-          type: [string, 'null']
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         gender:
           type: [integer, 'null']
           enum: [1, 2, null]
@@ -5379,7 +5381,7 @@ components:
       - is_guest
       - first_name
       - last_name
-      - avatar_url
+      - file
       properties:
         id:
           type: integer
@@ -5394,10 +5396,10 @@ components:
           type:
           - string
           - 'null'
-        avatar_url:
-          type:
-          - string
-          - 'null'
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
     DeviceUserResponse:
       type: object
       required:

@@ -1129,8 +1129,11 @@ paths:
         и доверенный Origin/Referer. Access текущего гостя необязателен; он позволяет
         сохранить его ID при авторизации. При существующем OAuth-аккаунте выполняется
         вход в него без объединения истории. Access возвращается в JSON, refresh —
-        в HttpOnly cookie. Ссылка аватара сохраняется в avatar_url и обновляется при
-        входе, если отличается. Отсутствующий аватар не стирает прежнюю ссылку.
+        в HttpOnly cookie. Изображение аватара провайдера скачивается в общее файловое
+        хранилище; users.media_id хранит ID файла. При следующем входе изображение
+        скачивается заново, если оно предоставлено; отсутствующее изображение не стирает
+        текущий файл. Ошибка скачивания возвращает 503 без изменения пользователя
+        и создания сессии. Отсутствующий аватар не стирает прежнюю ссылку.
       security:
       - {}
       - bearerAuth: []
@@ -1262,10 +1265,12 @@ paths:
                     nullable: true
                     description: Фамилия из OAuth или заданная пользователем через
                       PATCH /user/info
-                  avatar_url:
-                    type: string
-                    nullable: true
-                    description: URL аватара (только для авторизованных)
+                  file:
+                    anyOf:
+                    - $ref: '#/components/schemas/FileResponse'
+                    - type: 'null'
+                    description: Загруженный файл профиля с подписанными ссылками
+                      или null.
                   gender:
                     type:
                     - integer
@@ -1287,20 +1292,31 @@ paths:
       tags:
       - Пользователь
       summary: Изменить данные пользователя
-      description: 'Частично обновляет данные текущего пользователя по Bearer-токену,
-        включая
+      description: 'Частично обновляет профиль текущего пользователя, включая гостя
+        с действующей сессией.
 
-        гостя с действующей сессией. Принимает first_name, last_name, gender и birth_date:
+        Принимает first_name, last_name, gender, birth_date, а в multipart/form-data
+        также
 
-        хотя бы одно поле обязательно. Пропущенные поля сохраняются. Пробелы по краям
+        file, file_preview, file_title и file_description по общим правилам загрузки
+        файлов.
 
-        имени и фамилии удаляются до проверки длины; null для них не принимается.
+        Требуется хотя бы одно поле профиля или новый file. Пропущенные поля и файл
+        сохраняются.
 
-        Пол: 1 — мужской, 2 — женский. Дата рождения — YYYY-MM-DD. Пол и дату
+        Превью требует новый файл. Имена не могут быть пустыми или null; пробелы по
+        краям удаляются.
 
-        рождения можно очистить значением null. При следующем OAuth-входе эти
+        Пол: 1 — мужской, 2 — женский. Дата рождения: YYYY-MM-DD. Для очистки пола
+        и даты
 
-        данные могут быть обновлены данными провайдера.
+        в JSON используется null, в форме — текст null. Ответ содержит стандартный
+        объект
+
+        file с подписанными ссылками или null. media_id и avatar_url в запросе не
+        принимаются.
+
+        При следующем OAuth-входе данные могут обновиться из профиля провайдера.
 
         '
       security:
@@ -1339,11 +1355,64 @@ paths:
                   - 'null'
                   format: date
                   description: Дата рождения YYYY-MM-DD; null очищает значение.
+                file_title:
+                  type:
+                  - string
+                  - 'null'
+                file_description:
+                  type:
+                  - string
+                  - 'null'
             example:
               first_name: Анна
               last_name: Иванова
               gender: 2
               birth_date: '2000-05-17'
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                first_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: Непустое имя после удаления пробелов по краям.
+                last_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: Непустая фамилия после удаления пробелов по краям.
+                gender:
+                  type:
+                  - integer
+                  - 'null'
+                  enum:
+                  - 1
+                  - 2
+                  - null
+                  description: 1 — мужской, 2 — женский; null очищает значение.
+                birth_date:
+                  type:
+                  - string
+                  - 'null'
+                  format: date
+                  description: Дата рождения YYYY-MM-DD; null очищает значение.
+                file_title:
+                  type:
+                  - string
+                  - 'null'
+                file_description:
+                  type:
+                  - string
+                  - 'null'
+                file:
+                  type: string
+                  format: binary
+                file_preview:
+                  type: string
+                  format: binary
       responses:
         '200':
           description: Обновлённые данные текущего пользователя
@@ -1368,7 +1437,9 @@ paths:
         '422':
           description: Не передано ни одного поля; имя или фамилия null, не строка,
             пустые, длиннее 255 символов; недопустимый пол или дата рождения; переданы
-            лишние поля
+            лишние поля; превью без нового файла
+        '413':
+          description: Превышен общий лимит размера файла или превью.
   /users/me/recommendations:
     get:
       tags:
@@ -12149,7 +12220,7 @@ components:
       - email
       - first_name
       - last_name
-      - avatar_url
+      - file
       - gender
       - birth_date
       properties:
@@ -12169,10 +12240,10 @@ components:
           type:
           - string
           - 'null'
-        avatar_url:
-          type:
-          - string
-          - 'null'
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         gender:
           type:
           - integer
@@ -17092,7 +17163,7 @@ components:
       - is_guest
       - first_name
       - last_name
-      - avatar_url
+      - file
       properties:
         id:
           type: integer
@@ -17107,10 +17178,10 @@ components:
           type:
           - string
           - 'null'
-        avatar_url:
-          type:
-          - string
-          - 'null'
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
     DeviceUserResponse:
       type: object
       required:
