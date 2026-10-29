@@ -6211,6 +6211,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /quiz/sessions/{id}/professions:
+    get:
+      tags:
+      - Викторина
+      summary: ID профессий по вопросам сессии
+      operationId: quiz_session_professions_get
+      description: 'До пяти уникальных ID профессий из снимков привязок всех вопросов
+        всех раундов сессии, включая финальный и ещё не показанные вопросы. Частота
+        считается по записям GameSessionQuestion: повтор одного вопроса считается
+        повторно. Сортировка по количеству DESC, при равенстве по profession_id ASC.
+        Вопросы без привязки исключаются. Изменение исходной привязки в CMS не меняет
+        снимки сессии. Доступно для активных и завершённых сессий; не зависит от Redis
+        и не меняет ход сессии. Допускаются ADMIN/OPERATOR и активное устройство роли
+        1 только для собственной сессии. Мягко удалённые профессии не исключаются.'
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Массив ID профессий; при отсутствии привязок — пустой массив.
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                maxItems: 5
+                items:
+                  type: integer
+                  format: int64
+        '401':
+          description: Отсутствующий или недействительный токен; User не допускается.
+        '403':
+          description: Недостаточно прав, неверная роль устройства или чужая сессия.
+        '404':
+          description: Сессия не найдена.
+        '422':
+          description: Некорректный ID сессии.
   /quiz/sessions/{id}/questions:
     get:
       tags:
@@ -7854,6 +7897,47 @@ paths:
           description: Недействительный или отсутствующий токен
       security:
       - bearerAuth: []
+  /interactive-video/sessions/{id}/professions:
+    get:
+      tags:
+      - Профессии в действии
+      summary: ID профессий по сценариям сессии
+      operationId: interactive_video_session_professions_get
+      description: Все уникальные ID профессий сценариев из settings.scenario_ids
+        данной сессии, включая ещё не показанные сценарии. Без ограничения количества,
+        порядок profession_id ASC. Сценарии без профессии и отсутствующие сценарии
+        пропускаются. Привязки читаются из текущих записей сценариев. Доступно для
+        активных и завершённых сессий; не зависит от Redis и не меняет ход сессии.
+        Допускаются ADMIN/OPERATOR и активное устройство роли 1 только для собственной
+        сессии. Мягко удалённые профессии не исключаются.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Массив ID профессий; при отсутствии привязок — пустой массив.
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  type: integer
+                  format: int64
+        '401':
+          description: Отсутствующий или недействительный токен; User не допускается.
+        '403':
+          description: Недостаточно прав, неверная роль устройства или чужая сессия.
+        '404':
+          description: Сессия не найдена.
+        '422':
+          description: Некорректный ID сессии.
   /interactive-video/sessions/{id}/scenarios:
     get:
       security:

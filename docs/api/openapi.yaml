@@ -362,6 +362,8 @@ paths:
     $ref: './paths/quiz.yaml#/session-active'
   /quiz/sessions/{id}:
     $ref: './paths/quiz.yaml#/session-detail'
+  /quiz/sessions/{id}/professions:
+    $ref: './paths/quiz.yaml#/session-professions'
   /quiz/sessions/{id}/questions:
     $ref: './paths/quiz.yaml#/session-questions'
   /quiz/sessions/{id}/final-round:
@@ -432,6 +434,8 @@ paths:
     $ref: './paths/interactive-video.yaml#/session-stop'
   /interactive-video/sessions/{id}/state:
     $ref: './paths/interactive-video.yaml#/session-state'
+  /interactive-video/sessions/{id}/professions:
+    $ref: './paths/interactive-video.yaml#/session-professions'
   /interactive-video/sessions/{id}/scenarios:
     $ref: './paths/interactive-video.yaml#/session-scenarios'
   /interactive-video/sessions/{id}/advance:
