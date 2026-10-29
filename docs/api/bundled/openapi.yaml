@@ -10327,6 +10327,73 @@ paths:
             сессия или сущность недействительна
         '503':
           description: Реестр Metabase не развёрнут или недоступен
+  /analytics/report:
+    get:
+      tags:
+      - Аналитика
+      summary: PDF-отчет аналитики за неделю или месяц
+      operationId: getAnalyticsReport
+      description: 'Создает PDF на 10 страницах с графиками, текстовыми выводами,
+
+        абсолютными и относительными изменениями. Требуется сотрудник
+
+        с ролью ADMIN или ANALYST. Запрос не изменяет аналитические данные.
+
+        Периоды календарные, часовой пояс Europe/Moscow: текущая неделя
+
+        с понедельника или текущий месяц с первого числа до момента запроса;
+
+        сравнение с предыдущей полной календарной неделей или месяцем.
+
+        Неполнота текущего периода явно отмечается в PDF.
+
+        Используются SQL определений карточек Metabase и читатель ClickHouse.
+
+        Диаграммы перерисованы в векторном виде, это не снимки интерфейса.
+
+        При нулевой базе относительный рост не определен; изменение долей
+
+        дополнительно выражено в процентных пунктах. Нет оценок означает
+
+        отсутствие данных, а не нулевую оценку. Сбой источника дает 503.
+
+        Ответ содержит attachment и Cache-Control: no-store.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: query
+        name: period
+        required: true
+        description: week - текущая календарная неделя; month - текущий календарный
+          месяц
+        schema:
+          type: string
+          enum:
+          - week
+          - month
+      responses:
+        '200':
+          description: PDF-отчет с графиками и сравнением периодов
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="analytics-week-YYYY-MM-DD.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Недействительный токен или отсутствует авторизация
+        '403':
+          description: Доступ только для администратора и аналитика
+        '422':
+          description: period отсутствует или не равен week либо month
+        '503':
+          description: ClickHouse или определения карточек Metabase недоступны
   /cms/references:
     get:
       tags:

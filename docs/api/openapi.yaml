@@ -518,6 +518,8 @@ paths:
   # ── Аналитика ────────────────────────────────────
   /analytics/catalog:
     $ref: './paths/analytics.yaml#/catalog'
+  /analytics/report:
+    $ref: './paths/analytics.yaml#/report'
 
   # ── CMS ──────────────────────────────────────────
   /cms/references:
