@@ -1,3 +1,77 @@
+surveys:
+  get:
+    tags: [Обратная связь - Пользователь]
+    summary: Список активных анкет
+    description: >-
+      Получить активные анкеты с вопросами и вариантами ответов.
+      Требуется User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
+      Для устройства обязателен X-Device-Connection-Id. Черновики и неактивные
+      версии не возвращаются. total содержит общее число активных анкет.
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+    responses:
+      '200':
+        description: Список активных анкет с вопросами
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaginatedResponse_FeedbackSurveyResponse_'
+      '401':
+        description: Требуется действующий токен пользователя или устройства
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён
+      '422':
+        description: Неверная пагинация или не передан заголовок подключения устройства
+
+survey-detail:
+  get:
+    tags: [Обратная связь - Пользователь]
+    summary: Активная анкета по ID
+    description: >-
+      Получить активную анкету по её survey_id с вопросами и вариантами ответов.
+      Требуется User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
+      Для устройства обязателен X-Device-Connection-Id. Отсутствующая или неактивная
+      анкета возвращает 404. survey_id — ID анкеты, а не её type.
+    security:
+      - bearerAuth: []
+    parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: Активная анкета с вопросами
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackSurveyResponse'
+      '401':
+        description: Требуется действующий токен пользователя или устройства
+      '403':
+        description: Недостаточная роль устройства или пользователь не подключён
+      '404':
+        description: Активная анкета не найдена
+      '422':
+        description: Неверный ID или не передан заголовок подключения устройства
+
 start:
   post:
     tags: [Обратная связь - Пользователь]
