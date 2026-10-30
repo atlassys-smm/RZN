@@ -1645,7 +1645,9 @@ paths:
         на удалённые записи отклоняются (422). Принимает multipart/form-data по образцу
         организаций; поля профессии передаются отдельно, необязательные поля файла
         — file, file_preview, file_title и file_description. Без нового file текущий
-        файл сохраняется; file_preview без file отклоняется.
+        файл сохраняется; file_preview без file отклоняется. Необязательный short_name
+        содержит от 1 до 255 символов. Пустое значение или строка null передаёт NULL;
+        при редактировании пропущенное поле сохраняет прежнее значение.
   /professions/{id}:
     get:
       tags:
@@ -1732,7 +1734,9 @@ paths:
         null очищает nullable-поле. Принимает multipart/form-data по образцу организаций;
         поля профессии передаются отдельно, необязательные поля файла — file, file_preview,
         file_title и file_description. Без нового file текущий файл сохраняется; file_preview
-        без file отклоняется.
+        без file отклоняется. Необязательный short_name содержит от 1 до 255 символов.
+        Пустое значение или строка null передаёт NULL; при редактировании пропущенное
+        поле сохраняет прежнее значение.
     delete:
       tags:
       - Профессии
@@ -10379,6 +10383,47 @@ paths:
         отсутствие данных, а не нулевую оценку. Сбой источника дает 503.
 
         Ответ содержит attachment и Cache-Control: no-store.
+  /analytics/embed-tokens:
+    post:
+      tags:
+      - Аналитика
+      summary: Получить токены встраивания графиков Metabase
+      operationId: createAnalyticsEmbedTokens
+      description: 'Требуется действующий staff access-токен ADMIN или ANALYST.
+
+        Принимает только keys: от 1 до 100 постоянных ключей charts из справочника.
+
+        Возвращает items с key/token в порядке запроса и общий expires_at (UTC).
+
+        Повторяющиеся ключи сохраняются. Фильтры и params не принимаются.
+
+        Подписываются только развёрнутые графики, у которых в шаблоне
+
+        enable_embedding=true. Произвольные ID, коллекции и дашборды не принимаются.
+
+        Весь пакет проверяется до подписи: ошибка одного ключа отклоняет весь запрос.
+
+        JWT HS256 содержит resource.question, пустой params и exp; срок до 24 часов,
+
+        не дольше сессии сотрудника. Ответ Cache-Control: no-store.
+
+        date_from/date_to, time_grain, device_id, module_id, survey_id и source_id
+
+        настроены как редактируемые фильтры Metabase и передаются отдельно при
+
+        получении данных графика. Их изменение не требует перевыпуска JWT.
+
+        Без фильтров используются SQL-значения по умолчанию; date_to включителен,
+
+        часовой пояс Europe/Moscow. Секрет подписи фронтенду не передаётся.
+
+        iframe URL: {METABASE_URL}/embed/question/{token}.
+
+        Данные: GET {METABASE_URL}/api/embed/card/{token}/query?date_from=2026-10-22&date_to=2026-10-28.
+
+        Токен предоставляет доступ к графику до exp, в том числе после выхода
+
+        сотрудника из нашего API.
 
         '
       security:
@@ -10433,6 +10478,110 @@ paths:
             дата
         '503':
           description: ClickHouse или определения карточек Metabase недоступны
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsEmbedTokensRequest'
+            example:
+              keys:
+              - led.common.sessions
+              - led.common.sessions_daily
+      responses:
+        '200':
+          description: Токены для всех запрошенных графиков
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsEmbedTokensResponse'
+        '401':
+          description: Недействительный staff access-токен или сессия; пользователь
+            и устройство не допускаются
+        '403':
+          description: У сотрудника нет роли ADMIN или ANALYST
+        '404':
+          description: Ключ графика отсутствует в развёрнутом реестре
+        '422':
+          description: Некорректный пакет или встраивание графика не разрешено
+        '503':
+          description: Секрет подписи не настроен, реестр или шаблоны графиков недоступны
+  /demo/metabase/query:
+    post:
+      tags:
+      - Демонстрация аналитики
+      summary: Данные графика Metabase по токену встраивания
+      operationId: queryMetabaseDemo
+      description: 'Используется проектной страницей GET /demo/metabase.
+
+        Принимает выданный POST /analytics/embed-tokens токен и отдельные filters.
+
+        Авторизацию на конкретный график выполняет Metabase по подписи и сроку JWT;
+
+        дополнительный Bearer-токен проекта для этого запроса не требуется.
+
+        JWT передаётся в JSON, чтобы он не попадал в access log URL нашего API.
+
+        Бэкенд выполняет GET /api/embed/card/{token}/query по фиксированному
+
+        METABASE_INTERNAL_URL; произвольный upstream URL не принимается.
+
+        Даты обязательны, начало не позже конца; date_to включителен.
+
+        Cookie, пароль администратора и административная сессия Metabase не используются.
+
+        Успешный ответ содержит исходный результат Metabase с data.cols/data.rows;
+
+        Cache-Control: no-store. Диагностика и URL Metabase с токеном не раскрываются.
+
+        '
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetabaseDemoQuery'
+      responses:
+        '200':
+          description: Успешный результат Metabase; status=completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - data
+                properties:
+                  status:
+                    type: string
+                    const: completed
+                  data:
+                    type: object
+                    properties:
+                      cols:
+                        type: array
+                        items:
+                          type: object
+                      rows:
+                        type: array
+                        items:
+                          type: array
+                          items: {}
+        '401':
+          description: Metabase отклонил токен встраивания
+        '422':
+          description: Некорректный запрос или период
+        '502':
+          description: Metabase недоступен или не выполнил запрос
+        default:
+          description: Metabase отклонил токен или параметры; исходная диагностика
+            не раскрывается
   /cms/references:
     get:
       tags:
@@ -11852,6 +12001,122 @@ components:
             SQL сюда не входят
           additionalProperties:
             $ref: '#/components/schemas/AnalyticsMetabaseObject'
+    AnalyticsEmbedTokensRequest:
+      additionalProperties: false
+      properties:
+        keys:
+          items:
+            maxLength: 255
+            minLength: 1
+            type: string
+          maxItems: 100
+          minItems: 1
+          title: Keys
+          type: array
+      required:
+      - keys
+      title: AnalyticsEmbedTokensRequest
+      type: object
+    AnalyticsEmbedToken:
+      properties:
+        key:
+          title: Key
+          type: string
+        token:
+          title: Token
+          type: string
+      required:
+      - key
+      - token
+      title: AnalyticsEmbedToken
+      type: object
+    AnalyticsEmbedTokensResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AnalyticsEmbedToken'
+          title: Items
+          type: array
+        expires_at:
+          format: date-time
+          title: Expires At
+          type: string
+      required:
+      - items
+      - expires_at
+      title: AnalyticsEmbedTokensResponse
+      type: object
+    MetabaseDemoFilters:
+      additionalProperties: false
+      properties:
+        date_from:
+          format: date
+          title: Date From
+          type: string
+        date_to:
+          format: date
+          title: Date To
+          type: string
+        module_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Module Id
+        device_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Device Id
+        survey_id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Survey Id
+        source_id:
+          anyOf:
+          - maxLength: 255
+            minLength: 1
+            type: string
+          - type: 'null'
+          default: null
+          title: Source Id
+        time_grain:
+          anyOf:
+          - enum:
+            - day
+            - week
+            type: string
+          - type: 'null'
+          default: null
+          title: Time Grain
+      required:
+      - date_from
+      - date_to
+      title: MetabaseDemoFilters
+      type: object
+    MetabaseDemoQuery:
+      additionalProperties: false
+      properties:
+        token:
+          format: password
+          maxLength: 4096
+          minLength: 1
+          title: Token
+          type: string
+          writeOnly: true
+        filters:
+          $ref: '#/components/schemas/MetabaseDemoFilters'
+      required:
+      - token
+      - filters
+      title: MetabaseDemoQuery
+      type: object
     StaffInfoResponse:
       type: object
       required:
@@ -12732,6 +12997,13 @@ components:
         name:
           type: string
           title: Name
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Short Name
+          description: Короткое название профессии или null, если оно не задано.
         description:
           anyOf:
           - type: string
@@ -12778,6 +13050,7 @@ components:
       - file
       - id
       - name
+      - short_name
       - description
       - industry_id
       - direction_id
@@ -17562,6 +17835,15 @@ components:
           maxLength: 255
           minLength: 1
           title: Name
+        short_name:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Short Name
+          description: Короткое название профессии; пустое значение или строка null
+            очищает поле, пропущенное поле при редактировании сохраняет значение.
         description:
           anyOf:
           - type: string
@@ -17721,6 +18003,15 @@ components:
             minLength: 1
           - type: 'null'
           title: Name
+        short_name:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+          - type: 'null'
+          title: Short Name
+          description: Короткое название профессии; пустое значение или строка null
+            очищает поле, пропущенное поле при редактировании сохраняет значение.
         description:
           anyOf:
           - type: string
