@@ -11340,7 +11340,7 @@ paths:
       description: Требуется редактор контента. Изменения разрешены только у неактивной
         анкеты без прохождений. Варианты поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE
         и PROFESSION_CHOICE; profession_id обязателен только для последнего.
-  /feedback/surveys/{type}:
+  /feedback/surveys/type/{type}:
     get:
       description: Требуется device-токен активного устройства с ролью 4. type=1 —
         оценка качества. Возвращает вопросы с options; у TEXT и RATING_SCALE список
@@ -11348,7 +11348,7 @@ paths:
       tags:
       - Обратная связь - LED
       summary: Активная анкета по типу
-      operationId: get_survey_by_type_api_feedback_surveys__type__get
+      operationId: get_survey_by_type_api_feedback_surveys_type__type__get
       parameters:
       - name: type
         in: path
@@ -11374,6 +11374,78 @@ paths:
           description: Анкета или вопрос не найдены
       security:
       - bearerAuth: []
+  /feedback/surveys:
+    get:
+      tags:
+      - Обратная связь - Пользователь
+      summary: Список активных анкет
+      description: Получить активные анкеты с вопросами и вариантами ответов. Требуется
+        User JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства
+        обязателен X-Device-Connection-Id. Черновики и неактивные версии не возвращаются.
+        total содержит общее число активных анкет.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Список активных анкет с вопросами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_FeedbackSurveyResponse_'
+        '401':
+          description: Требуется действующий токен пользователя или устройства
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+        '422':
+          description: Неверная пагинация или не передан заголовок подключения устройства
+  /feedback/surveys/{survey_id}:
+    get:
+      tags:
+      - Обратная связь - Пользователь
+      summary: Активная анкета по ID
+      description: Получить активную анкету по её survey_id с вопросами и вариантами
+        ответов. Требуется User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
+        Для устройства обязателен X-Device-Connection-Id. Отсутствующая или неактивная
+        анкета возвращает 404. survey_id — ID анкеты, а не её type.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: survey_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Активная анкета с вопросами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackSurveyResponse'
+        '401':
+          description: Требуется действующий токен пользователя или устройства
+        '403':
+          description: Недостаточная роль устройства или пользователь не подключён
+        '404':
+          description: Активная анкета не найдена
+        '422':
+          description: Неверный ID или не передан заголовок подключения устройства
   /feedback/surveys/{survey_id}/start:
     post:
       tags:
@@ -12244,6 +12316,18 @@ components:
       - scale_max
       - options
       title: FeedbackQuestionResponse
+    PaginatedResponse_FeedbackSurveyResponse_:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackSurveyResponse'
+        total:
+          type: integer
     FeedbackSurveyResponse:
       properties:
         id:

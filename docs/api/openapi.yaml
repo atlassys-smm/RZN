@@ -547,10 +547,14 @@ paths:
   /cms/surveys/{survey_id}/questions/{question_id}/options/{option_id}:
     $ref: ./paths/surveys.yaml#/cms-survey-option
   # ── Обратная связь — LED ────────────────────────
-  /feedback/surveys/{type}:
+  /feedback/surveys/type/{type}:
     $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь — Пользователь ────────────────
+  /feedback/surveys:
+    $ref: './paths/feedback.yaml#/surveys'
+  /feedback/surveys/{survey_id}:
+    $ref: './paths/feedback.yaml#/survey-detail'
   /feedback/surveys/{survey_id}/start:
     $ref: './paths/feedback.yaml#/start'
 
@@ -1096,6 +1100,16 @@ components:
       - options
       title: FeedbackQuestionResponse
 
+    PaginatedResponse_FeedbackSurveyResponse_:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackSurveyResponse'
+        total:
+          type: integer
     FeedbackSurveyResponse:
       properties:
         id:
