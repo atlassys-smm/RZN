@@ -702,7 +702,7 @@ feedback-survey:
     tags:
     - Обратная связь - LED
     summary: Активная анкета по типу
-    operationId: get_survey_by_type_api_feedback_surveys__type__get
+    operationId: get_survey_by_type_api_feedback_surveys_type__type__get
     parameters:
     - name: type
       in: path
