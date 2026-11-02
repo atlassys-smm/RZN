@@ -223,8 +223,6 @@ paths:
   /staff/info:
     $ref: './paths/staff.yaml#/staff-info'
   # ── Авторизация пользователя ─────────────────────
-  /auth/{id}:
-    $ref: './paths/user-auth.yaml#/user-test-login'
   /auth/user/guest:
     $ref: './paths/user-auth.yaml#/user-guest'
   /auth/user/refresh:
