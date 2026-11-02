@@ -1344,6 +1344,7 @@ components:
           type: string
           title: Url
         preview_url:
+          description: Для видео без переданного превью возвращается null до завершения фоновой генерации; затем подписанный URL на 24 часа.
           anyOf:
           - type: string
           - type: 'null'
