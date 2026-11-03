@@ -2,7 +2,13 @@ detail:
   get:
     tags: [Файлы]
     summary: Скачать файл
-    description: Скачать основной файл или превью по подписанной ссылке. Идентификатор превью — UUID основного файла с суффиксом _preview.
+    description: |
+      Скачать основной файл или превью по подписанной ссылке. Идентификатор превью
+      — UUID основного файла с суффиксом _preview. Для растровых изображений width
+      и height задают максимальные размеры в пикселях. Можно передать один или
+      оба параметра. Пропорции сохраняются. Изображение, которое уже помещается
+      в заданные границы, выдаётся в исходном виде. Уменьшенный вариант выдаётся
+      в формате исходного изображения. Размеры можно дописать к уже подписанному URL.
     parameters:
       - name: file_uuid
         in: path
@@ -22,6 +28,20 @@ detail:
         schema:
           type: string
         description: HMAC-подпись
+      - name: width
+        in: query
+        description: Максимальная ширина изображения в пикселях.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 2048
+      - name: height
+        in: query
+        description: Максимальная высота изображения в пикселях.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 2048
     responses:
       '200':
         description: Файл
@@ -30,7 +50,15 @@ detail:
             schema:
               type: string
               format: binary
+          image/*:
+            schema:
+              type: string
+              format: binary
       '403':
         description: Неверная или истёкшая подпись
       '404':
         description: Файл не найден
+      '415':
+        description: Для уменьшения нужен файл в поддерживаемом растровом формате
+      '422':
+        description: Недопустимые размеры или изображение не удалось уменьшить

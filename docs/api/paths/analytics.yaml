@@ -110,15 +110,15 @@ embed-tokens:
     summary: Получить токены встраивания графиков Metabase
     operationId: createAnalyticsEmbedTokens
     description: |
-      Требуется действующий staff access-токен ADMIN или ANALYST.
+      Требуется staff access-токен ADMIN или ANALYST либо Device JWT активного устройства с ролью QUIZ_VIDEO (1).
       Принимает только keys: от 1 до 100 постоянных ключей charts из справочника.
       Возвращает items с key/token в порядке запроса и общий expires_at (UTC).
       Повторяющиеся ключи сохраняются. Фильтры и params не принимаются.
       Подписываются только развёрнутые графики, у которых в шаблоне
       enable_embedding=true. Произвольные ID, коллекции и дашборды не принимаются.
       Весь пакет проверяется до подписи: ошибка одного ключа отклоняет весь запрос.
-      JWT HS256 содержит resource.question, пустой params и exp; срок до 24 часов,
-      не дольше сессии сотрудника. Ответ Cache-Control: no-store.
+      JWT HS256 содержит resource.question, пустой params и exp. Для устройства срок составляет 24 часа.
+      Для сотрудника срок составляет до 24 часов и ограничен сессией. Ответ Cache-Control: no-store.
       date_from/date_to, time_grain, device_id, module_id, survey_id и source_id
       настроены как редактируемые фильтры Metabase и передаются отдельно при
       получении данных графика. Их изменение не требует перевыпуска JWT.
@@ -151,9 +151,9 @@ embed-tokens:
             schema:
               $ref: '#/components/schemas/AnalyticsEmbedTokensResponse'
       '401':
-        description: Недействительный staff access-токен или сессия; пользователь и устройство не допускаются
+        description: Требуется действующий staff access-токен или Device JWT
       '403':
-        description: У сотрудника нет роли ADMIN или ANALYST
+        description: Недостаточно прав сотрудника или у устройства нет роли QUIZ_VIDEO
       '404':
         description: Ключ графика отсутствует в развёрнутом реестре
       '422':
@@ -167,7 +167,8 @@ visitor-profiles:
     summary: Профили посетителей по списку ID
     operationId: getAnalyticsVisitorProfiles
     description: >
-      Для сотрудников ADMIN или ANALYST. Возвращает имена, фамилии и файлы аватарок
+      Доступен сотрудникам ADMIN и ANALYST, а также активным устройствам с ролью
+      QUIZ_VIDEO (1) по Device JWT. Возвращает имена, фамилии и файлы аватарок
       по ID пользователей и гостей. Неизвестные ID пропускаются, повторы объединяются.
       Список посетителей и статистику фронтенд получает из Metabase.
     security:
@@ -193,8 +194,8 @@ visitor-profiles:
             schema:
               $ref: '#/components/schemas/VisitorProfilesResponse'
       '401':
-        description: Отсутствует действующий токен сотрудника
+        description: Требуется действующий staff access-токен или Device JWT
       '403':
-        description: Доступ только для ADMIN и ANALYST
+        description: Недостаточно прав сотрудника или у устройства нет роли QUIZ_VIDEO
       '422':
         description: Некорректный список ID

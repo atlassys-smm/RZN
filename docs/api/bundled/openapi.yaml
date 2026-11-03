@@ -569,7 +569,8 @@ paths:
         того же User. После успешной привязки отправляется user_connected в сокет
         устройства.
 
-        Пользовательский JWT на устройство не передаётся.
+        Пользовательский JWT на устройство не передаётся. Профиль содержит user.gender
+        и user.birth_date.
 
         '
       security:
@@ -627,6 +628,9 @@ paths:
         Сервер определяет пользователя по Redis и отдельно проверяет роль модуля.
 
         Старый идентификатор после переподключения отклоняется.
+
+        Профиль содержит user.gender и user.birth_date в формате YYYY-MM-DD. Незаданные
+        значения возвращаются как null.
 
         '
       security:
@@ -10628,10 +10632,10 @@ paths:
       - Аналитика
       summary: Профили посетителей по списку ID
       operationId: getAnalyticsVisitorProfiles
-      description: 'Для сотрудников ADMIN или ANALYST. Возвращает имена, фамилии и
-        файлы аватарок по ID пользователей и гостей. Неизвестные ID пропускаются,
-        повторы объединяются. Список посетителей и статистику фронтенд получает из
-        Metabase.
+      description: 'Доступен сотрудникам ADMIN и ANALYST, а также активным устройствам
+        с ролью QUIZ_VIDEO (1) по Device JWT. Возвращает имена, фамилии и файлы аватарок
+        по ID пользователей и гостей. Неизвестные ID пропускаются, повторы объединяются.
+        Список посетителей и статистику фронтенд получает из Metabase.
 
         '
       security:
@@ -10659,9 +10663,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/VisitorProfilesResponse'
         '401':
-          description: Отсутствует действующий токен сотрудника
+          description: Требуется действующий staff access-токен или Device JWT
         '403':
-          description: Доступ только для ADMIN и ANALYST
+          description: Недостаточно прав сотрудника или у устройства нет роли QUIZ_VIDEO
         '422':
           description: Некорректный список ID
   /analytics/embed-tokens:
@@ -10670,7 +10674,8 @@ paths:
       - Аналитика
       summary: Получить токены встраивания графиков Metabase
       operationId: createAnalyticsEmbedTokens
-      description: 'Требуется действующий staff access-токен ADMIN или ANALYST.
+      description: 'Требуется staff access-токен ADMIN или ANALYST либо Device JWT
+        активного устройства с ролью QUIZ_VIDEO (1).
 
         Принимает только keys: от 1 до 100 постоянных ключей charts из справочника.
 
@@ -10684,9 +10689,11 @@ paths:
 
         Весь пакет проверяется до подписи: ошибка одного ключа отклоняет весь запрос.
 
-        JWT HS256 содержит resource.question, пустой params и exp; срок до 24 часов,
+        JWT HS256 содержит resource.question, пустой params и exp. Для устройства
+        срок составляет 24 часа.
 
-        не дольше сессии сотрудника. Ответ Cache-Control: no-store.
+        Для сотрудника срок составляет до 24 часов и ограничен сессией. Ответ Cache-Control:
+        no-store.
 
         date_from/date_to, time_grain, device_id, module_id, survey_id и source_id
 
@@ -10732,10 +10739,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalyticsEmbedTokensResponse'
         '401':
-          description: Недействительный staff access-токен или сессия; пользователь
-            и устройство не допускаются
+          description: Требуется действующий staff access-токен или Device JWT
         '403':
-          description: У сотрудника нет роли ADMIN или ANALYST
+          description: Недостаточно прав сотрудника или у устройства нет роли QUIZ_VIDEO
         '404':
           description: Ключ графика отсутствует в развёрнутом реестре
         '422':
@@ -11754,6 +11760,40 @@ paths:
           description: Анкета или вопрос не найдены
       security:
       - bearerAuth: []
+  /feedback/me/completed:
+    get:
+      tags:
+      - Обратная связь - Пользователь
+      summary: Проверить прохождение обратной связи
+      description: 'Возвращает true, если текущий пользователь отправил хотя бы одну
+        анкету
+
+        обратной связи. Учитывается история всех версий анкет. Начатая анкета
+
+        учитывается после отправки. Требуется User JWT, в том числе гостевой.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Статус прохождения обратной связи
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - completed
+                properties:
+                  completed:
+                    type: boolean
+        '401':
+          description: Требуется действующий User JWT
   /feedback/surveys:
     get:
       tags:
@@ -11929,8 +11969,21 @@ paths:
       tags:
       - Файлы
       summary: Скачать файл
-      description: Скачать основной файл или превью по подписанной ссылке. Идентификатор
-        превью — UUID основного файла с суффиксом _preview.
+      description: 'Скачать основной файл или превью по подписанной ссылке. Идентификатор
+        превью
+
+        — UUID основного файла с суффиксом _preview. Для растровых изображений width
+
+        и height задают максимальные размеры в пикселях. Можно передать один или
+
+        оба параметра. Пропорции сохраняются. Изображение, которое уже помещается
+
+        в заданные границы, выдаётся в исходном виде. Уменьшенный вариант выдаётся
+
+        в формате исходного изображения. Размеры можно дописать к уже подписанному
+        URL.
+
+        '
       parameters:
       - name: file_uuid
         in: path
@@ -11950,6 +12003,20 @@ paths:
         schema:
           type: string
         description: HMAC-подпись
+      - name: width
+        in: query
+        description: Максимальная ширина изображения в пикселях.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 2048
+      - name: height
+        in: query
+        description: Максимальная высота изображения в пикселях.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 2048
       responses:
         '200':
           description: Файл
@@ -11958,10 +12025,18 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/*:
+              schema:
+                type: string
+                format: binary
         '403':
           description: Неверная или истёкшая подпись
         '404':
           description: Файл не найден
+        '415':
+          description: Для уменьшения нужен файл в поддерживаемом растровом формате
+        '422':
+          description: Недопустимые размеры или изображение не удалось уменьшить
   /me/avatars:
     get:
       security:
@@ -17790,6 +17865,8 @@ components:
       - first_name
       - last_name
       - file
+      - gender
+      - birth_date
       properties:
         id:
           type: integer
@@ -17808,6 +17885,21 @@ components:
           anyOf:
           - $ref: '#/components/schemas/FileResponse'
           - type: 'null'
+        gender:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - null
+          description: 1 — мужской, 2 — женский. Если не указан, null.
+        birth_date:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Дата рождения из профиля. Если не указана, null.
     DeviceUserResponse:
       type: object
       required:

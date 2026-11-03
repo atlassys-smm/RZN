@@ -297,8 +297,8 @@ ID в примере условный. Compose монтирует каталог
 
 ### Пакет токенов для встраивания
 
-`POST /api/analytics/embed-tokens` принимает staff access-токен ADMIN/ANALYST
-и только список ключей графиков:
+`POST /api/analytics/embed-tokens` доступен по staff access-токену ADMIN/ANALYST
+или Device JWT устройства с ролью QUIZ_VIDEO (1). В запросе передаётся список ключей графиков:
 
 ```json
 {"keys": ["led.common.sessions", "led.common.sessions_daily"]}
@@ -306,8 +306,9 @@ ID в примере условный. Compose монтирует каталог
 
 Ответ содержит `items: [{key, token}, ...]` и общий `expires_at` в UTC.
 От 1 до 100 ключей, порядок и повторы сохраняются. JWT HS256 содержит
-`resource.question`, пустой `params: {}` и `exp`; действует до 24 часов,
-не дольше сессии сотрудника. Ответ имеет `Cache-Control: no-store`.
+`resource.question`, пустой `params: {}` и `exp`. Токен встраивания, выданный устройству, действует 24 часа.
+Токен сотрудника действует до 24 часов в пределах срока его сессии.
+Ответ имеет `Cache-Control: no-store`.
 
 Фронтенд строит iframe URL `{METABASE_URL}/embed/question/{token}`.
 Для получения числовых данных используется

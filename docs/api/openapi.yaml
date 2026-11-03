@@ -579,6 +579,8 @@ paths:
     $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь — Пользователь ────────────────
+  /feedback/me/completed:
+    $ref: './paths/feedback.yaml#/completion'
   /feedback/surveys:
     $ref: './paths/feedback.yaml#/surveys'
   /feedback/surveys/{survey_id}:
@@ -5574,6 +5576,8 @@ components:
       - first_name
       - last_name
       - file
+      - gender
+      - birth_date
       properties:
         id:
           type: integer
@@ -5592,6 +5596,14 @@ components:
           anyOf:
           - $ref: '#/components/schemas/FileResponse'
           - type: 'null'
+        gender:
+          type: [integer, 'null']
+          enum: [1, 2, null]
+          description: 1 — мужской, 2 — женский. Если не указан, null.
+        birth_date:
+          type: [string, 'null']
+          format: date
+          description: Дата рождения из профиля. Если не указана, null.
     DeviceUserResponse:
       type: object
       required:

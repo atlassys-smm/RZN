@@ -176,7 +176,7 @@ User JWT и refresh-cookie — на телефоне. Новые токены и
 | `GET /api/device/auth/qr/{code}` | Код QR | Сообщить устройству о переходе и перенаправить на фронтенд; ответ 302 |
 | `WS /api/device/auth/ws?token=...` | Device JWT | Получать события открытия QR и подтверждения привязки |
 | `POST /api/device/auth/confirm` | User JWT | Подтвердить с телефона: `{"code": "..."}` |
-| `GET /api/device/auth/user` | Device JWT | Получить User, connection_id и expires_at |
+| `GET /api/device/auth/user` | Device JWT | Получить User с gender и birth_date, connection_id и expires_at |
 | `DELETE /api/device/auth/user` | Device JWT; для текущего подключения — X-Device-Connection-Id | Завершить подключение; ответ 204 |
 
 1. Устройство подключает `/api/device/auth/ws?token=<device_jwt>`, затем создаёт QR.
