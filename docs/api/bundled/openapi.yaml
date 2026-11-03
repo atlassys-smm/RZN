@@ -944,87 +944,6 @@ paths:
         '422':
           description: Не передано ни одного поля; имя или фамилия null, не строка,
             пустые, длиннее 100 символов; переданы лишние поля
-  /auth/{id}:
-    get:
-      tags:
-      - Авторизация пользователей
-      summary: Тестовый вход по ID пользователя
-      description: 'Временный вход без пароля и действующего токена.
-
-        '
-      security: []
-      parameters:
-      - name: id
-        in: path
-        required: true
-        description: ID существующего активного пользователя; нечисловой сегмент не
-          соответствует маршруту (404).
-        schema:
-          type: integer
-          format: int64
-        example: 1
-      responses:
-        '200':
-          description: Access JWT пользователя; создана серверная сессия и установлена
-            refresh cookie
-          headers:
-            Set-Cookie:
-              schema:
-                type: string
-              description: user_refresh; HttpOnly; Path=/api/auth/user. Secure и SameSite
-                определяются AUTH_COOKIE_SECURE и AUTH_COOKIE_SAMESITE.
-            Cache-Control:
-              schema:
-                type: string
-                enum:
-                - no-store
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - token
-                properties:
-                  token:
-                    type: string
-                    description: Штатный access JWT; имя поля сохранено для тестового
-                      маршрута.
-        '401':
-          description: Пользователь деактивирован либо срок гостя отсутствует или
-            истёк
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - detail
-                properties:
-                  detail:
-                    type: string
-              example:
-                detail: Недействительная сессия
-        '404':
-          description: Тестовый вход выключен, пользователь не найден или URL не соответствует
-            числовому ID
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - detail
-                properties:
-                  detail:
-                    type: string
-              examples:
-                disabled:
-                  value:
-                    detail: Тестовый вход отключён
-                missing-user:
-                  value:
-                    detail: Пользователь не найден
-                invalid-path:
-                  value:
-                    detail: Not Found
   /auth/user/guest:
     post:
       tags:
@@ -1462,15 +1381,22 @@ paths:
         собственный файл; при пустом media_id — male_photo_file_id шаблона аватара;
         без обоих — null. Название и баллы сохраняют значения из снимков источников.
         До первого сохранённого источника — JSON null. В расчёте участвуют только
-        источники с положительным весом в SOURCE_WEIGHTS. Рейтинг рассчитывается при
-        каждом запросе из снимков источников; веса заданы в коде, итог не сохраняется.
-        Мягкое удаление профессии (`deleted_at`) не исключает её из ранее сохранённых
-        рекомендаций: ID, название и исходные баллы берутся из снимка источника. При
-        новом прохождении подбираются только активные профессии по активным связям.
-        По максимум трём профессиям из итогового рейтинга рассчитываются три отдельных
-        списка: `employers` (до 5 работодателей типа 1), `educations` (до 5 учебных
-        заведений типа 2) и `education_programs` (до 5 направлений подготовки). Работодатели
-        определяются через profession_employers, учебные заведения — через profession_education_programs
+        источники с положительным весом в SOURCE_WEIGHTS. Итоговая подборка кэшируется
+        в Redis на 86400 секунд без продления при чтении. Ключ привязан к user_id
+        и ID последнего сохранённого источника profstart (0 при его отсутствии), весам
+        и версии справочников. Новый результат ПрофСтарта учитывается сразу после
+        commit; завершение викторины и просмотры не сбрасывают кэш и учитываются при
+        следующем пересчёте. Проверка шестичасового интервала источника просмотров
+        выполняется только при пересчёте. Правки карточек и связей справочников инвалидируют
+        кэш после commit. Подписанные URL формируются заново; при недоступности Redis
+        расчёт выполняется через БД. Итог не сохраняется в PostgreSQL. Мягкое удаление
+        профессии (`deleted_at`) не исключает её из ранее сохранённых рекомендаций:
+        ID, название и исходные баллы берутся из снимка источника. При новом прохождении
+        подбираются только активные профессии по активным связям. По максимум трём
+        профессиям из итогового рейтинга рассчитываются три отдельных списка: `employers`
+        (до 5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2)
+        и `education_programs` (до 5 направлений подготовки). Работодатели определяются
+        через profession_employers, учебные заведения — через profession_education_programs
         → education_programs → organization_education_programs → organizations. Направления
         подбираются непосредственно через profession_education_programs → education_programs,
         независимо от наличия организаций. В каждом списке сначала идут записи с большим
@@ -3177,17 +3103,23 @@ paths:
         профессиями, независимо от организаций; поле education_program содержит полные
         данные направления, рядом возвращаются profession_ids, profession_count и
         position. Учитываются профессии, связи, программы и организации с deleted_at.
-        Результат не сохраняется. Правило покрытия применяется отдельно к каждому
-        из трёх списков: employers, educations, education_programs. Сначала формируется
-        топ-5 по числу различных совпавших профессий DESC и ID организации или направления
-        ASC. Затем проверяется покрытие каждой выбранной профессии. Если для неё есть
-        связанные записи, но ни одна не попала в топ-5, лучшая из них заменяет последнюю
-        запись, удаление которой не лишает покрытия другие профессии. Одна запись
-        может покрывать несколько профессий. После замен сохраняется сортировка по
-        рейтингу; лимит — 5 уникальных записей в каждом списке. Если соответствующих
-        связей нет, покрытие этой профессии в данном списке не требуется. Профиль
-        пользователя и результаты тестов не требуются. Если соответствующих связей
-        нет, массивы пустые. Любой неизвестный ID профессии возвращает 404.'
+        Результат кэшируется в Redis на 86400 секунд без продления при чтении. Ключ
+        включает отсортированный список profession_ids (перестановки используют общую
+        запись), текущие SOURCE_WEIGHTS и версию справочников; веса не являются параметром
+        маршрута, ранжирование не меняется. Правки справочников инвалидируют кэш после
+        commit. Подписанные URL формируются заново, ошибки не кэшируются. При недоступности
+        Redis выполняется расчёт из БД. Результат не сохраняется в PostgreSQL. Правило
+        покрытия применяется отдельно к каждому из трёх списков: employers, educations,
+        education_programs. Сначала формируется топ-5 по числу различных совпавших
+        профессий DESC и ID организации или направления ASC. Затем проверяется покрытие
+        каждой выбранной профессии. Если для неё есть связанные записи, но ни одна
+        не попала в топ-5, лучшая из них заменяет последнюю запись, удаление которой
+        не лишает покрытия другие профессии. Одна запись может покрывать несколько
+        профессий. После замен сохраняется сортировка по рейтингу; лимит — 5 уникальных
+        записей в каждом списке. Если соответствующих связей нет, покрытие этой профессии
+        в данном списке не требуется. Профиль пользователя и результаты тестов не
+        требуются. Если соответствующих связей нет, массивы пустые. Любой неизвестный
+        ID профессии возвращает 404.'
       security:
       - bearerAuth: []
       parameters:
@@ -10690,6 +10622,48 @@ paths:
             дата
         '503':
           description: ClickHouse или определения карточек Metabase недоступны
+  /analytics/visitors/profiles:
+    post:
+      tags:
+      - Аналитика
+      summary: Профили посетителей по списку ID
+      operationId: getAnalyticsVisitorProfiles
+      description: 'Для сотрудников ADMIN или ANALYST. Возвращает имена, фамилии и
+        файлы аватарок по ID пользователей и гостей. Неизвестные ID пропускаются,
+        повторы объединяются. Список посетителей и статистику фронтенд получает из
+        Metabase.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisitorProfilesRequest'
+            example:
+              user_ids:
+              - 42
+              - 57
+      responses:
+        '200':
+          description: Профили, найденные по переданным ID
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitorProfilesResponse'
+        '401':
+          description: Отсутствует действующий токен сотрудника
+        '403':
+          description: Доступ только для ADMIN и ANALYST
+        '422':
+          description: Некорректный список ID
   /analytics/embed-tokens:
     post:
       tags:
@@ -11788,7 +11762,10 @@ paths:
       description: Получить активные анкеты с вопросами и вариантами ответов. Требуется
         User JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства
         обязателен X-Device-Connection-Id. Черновики и неактивные версии не возвращаются.
-        total содержит общее число активных анкет.
+        total содержит общее число активных анкет. Общий Redis-кэш на 86400 секунд
+        без продления при чтении; публикация новой версии инвалидирует кэш. Подписанные
+        URL формируются заново. При сбое Redis выполняется чтение БД. Авторизация
+        проверяется на каждом запросе.
       security:
       - bearerAuth: []
       parameters:
@@ -11826,7 +11803,10 @@ paths:
       description: Получить активную анкету по её survey_id с вопросами и вариантами
         ответов. Требуется User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
         Для устройства обязателен X-Device-Connection-Id. Отсутствующая или неактивная
-        анкета возвращает 404. survey_id — ID анкеты, а не её type.
+        анкета возвращает 404. survey_id — ID анкеты, а не её type. Общий Redis-кэш
+        на 86400 секунд без продления при чтении; публикация новой версии инвалидирует
+        кэш. Подписанные URL формируются заново. При сбое Redis выполняется чтение
+        БД. Авторизация проверяется на каждом запросе.
       security:
       - bearerAuth: []
       parameters:
@@ -12610,6 +12590,49 @@ components:
           description: Тип объекта; question — сохранённый вопрос (график, таблица
             или карточка)
           example: dashboard
+    VisitorProfile:
+      type: object
+      required:
+      - first_name
+      - last_name
+      - file
+      properties:
+        first_name:
+          type:
+          - string
+          - 'null'
+        last_name:
+          type:
+          - string
+          - 'null'
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
+    VisitorProfilesRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - user_ids
+      properties:
+        user_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+    VisitorProfilesResponse:
+      type: object
+      required:
+      - profiles
+      properties:
+        profiles:
+          type: object
+          description: Профили по ID, представленных строковыми ключами JSON.
+          additionalProperties:
+            $ref: '#/components/schemas/VisitorProfile'
     AnalyticsCatalog:
       type: object
       required:
@@ -13259,6 +13282,8 @@ components:
           type: string
           title: Url
         preview_url:
+          description: Для видео без переданного превью возвращается null до завершения
+            фоновой генерации; затем подписанный URL на 24 часа.
           anyOf:
           - type: string
           - type: 'null'
@@ -14599,6 +14624,12 @@ components:
           type: string
           description: Имя и фамилия из users, соединённые пробелом; для нового гостя
             — «Гость users.id»
+        file:
+          description: Файл аватарки профиля в списке участников сессии. Если аватарки
+            нет, возвращается null.
+          anyOf:
+          - $ref: '#/components/schemas/FileResponse'
+          - type: 'null'
         individual_score:
           type: number
           description: Десятичное число баллов; в JSON передаётся как number
