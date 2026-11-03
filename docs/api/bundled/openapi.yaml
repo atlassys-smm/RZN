@@ -10674,7 +10674,8 @@ paths:
       - Аналитика
       summary: Получить токены встраивания графиков Metabase
       operationId: createAnalyticsEmbedTokens
-      description: 'Требуется действующий staff access-токен ADMIN или ANALYST.
+      description: 'Требуется staff access-токен ADMIN или ANALYST либо Device JWT
+        активного устройства с ролью QUIZ_VIDEO (1).
 
         Принимает только keys: от 1 до 100 постоянных ключей charts из справочника.
 
@@ -10688,9 +10689,11 @@ paths:
 
         Весь пакет проверяется до подписи: ошибка одного ключа отклоняет весь запрос.
 
-        JWT HS256 содержит resource.question, пустой params и exp; срок до 24 часов,
+        JWT HS256 содержит resource.question, пустой params и exp. Для устройства
+        срок составляет 24 часа.
 
-        не дольше сессии сотрудника. Ответ Cache-Control: no-store.
+        Для сотрудника срок составляет до 24 часов и ограничен сессией. Ответ Cache-Control:
+        no-store.
 
         date_from/date_to, time_grain, device_id, module_id, survey_id и source_id
 
@@ -10736,10 +10739,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalyticsEmbedTokensResponse'
         '401':
-          description: Недействительный staff access-токен или сессия; пользователь
-            и устройство не допускаются
+          description: Требуется действующий staff access-токен или Device JWT
         '403':
-          description: У сотрудника нет роли ADMIN или ANALYST
+          description: Недостаточно прав сотрудника или у устройства нет роли QUIZ_VIDEO
         '404':
           description: Ключ графика отсутствует в развёрнутом реестре
         '422':
