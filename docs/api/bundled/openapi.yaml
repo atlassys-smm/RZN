@@ -569,7 +569,8 @@ paths:
         того же User. После успешной привязки отправляется user_connected в сокет
         устройства.
 
-        Пользовательский JWT на устройство не передаётся.
+        Пользовательский JWT на устройство не передаётся. Профиль содержит user.gender
+        и user.birth_date.
 
         '
       security:
@@ -627,6 +628,9 @@ paths:
         Сервер определяет пользователя по Redis и отдельно проверяет роль модуля.
 
         Старый идентификатор после переподключения отклоняется.
+
+        Профиль содержит user.gender и user.birth_date в формате YYYY-MM-DD. Незаданные
+        значения возвращаются как null.
 
         '
       security:
@@ -11929,8 +11933,20 @@ paths:
       tags:
       - Файлы
       summary: Скачать файл
-      description: Скачать основной файл или превью по подписанной ссылке. Идентификатор
-        превью — UUID основного файла с суффиксом _preview.
+      description: 'Скачать основной файл или превью по подписанной ссылке. Идентификатор
+        превью
+
+        — UUID основного файла с суффиксом _preview. Для растровых изображений width
+
+        и height задают максимальные размеры в пикселях. Можно передать один или
+
+        оба параметра. Пропорции сохраняются. Изображение, которое уже помещается
+
+        в заданные границы, выдаётся в исходном виде. Уменьшенный вариант выдаётся
+
+        как WebP. Размеры можно дописать к уже подписанному URL.
+
+        '
       parameters:
       - name: file_uuid
         in: path
@@ -11950,6 +11966,20 @@ paths:
         schema:
           type: string
         description: HMAC-подпись
+      - name: width
+        in: query
+        description: Максимальная ширина изображения в пикселях.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 2048
+      - name: height
+        in: query
+        description: Максимальная высота изображения в пикселях.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 2048
       responses:
         '200':
           description: Файл
@@ -11958,10 +11988,18 @@ paths:
               schema:
                 type: string
                 format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
         '403':
           description: Неверная или истёкшая подпись
         '404':
           description: Файл не найден
+        '415':
+          description: Для уменьшения нужен файл в поддерживаемом растровом формате
+        '422':
+          description: Недопустимые размеры или изображение не удалось уменьшить
   /me/avatars:
     get:
       security:
@@ -17790,6 +17828,8 @@ components:
       - first_name
       - last_name
       - file
+      - gender
+      - birth_date
       properties:
         id:
           type: integer
@@ -17808,6 +17848,21 @@ components:
           anyOf:
           - $ref: '#/components/schemas/FileResponse'
           - type: 'null'
+        gender:
+          type:
+          - integer
+          - 'null'
+          enum:
+          - 1
+          - 2
+          - null
+          description: 1 — мужской, 2 — женский. Если не указан, null.
+        birth_date:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Дата рождения из профиля. Если не указана, null.
     DeviceUserResponse:
       type: object
       required:
