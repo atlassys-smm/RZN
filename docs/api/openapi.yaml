@@ -579,6 +579,8 @@ paths:
     $ref: ./paths/surveys.yaml#/feedback-survey
 
   # ── Обратная связь — Пользователь ────────────────
+  /feedback/me/completed:
+    $ref: './paths/feedback.yaml#/completion'
   /feedback/surveys:
     $ref: './paths/feedback.yaml#/surveys'
   /feedback/surveys/{survey_id}:
