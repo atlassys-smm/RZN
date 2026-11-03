@@ -160,3 +160,41 @@ embed-tokens:
         description: Некорректный пакет или встраивание графика не разрешено
       '503':
         description: Секрет подписи не настроен, реестр или шаблоны графиков недоступны
+
+visitor-profiles:
+  post:
+    tags: [Аналитика]
+    summary: Профили посетителей по списку ID
+    operationId: getAnalyticsVisitorProfiles
+    description: >
+      Для сотрудников ADMIN или ANALYST. Возвращает имена, фамилии и файлы аватарок
+      по ID пользователей и гостей. Неизвестные ID пропускаются, повторы объединяются.
+      Список посетителей и статистику фронтенд получает из Metabase.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/VisitorProfilesRequest'
+          example:
+            user_ids: [42, 57]
+    responses:
+      '200':
+        description: Профили, найденные по переданным ID
+        headers:
+          Cache-Control:
+            schema:
+              type: string
+              const: no-store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VisitorProfilesResponse'
+      '401':
+        description: Отсутствует действующий токен сотрудника
+      '403':
+        description: Доступ только для ADMIN и ANALYST
+      '422':
+        description: Некорректный список ID
