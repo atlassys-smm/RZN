@@ -193,7 +193,7 @@ cms-questions:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
               answer_option_files[0]:
                 type: string
                 format: binary
@@ -201,7 +201,7 @@ cms-questions:
               answer_option_file_previews[0]:
                 type: string
                 format: binary
-                description: Превью файла варианта с индексом 0.
+                description: Превью файла варианта с индексом 0. При обновлении можно передать отдельно для существующего файла варианта.
             required:
             - text
             - question_type
@@ -377,7 +377,7 @@ cms-questions-update:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
               answer_option_files[0]:
                 type: string
                 format: binary
@@ -385,7 +385,7 @@ cms-questions-update:
               answer_option_file_previews[0]:
                 type: string
                 format: binary
-                description: Превью файла варианта с индексом 0.
+                description: Превью файла варианта с индексом 0. При обновлении можно передать отдельно для существующего файла варианта.
             title: QuestionUpdateRequest
             type: object
             patternProperties:

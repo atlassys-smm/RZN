@@ -3425,7 +3425,7 @@ components:
         file_preview:
           type: string
           format: binary
-          description: Превью нового файла; без нового file возвращается 422.
+          description: Превью файла. При PATCH можно передать отдельно для существующего вложения, иначе возвращается 422.
         test_type_id:
           type: integer
           format: int64
@@ -3466,7 +3466,7 @@ components:
         file_preview:
           type: string
           format: binary
-          description: Превью нового файла; без нового file возвращается 422.
+          description: Превью файла. При PATCH можно передать отдельно для существующего вложения, иначе возвращается 422.
         name:
           type: string
           minLength: 1
@@ -3854,7 +3854,7 @@ components:
         file_preview:
           type: string
           format: binary
-          description: Превью нового файла; без нового file возвращается 422.
+          description: Превью файла. При PATCH можно передать отдельно для существующего вложения, иначе возвращается 422.
         code:
           type: string
           minLength: 1
@@ -3893,7 +3893,7 @@ components:
         file_preview:
           type: string
           format: binary
-          description: Превью нового файла; без нового file возвращается 422.
+          description: Превью файла. При PATCH можно передать отдельно для существующего вложения, иначе возвращается 422.
         code:
           type: string
           minLength: 1
@@ -6315,7 +6315,7 @@ components:
         file_preview:
           type: string
           format: binary
-          description: Превью нового файла; без file не принимается
+          description: Превью файла. При PATCH можно передать отдельно для существующего вложения, иначе возвращается 422.
         file_title:
           type: string
         file_description:
@@ -6487,7 +6487,7 @@ components:
         file_preview:
           type: string
           format: binary
-          description: Превью нового файла; без file не принимается
+          description: Превью файла. При PATCH можно передать отдельно для существующего вложения, иначе возвращается 422.
         file_title:
           type: string
         file_description:

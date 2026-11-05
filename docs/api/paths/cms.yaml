@@ -475,7 +475,7 @@ surveys-questions-create:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
             required:
             - type
             - text
@@ -621,7 +621,7 @@ surveys-questions-update:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
             title: SurveyQuestionUpdateRequest
             type: object
           encoding:

@@ -212,7 +212,7 @@ organizations:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
             required:
             - name
             - type
@@ -248,8 +248,8 @@ organizations:
       file, необязательные file_preview, file_title и file_description. coordinates
       передаётся JSON-строкой. В ответе file содержит подписанный URL, preview_url,
       mime_type, title и description либо null. При PUT без нового file прежнее вложение
-      сохраняется; новый file заменяет привязку. file_preview без нового file возвращает
-      422. Новая загрузка и организация сохраняются одной транзакцией; при ошибке
+      сохраняется; новый file заменяет привязку. При обновлении file_preview можно
+      передать отдельно для существующего файла, иначе возвращается 422. Новая загрузка и организация сохраняются одной транзакцией; при ошибке
       новые файлы удаляются.'
 organizations-detail:
   get:
@@ -438,7 +438,7 @@ organizations-detail:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
             title: OrganizationUpdateRequest
             type: object
           encoding:
@@ -474,7 +474,8 @@ organizations-detail:
       file_title и file_description. coordinates передаётся JSON-строкой. В ответе
       file содержит подписанный URL, preview_url, mime_type, title и description либо
       null. При PUT без нового file прежнее вложение сохраняется; новый file заменяет
-      привязку. file_preview без нового file возвращает 422. Новая загрузка и организация
+      привязку. При обновлении file_preview можно передать отдельно для существующего файла,
+      иначе возвращается 422. Новая загрузка и организация
       сохраняются одной транзакцией; при ошибке новые файлы удаляются.'
   delete:
     tags:

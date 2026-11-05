@@ -442,7 +442,7 @@ cms-survey-questions:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
             required:
             - type
             - text
@@ -633,7 +633,7 @@ cms-survey-question-detail:
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла; без него для видео создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
             title: SurveyQuestionUpdateRequest
             type: object
           encoding:
