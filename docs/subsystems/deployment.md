@@ -202,7 +202,7 @@ docker compose -f docker-compose.yml exec api python -m app.cli.create_admin \
 
 Введите отдельный пароль на скрытом приглашении `Пароль:`. Не передавайте его в аргументах и не добавляйте в историю shell. При повторном запуске с тем же email команда откажется создавать дубликат. Это учётная запись CMS/API; веб-администратор Metabase создаётся отдельно.
 
-Банк викторины находится в `app/data/quiz/professions_bank.json`. Его загрузка не входит в Alembic:
+Банк викторины находится в `app/cli/data/quiz/professions_bank.json`. Его загрузка не входит в Alembic:
 
 ```bash
 docker compose -f docker-compose.yml exec -T api python -m app.cli.load_quiz_bank --check
