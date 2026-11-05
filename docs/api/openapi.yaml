@@ -546,8 +546,6 @@ paths:
     $ref: './paths/analytics.yaml#/visitor-profiles'
   /analytics/embed-tokens:
     $ref: './paths/analytics.yaml#/embed-tokens'
-  /demo/metabase/query:
-    $ref: './paths/demo.yaml#/metabase-query'
 
   # ── CMS ──────────────────────────────────────────
   /cms/references:
