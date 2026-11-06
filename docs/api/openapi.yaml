@@ -220,6 +220,10 @@ paths:
     $ref: './paths/auth.yaml#/logout'
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
+  /staff:
+    $ref: './paths/staff.yaml#/staff-list'
+  /staff/{staff_id}:
+    $ref: './paths/staff.yaml#/staff-detail'
   /staff/info:
     $ref: './paths/staff.yaml#/staff-info'
   # ── Авторизация пользователя ─────────────────────
@@ -905,6 +909,17 @@ components:
       - filters
       title: MetabaseDemoQuery
       type: object
+    StaffListResponse:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StaffInfoResponse'
+        total:
+          type: integer
+          description: Количество сотрудников до пагинации.
     StaffInfoResponse:
       type: object
       required: [id, email, first_name, last_name, role, status]

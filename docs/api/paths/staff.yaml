@@ -1,3 +1,67 @@
+staff-list:
+  get:
+    tags: [Сотрудник]
+    summary: Список сотрудников
+    description: |
+      Только активный администратор со Staff JWT, роль 1. Возвращает активных
+      и заблокированных сотрудников в порядке id.
+      total считается до limit/offset. Хеши паролей и токены не возвращаются.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: limit
+        in: query
+        schema: {type: integer, minimum: 1, default: 20}
+      - name: offset
+        in: query
+        schema: {type: integer, minimum: 0, default: 0}
+    responses:
+      '200':
+        description: Страница сотрудников и общее число записей.
+        headers:
+          Cache-Control:
+            schema: {type: string, enum: [no-store]}
+          Pragma:
+            schema: {type: string, enum: [no-cache]}
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StaffListResponse'}
+      '401': {description: Нет действующего Staff JWT; пользователь и устройство не допускаются.}
+      '403': {description: Только для администраторов.}
+      '422': {description: limit меньше 1 либо offset меньше 0.}
+
+staff-detail:
+  delete:
+    tags: [Сотрудник]
+    summary: Удалить сотрудника
+    description: |
+      Только активный администратор со Staff JWT, роль 1. Физическое удаление:
+      одной транзакцией удаляются refresh-токены сотрудника, его сессии и учётная
+      запись. Access/refresh-токены перестают работать, вход запрещён, сотрудник
+      исчезает из списка. Email освобождается для повторной регистрации.
+      Другие сотрудники и пользовательские данные не удаляются.
+      Свой аккаунт удалить нельзя.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: staff_id
+        in: path
+        required: true
+        schema: {type: integer}
+    responses:
+      '204':
+        description: Сотрудник удалён, ответ без тела.
+        headers:
+          Cache-Control:
+            schema: {type: string, enum: [no-store]}
+          Pragma:
+            schema: {type: string, enum: [no-cache]}
+      '401': {description: Нет действующего Staff JWT.}
+      '403': {description: Только для администраторов.}
+      '404': {description: Сотрудник отсутствует либо уже удалён.}
+      '409': {description: Нельзя удалить собственную учётную запись.}
+      '422': {description: Некорректный staff_id.}
+
 staff-info:
   get:
     tags: [Сотрудник]
