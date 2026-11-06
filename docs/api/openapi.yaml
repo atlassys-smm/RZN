@@ -598,6 +598,8 @@ paths:
     $ref: './paths/user-avatars.yaml#/user-avatars-list'
   /me/avatars/{avatar_id}:
     $ref: './paths/user-avatars.yaml#/user-avatars-detail'
+  /cms/avatar-generations/simulate:
+    $ref: './paths/avatar-generations.yaml#/simulation'
   /users/avatar-generations:
     $ref: './paths/avatar-generations.yaml#/generations'
   /users/avatar-generations/{request_id}:

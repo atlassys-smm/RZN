@@ -1,3 +1,49 @@
+simulation:
+  post:
+    tags: [Генерация аватаров]
+    summary: Эмулировать успешную генерацию без внешнего FaceAI
+    description: |
+      Только администратор (роль 1). Устройство должно быть активным, с ролью AVATAR (2)
+      и действующей QR-привязкой пользователя через X-Device-Connection-Id.
+      Весь обмен FaceAI v2 выполняется локальным HTTP-моком: POST задачи (202 queued),
+      GET статуса (200 done), GET JPEG (200). Сетевых запросов к FaceAI нет;
+      FACEAI_BASE_URL и FACEAI_API_KEY не используются.
+      Задание, селфи и результат сохраняются одной транзакцией, сразу со статусом 4;
+      фоновый worker не может забрать незавершённое demo-задание.
+      Результат — result_photo либо копия исходного выбранного образа (PNG преобразуется в JPEG).
+      Каждый POST создаёт новое задание и UserAvatar. Это эмуляция, без синтеза нового изображения.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: X-Device-Connection-Id
+        in: header
+        required: true
+        schema: {type: string}
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [device_id, template_id, gender, photo]
+            properties:
+              device_id: {type: integer}
+              template_id: {type: integer, description: 'ID комплекта ProfessionAvatarTemplate, не профессии.'}
+              gender: {type: integer, enum: [1, 2]}
+              photo: {type: string, format: binary, description: 'Селфи JPEG или PNG.'}
+              result_photo: {type: string, format: binary, description: 'Необязательный JPEG успешного demo-результата.'}
+    responses:
+      '202':
+        description: Эмуляция завершена, статус 4, результат сохранён; Cache-Control — no-store.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AvatarGenerationResponse'}
+      '401': {description: Требуется staff access JWT.}
+      '403': {description: Не администратор, устройство без роли AVATAR либо QR-привязка изменилась.}
+      '404': {description: Активное устройство или комплект образов не найден.}
+      '413': {description: Недопустимый размер файла.}
+      '422': {description: Некорректные параметры, изображение или недоступная профессия.}
+
 generations:
   post:
     tags: [Генерация аватаров]
