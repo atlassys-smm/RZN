@@ -12017,6 +12017,101 @@ paths:
           description: Источник или ответы не совпадают с сохранённым прохождением
         '422':
           description: Анкета не активна, оценка некорректна или вопрос чужой/повторный
+  /cms/files/cdn-manifest:
+    get:
+      tags:
+      - Файлы
+      summary: Получить подписанные ссылки для прогрева CDN
+      operationId: getCdnFileManifest
+      description: 'Только для администратора. Основной API возвращает text/plain:
+        относительный
+
+        подписанный путь /api/files/... на каждой строке. Включает только файлы
+
+        с 90-дневной политикой: ttl=7776000 и срок ссылок 90 дней. Файлы с
+
+        module=avatars, avatar_generation_inputs, users, general исключаются
+
+        независимо от связей с контентом.
+
+        Запрос ничего не скачивает и не изменяет БД/Redis. На CDN-сервере список
+
+        обрабатывает CDN/warmup.sh. Оригиналы и текущие превью с v включаются всегда;
+
+        sizes добавляет уменьшенные варианты изображений и превью. Общие UUID
+
+        объединяются. Личные файлы и неиспользуемые загрузки не включаются.
+
+        ПрофСтарт выбирается по статусу ACTIVE, анкеты по is_active; профессии,
+
+        организации — без deleted_at. Фильтр avatars совместим, но суточные
+
+        файлы шаблонов не выдаются. У вопросов викторины,
+
+        заставок и видеосценариев нет статуса активности, выбирается весь контент.
+
+        Без modules включаются все поддерживаемые модули. Нужен FILE_SIGNING_SECRET.
+
+        '
+      parameters:
+      - name: modules
+        in: query
+        description: Модули контента. Можно передать несколько параметров modules.
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - quiz
+            - profstart
+            - screensavers
+            - video
+            - surveys
+            - professions
+            - organizations
+            - avatars
+        style: form
+        explode: true
+      - name: sizes
+        in: query
+        description: Дополнительные размеры вида 320x180, каждая сторона 1–2048. Можно
+          повторить.
+        schema:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9]+x[0-9]+$
+        style: form
+        explode: true
+      responses:
+        '200':
+          description: Список ссылок; пустая строка, если подходящих файлов нет.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            X-File-Count:
+              description: Число уникальных файлов.
+              schema:
+                type: integer
+            X-URL-Count:
+              description: Число URL с учётом превью и размеров.
+              schema:
+                type: integer
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Недействительный или отсутствующий access JWT.
+        '403':
+          description: Требуется роль администратора.
+        '422':
+          description: Неизвестный модуль или недопустимый размер.
+        '503':
+          description: Не настроен отдельный ключ подписи файлов.
   /files/{file_uuid}:
     get:
       tags:
@@ -12036,7 +12131,20 @@ paths:
         в формате исходного изображения. Размеры можно дописать к уже подписанному
         URL.
 
-        Срок ссылки — 24 часа. Поля file.url и file.preview_url содержат только
+        Срок ссылки и TTL CDN — 1 день для files.module из списка avatars,
+
+        avatar_generation_inputs, users, general и 90 дней для остальных значений.
+
+        Новые ссылки содержат ttl (86400 или 7776000), включённый в подпись;
+
+        срок при скачивании берётся из проверенной подписи, без ttl — 1 день.
+
+        Модуль определяет срок при создании ссылки, его изменение не вызывает
+
+        отказа по ранее выданной действующей ссылке. Старые ссылки без ttl
+
+        сохраняют прежний срок и суточный кэш. Поля file.url и file.preview_url содержат
+        только
 
         относительные пути /api/files/... с параметрами подписи и срока; домен CDN
 
@@ -12074,6 +12182,15 @@ paths:
         schema:
           type: string
         description: HMAC-подпись
+      - name: ttl
+        in: query
+        description: Срок кэширования в секундах, включённый в подпись. У новых ссылок
+          обязателен.
+        schema:
+          type: integer
+          enum:
+          - 86400
+          - 7776000
       - name: v
         in: query
         description: Версия превью, включённая в подпись ссылки. Для новых preview_url.

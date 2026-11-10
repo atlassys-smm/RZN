@@ -594,6 +594,8 @@ paths:
     $ref: './paths/feedback.yaml#/respond'
 
   # ── Файлы ────────────────────────────────────────
+  /cms/files/cdn-manifest:
+    $ref: './paths/files.yaml#/cdn_manifest'
   /files/{file_uuid}:
     $ref: './paths/files.yaml#/detail'
 
