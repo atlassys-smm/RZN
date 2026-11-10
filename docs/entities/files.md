@@ -138,7 +138,7 @@ answer_option_files[0]=<файл варианта>
 ### Подписанные ссылки и CDN
 
 `file.url` и `file.preview_url` действуют 1 день для `files.module` из списка
-`avatars`, `avatar_generation_inputs`, `users`, `general` и 90 дней для остальных
+`avatars`, `avatar_generation_inputs` и 90 дней для остальных
 значений. Срок одинаков для оригинала, превью и уменьшенных вариантов.
 Ссылки содержат только относительные
 пути `/api/files/...` с параметрами подписи и срока. Домен CDN подставляет

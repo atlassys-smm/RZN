@@ -46,7 +46,7 @@ docker compose -f docker-compose.yml --profile cdn up -d --no-deps cdn
 Команды работают только с CDN и не запускают API, его миграции, PostgreSQL или Redis.
 Для обычного запуска проекта файл ключа CDN не требуется.
 Срок ссылок и TTL кэша — 1 день для `files.module` со значениями `avatars`,
-`avatar_generation_inputs`, `users`, `general`; для остальных значений — 90 дней.
+`avatar_generation_inputs`; для остальных значений — 90 дней.
 Суточный кэш остаётся в томе `cdn_cache`, 90-дневный хранится в новом
 `cdn_cache_long`. Каждая зона имеет собственный `inactive` (1 и 90 дней).
 Ограничение общего размера не задаётся. Новые ссылки содержат подписанный `ttl`;
