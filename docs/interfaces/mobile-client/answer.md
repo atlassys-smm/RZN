@@ -144,3 +144,13 @@ https://app.example.com/join?session_id={sessionId}&device_id={deviceId}
 
 
 Передавайте пользовательский access JWT в token; в викторине сначала выполните join. Авторизация сокета проверяется только при подключении.
+
+## Форматы ответа викторины
+
+- Single (1, 3, 4, 8, 9, 11, 14, 15, 16, 17, 18): `answer.option_id`.
+- Multiple (2, 13): `answer.option_ids`.
+- Matching (5, 7, 12): `answer.pairs` с left_option_id/right_option_id.
+- Sorting (6, 10): `answer.option_ids` в выбранном порядке.
+
+Медиа для 8, 9 и 17 прикладывается к вопросу. Типов со свободным ответом нет.
+Поле `answer.text` сохранено как необязательное пояснение и не влияет на правильность.

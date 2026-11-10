@@ -987,6 +987,7 @@ components:
         question_type:
           title: Question Type
           type: integer
+          description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
         difficulty:
           title: Difficulty
           type: integer
@@ -2155,6 +2156,7 @@ components:
           type: string
         question_type:
           type: integer
+          description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
           enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
         difficulty:
           type: integer
@@ -2527,8 +2529,9 @@ components:
             Число текущих голосов участников и голосов капитанов команд за вариант.
             Нулевые значения включены. User в командной игре получает счётчики своей команды,
             StaffUser и Device — всей сессии. При множественном выборе каждый участник/команда
-            учитывается один раз на выбранный вариант. Для текста, сопоставления, порядка
-            и распределения ролей возвращается пустой массив.
+            учитывается один раз на выбранный вариант. Счётчики доступны для single-типов
+            1,3,4,8,9,11,14,15,16,17,18 и multiple-типов 2,13. Для matching 5,7,12
+            и sorting 6,10 возвращается пустой массив.
           items:
             type: object
             required: [option_id, participant_count, team_count]
@@ -2642,6 +2645,7 @@ components:
                   type: string
                 question_type:
                   type: integer
+                  description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
                   enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
                 file:
                   anyOf:
