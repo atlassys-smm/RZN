@@ -13965,6 +13965,12 @@ components:
           format: date-time
     Organization:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          default: null
         id:
           type: integer
           title: Id
@@ -18451,6 +18457,13 @@ components:
       title: IndustryUpdateRequest
     OrganizationCreateRequest:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          default: null
         name:
           maxLength: 255
           minLength: 1
@@ -18558,6 +18571,13 @@ components:
       title: OrganizationType
     OrganizationUpdateRequest:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          default: null
         name:
           anyOf:
           - maxLength: 255
