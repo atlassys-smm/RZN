@@ -987,6 +987,7 @@ components:
         question_type:
           title: Question Type
           type: integer
+          description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
         difficulty:
           title: Difficulty
           type: integer
@@ -2161,6 +2162,7 @@ components:
           type: string
         question_type:
           type: integer
+          description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
           enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
         difficulty:
           type: integer
@@ -2323,8 +2325,8 @@ components:
           description: 1 — individual, 2 — team
         status:
           type: integer
-          enum: [1, 2, 3]
-          description: 1 — waiting, 2 — active, 3 — finished
+          enum: [1, 2, 3, 4]
+          description: 1 — waiting, 2 — active, 3 — finished, 4 — results (показ итогов)
         settings:
           type: object
         created_at:
@@ -2389,7 +2391,7 @@ components:
           properties:
             can_start_final_round:
               type: boolean
-              description: true только в active после раскрытия последнего вопроса последнего раунда, если в сессии нет FINAL (9). Вычисляется заново при чтении; после добавления финала всегда false.
+              description: true в active после раскрытия последнего вопроса последнего раунда и в results, если в сессии нет FINAL (9). Вычисляется заново при чтении; после добавления финала всегда false.
             round_count:
               type: integer
               minimum: 0
@@ -2533,8 +2535,9 @@ components:
             Число текущих голосов участников и голосов капитанов команд за вариант.
             Нулевые значения включены. User в командной игре получает счётчики своей команды,
             StaffUser и Device — всей сессии. При множественном выборе каждый участник/команда
-            учитывается один раз на выбранный вариант. Для текста, сопоставления, порядка
-            и распределения ролей возвращается пустой массив.
+            учитывается один раз на выбранный вариант. Счётчики доступны для single-типов
+            1,3,4,8,9,11,14,15,16,17,18 и multiple-типов 2,13. Для matching 5,7,12
+            и sorting 6,10 возвращается пустой массив.
           items:
             type: object
             required: [option_id, participant_count, team_count]
@@ -2617,8 +2620,8 @@ components:
       properties:
         status:
           type: integer
-          enum: [1, 2, 3]
-          description: 1 — waiting, 2 — active, 3 — finished
+          enum: [1, 2, 3, 4]
+          description: 1 — waiting, 2 — active, 3 — finished, 4 — results (показ итогов)
         current_round:
           type: object
           nullable: true
@@ -2648,6 +2651,7 @@ components:
                   type: string
                 question_type:
                   type: integer
+                  description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
                   enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
                 file:
                   anyOf:
@@ -2665,6 +2669,10 @@ components:
                         format: int64
                       text:
                         type: string
+                      side:
+                        type: integer
+                        nullable: true
+                        description: "Сторона сопоставления для matching: 1 — left, 2 — right; для остальных типов null."
                       file:
                         anyOf:
                           - $ref: '#/components/schemas/FileResponse'
@@ -3126,6 +3134,11 @@ components:
                     format: int64
                   text:
                     type: string
+        last_voting_result:
+          description: Последнее завершённое голосование либо null до первого закрытия. Не сбрасывается при открытии следующего голосования.
+          anyOf:
+            - $ref: '#/components/schemas/InteractiveVideoVotingResult'
+            - type: 'null'
         voting_point:
           type: object
           nullable: true
@@ -3158,6 +3171,43 @@ components:
                     format: int64
                   count:
                     type: integer
+
+    InteractiveVideoVotingResult:
+      description: Снимок последнего завершённого голосования. Сохраняется до завершения следующего голосования, включая переходы и окончание сессии; хранится в Redis.
+      type: object
+      required: [scenario_id, voted_count, votes, winner_branch_id, auto_selected]
+      properties:
+        scenario_id:
+          type: integer
+          format: int64
+          description: Сценарий завершённого голосования.
+        voted_count:
+          type: integer
+          minimum: 0
+          description: Итоговое число голосов.
+        votes:
+          type: array
+          description: Все варианты с итоговыми голосами, включая нулевые; тексты зафиксированы при закрытии.
+          items:
+            type: object
+            required: [branch_id, text, count]
+            properties:
+              branch_id:
+                type: integer
+                format: int64
+              text:
+                type: string
+                nullable: true
+              count:
+                type: integer
+                minimum: 0
+        winner_branch_id:
+          type: integer
+          format: int64
+          description: ID выбранного варианта до разрешения reference_branch_id. При равенстве выбирается случайно среди лидеров.
+        auto_selected:
+          type: boolean
+          description: true при отсутствии голосов, когда вариант выбран автоматически.
 
     InteractiveVideoVoting:
       description: Информация о голосовании для мобильного клиента
@@ -5577,7 +5627,7 @@ components:
       properties:
         type:
           type: string
-          enum: [session_started, session_finished]
+          enum: [session_started, results_started, session_finished]
         payload:
           type: object
           required: [device_id, session_id, module]
