@@ -1500,7 +1500,7 @@ question:
     - ПрофСтарт - Пользователь
     summary: Следующий неотвеченный вопрос сессии
     operationId: profstart_question_get
-    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Следующий неотвеченный вопрос текущей in_progress сессии. Повтор GET возвращает тот же вопрос до сохранения ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409."
+    description: "User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id. Следующий неотвеченный вопрос текущей in_progress сессии. Повтор GET возвращает тот же вопрос до сохранения ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409. Для пользователей до 15 лет поле text вопроса и каждого варианта берётся из text_under_age, если оно задано. Возраст определяется по User.birth_date на дату запроса (Europe/Moscow). Без даты рождения используется обычный текст."
     x-implementation-status: implemented
     parameters:
     - $ref: '#/components/parameters/DeviceConnectionId'
@@ -1521,6 +1521,7 @@ question:
         description: Конфликт состояния или уникальности.
       '422':
         description: Некорректные параметры, ссылки или состав теста.
+
 me-sessions:
   get:
     tags:

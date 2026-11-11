@@ -3980,6 +3980,11 @@ components:
       - order
       - group_id
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         text:
           type: string
           minLength: 1
@@ -4025,6 +4030,11 @@ components:
       additionalProperties: false
       required: []
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         text:
           type: string
           minLength: 1
@@ -4076,11 +4086,17 @@ components:
       - id
       - question_id
       - text
+      - text_under_age
       - file
       - value
       - order
       - group_id
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -4116,10 +4132,16 @@ components:
       required:
       - id
       - text
+      - text_under_age
       - file
       - value
       - order
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -4149,6 +4171,11 @@ components:
       - text
       - order
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         type:
           type: string
           enum:
@@ -4195,6 +4222,11 @@ components:
       additionalProperties: false
       required: []
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         type:
           type: string
           enum:
@@ -4248,12 +4280,18 @@ components:
       - type
       - axis
       - text
+      - text_under_age
       - file
       - order
       - options
       - created_at
       - updated_at
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -4303,10 +4341,16 @@ components:
       - type
       - axis
       - text
+      - text_under_age
       - file
       - order
       - options
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
