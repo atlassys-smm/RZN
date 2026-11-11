@@ -2659,6 +2659,10 @@ components:
                         format: int64
                       text:
                         type: string
+                      side:
+                        type: integer
+                        nullable: true
+                        description: "Сторона сопоставления для matching: 1 — left, 2 — right; для остальных типов null."
                       file:
                         anyOf:
                           - $ref: '#/components/schemas/FileResponse'

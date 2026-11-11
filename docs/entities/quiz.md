@@ -86,6 +86,8 @@
 - **GameAnswerOption → GameQuestion**: вариант принадлежит одному вопросу (`question_id`)
 - **GameAnswerOption → File**: вариант может иметь медиа-файл (`media_id`)
 
+В ответах CMS и в `current_question.question.answer_options[]` игрового состояния каждый вариант содержит `side`: `1` — left, `2` — right, `null` — сторона не задана. Поле возвращается оператору, LED и участнику через `GET /quiz/sessions/{id}` и `GET /quiz/sessions/active?device_id=...`.
+
 Для `matching` варианты делятся на две стороны через `side` (`1` — left, `2` — right); `answer_key.pairs` содержит соответствие между ID элементов этих сторон. Баллы вопроса (`points`) задаются целым числом; рассчитанный счёт хранится как десятичное число из-за множителя раунда.
 
 ### Где используется
