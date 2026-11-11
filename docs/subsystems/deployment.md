@@ -52,11 +52,12 @@ docker compose -f docker-compose.yml --profile cdn up -d --no-deps cdn
 Ограничение общего размера не задаётся. Новые ссылки содержат подписанный `ttl`;
 старые ссылки без него сохраняют прежний срок и суточное кэширование.
 
-Прогрев выполняется на отдельном CDN-сервере скриптом `CDN/warmup.sh`:
+Прогрев выполняется на отдельном CDN-сервере внутри контейнера CDN. Скрипт
+`CDN/warmup.sh` установлен в образ как команда `cdn-warmup`:
 
 ```sh
-sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:8090 --origin https://admin.example.ru --dry-run
-sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:8090 --origin https://admin.example.ru
+docker compose --profile cdn exec cdn cdn-warmup --api-url https://api.example.ru --cdn-url http://127.0.0.1:8080 --origin https://admin.example.ru --dry-run
+docker compose --profile cdn exec cdn cdn-warmup --api-url https://api.example.ru --cdn-url http://127.0.0.1:8080 --origin https://admin.example.ru
 ```
 
 Скрипт запрашивает логин и пароль администратора в консоли, скрывает пароль
@@ -66,7 +67,8 @@ sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:809
 Основной API выдаёт через защищённый `GET /api/cms/files/cdn-manifest`
 только ссылки на файлы с политикой 90 дней; суточные модули исключены.
 После получения списка скрипт закрывает свою сессию, затем запрашивает файлы у CDN.
-Для запуска достаточно `sh`, `curl` и стандартных Unix-утилит. Правила активности,
+Команда `exec` запускается без `-T`, чтобы сохранить интерактивный ввод пароля.
+Порт CDN внутри контейнера — 8080, все нужные утилиты уже входят в образ. Правила активности,
 размеры изображений, параметры и коды завершения описаны в `CDN/README.md`, раздел
 «Прогрев кэша на отдельном CDN-сервере».
 
