@@ -55,13 +55,14 @@ docker compose -f docker-compose.yml --profile cdn up -d --no-deps cdn
 Прогрев выполняется на отдельном CDN-сервере скриптом `CDN/warmup.sh`:
 
 ```sh
-sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:8090 --dry-run
-sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:8090
+sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:8090 --origin https://admin.example.ru --dry-run
+sh CDN/warmup.sh --api-url https://api.example.ru --cdn-url http://127.0.0.1:8090 --origin https://admin.example.ru
 ```
 
-Скрипт читает `DEMO_ADMIN_LOGIN` и `DEMO_ADMIN_PASS` из корневого `.env`,
-авторизуется администратором и сам получает JWT. Путь к конфигурации можно изменить
-через `--env-file`; Origin берётся из `AUTH_ALLOWED_ORIGINS` или `--origin`.
+Скрипт запрашивает логин и пароль администратора в консоли, скрывает пароль
+при вводе и сам получает JWT. Доступы из `.env` и переменных `DEMO_ADMIN_*`
+больше не читаются. Origin задаётся через `--origin`, по умолчанию — адрес API;
+если он не разрешён в `AUTH_ALLOWED_ORIGINS`, укажите разрешённый адрес фронтенда.
 Основной API выдаёт через защищённый `GET /api/cms/files/cdn-manifest`
 только ссылки на файлы с политикой 90 дней; суточные модули исключены.
 После получения списка скрипт закрывает свою сессию, затем запрашивает файлы у CDN.
