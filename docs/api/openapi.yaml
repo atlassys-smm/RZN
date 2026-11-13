@@ -199,6 +199,8 @@ tags:
   description: Общие справочные данные CMS
 
 paths:
+  /cms/led/settings:
+    $ref: './paths/screen-settings.yaml#/settings'
   /cms/led/screensavers:
     $ref: './paths/led-screensavers.yaml#/screensavers'
   /cms/led/screensavers/{screensaver_id}:
@@ -656,6 +658,110 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    ScreenSettingsResponse:
+      type: object
+      required:
+      - carouselDurationSec
+      - selectedCardHoldSec
+      - cardExpandDurationSec
+      - victoryDisplayDurationSec
+      - screensaversPerCycle
+      - initialBackgroundDurationSec
+      - betweenScreensaversDurationSec
+      - screensaverRouletteWaitSec
+      - analyticsDurationSec
+      - professionIntroBackgroundSec
+      - professionFirstCountdownSec
+      - professionNextSpinDelaySec
+      properties:
+        carouselDurationSec:
+          type: number
+          minimum: 0
+          default: 15
+        selectedCardHoldSec:
+          type: number
+          minimum: 0
+          default: 1
+        cardExpandDurationSec:
+          type: number
+          minimum: 0
+          default: 0.8
+        victoryDisplayDurationSec:
+          type: number
+          minimum: 0
+          default: 3
+        screensaversPerCycle:
+          type: integer
+          minimum: 1
+          default: 4
+        initialBackgroundDurationSec:
+          type: number
+          minimum: 0
+          default: 10
+        betweenScreensaversDurationSec:
+          type: number
+          minimum: 0
+          default: 5
+        screensaverRouletteWaitSec:
+          type: number
+          minimum: 0
+          default: 3
+        analyticsDurationSec:
+          type: number
+          minimum: 0
+          default: 60
+        professionIntroBackgroundSec:
+          type: number
+          minimum: 0
+          default: 2
+        professionFirstCountdownSec:
+          type: number
+          minimum: 0
+          default: 15
+        professionNextSpinDelaySec:
+          type: number
+          minimum: 0
+          default: 3
+    ScreenSettingsUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        carouselDurationSec:
+          type: number
+          minimum: 0
+        selectedCardHoldSec:
+          type: number
+          minimum: 0
+        cardExpandDurationSec:
+          type: number
+          minimum: 0
+        victoryDisplayDurationSec:
+          type: number
+          minimum: 0
+        screensaversPerCycle:
+          type: integer
+          minimum: 1
+        initialBackgroundDurationSec:
+          type: number
+          minimum: 0
+        betweenScreensaversDurationSec:
+          type: number
+          minimum: 0
+        screensaverRouletteWaitSec:
+          type: number
+          minimum: 0
+        analyticsDurationSec:
+          type: number
+          minimum: 0
+        professionIntroBackgroundSec:
+          type: number
+          minimum: 0
+        professionFirstCountdownSec:
+          type: number
+          minimum: 0
+        professionNextSpinDelaySec:
+          type: number
+          minimum: 0
     AvatarGenerationWebSocketEvent:
       type: object
       required: [type, payload]

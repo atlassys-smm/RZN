@@ -166,6 +166,7 @@ nav:
       - Профиль: subsystems/digital-profile/profile.md
   - Сущности:
     - Заставки LED: entities/led-screensaver.md
+    - Настройки экрана: entities/screen-settings.md
     - Пользователи: entities/users.md
     - Файлы: entities/files.md
     - Профессии: entities/professions.md
@@ -297,6 +298,7 @@ nav:
       - Версия 1.0: changelog/docs/v1.0.md
     - Бэкенд:
       - Обзор: changelog/back/index.md
+      - Версия 0.37: changelog/back/v0.37.md
       - Версия 0.35: changelog/back/v0.35.md
       - Версия 0.33: changelog/back/v0.33.md
       - Версия 0.32: changelog/back/v0.32.md

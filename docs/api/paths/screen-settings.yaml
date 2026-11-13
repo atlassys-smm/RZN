@@ -1,0 +1,40 @@
+settings:
+  get:
+    tags: [Настройки экрана - CMS]
+    summary: Получить настройки экрана
+    description: Общий набор настроек. Только активный администратор со Staff JWT (роль 1).
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Текущие настройки экрана.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ScreenSettingsResponse'}
+      '401': {description: Нет действующего Staff JWT; пользователь и устройство не допускаются.}
+      '403': {description: Только для администраторов.}
+  put:
+    tags: [Настройки экрана - CMS]
+    summary: Изменить настройки экрана
+    description: |
+      Только активный администратор со Staff JWT (роль 1). Изменяются только переданные
+      поля; пропущенные сохраняют свои значения. Пустой объект возвращает текущие настройки.
+      Длительности — конечные JSON-числа >= 0, screensaversPerCycle — целое число >= 1.
+      null, строки, boolean и неизвестные поля не принимаются. Поля передаются в camelCase.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ScreenSettingsUpdateRequest'}
+          example: {carouselDurationSec: 20, cardExpandDurationSec: 0.8, screensaversPerCycle: 4}
+    responses:
+      '200':
+        description: Полный набор сохранённых настроек экрана.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ScreenSettingsResponse'}
+      '401': {description: Нет действующего Staff JWT; пользователь и устройство не допускаются.}
+      '403': {description: Только для администраторов.}
+      '422': {description: Некорректные значения либо неизвестные поля.}
