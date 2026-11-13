@@ -1568,6 +1568,46 @@ session-participant-team:
       '409':
         description: В целевой команде достигнут лимит в 10 участников
 
+session-participant-delete:
+  delete:
+    tags: [Викторина - Оператор]
+    summary: Удалить участника из викторины
+    description: |
+      Только оператор или администратор со Staff access JWT. Работает в индивидуальном
+      и командном режиме, в том числе во время игры. Удаляется запись участника сессии;
+      учётная запись пользователя и его файлы сохраняются. Участник исключается из состава,
+      текущих ответов и индивидуального рейтинга. Повторное подключение через join не блокируется.
+      При удалении капитана выбирается случайный оставшийся участник той же команды;
+      если команда опустела, captain_id=null. Пустая команда сохраняется, но не участвует
+      в проверке «все ответили». Уже начисленные очки команды и история оценённых ответов сохраняются.
+      Если приём ответов ещё открыт (включая паузу) и ответ не раскрыт, у команды удалённого
+      капитана снимается отметка решающего ответа текущего вопроса, чтобы новый капитан мог ответить.
+      После удаления заново проверяется «все ответили» по оставшемуся составу. Если все ответили,
+      приём закрывается существующей логикой: при числовом auto_reveal_delay раскрывается ответ,
+      при null ожидается ручное действие. Пустой состав не считается «все ответили».
+      Операция сериализуется блокировкой сессии с приёмом ответов и сменой капитана.
+      События сокета: participant_removed, при смене капитана captain_changed, затем
+      answers_update и session_state; при досрочном закрытии также all_answered и обычные
+      события раскрытия ответа. Повторное удаление возвращает 404 без повторных событий.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: participantId
+        in: path
+        required: true
+        description: ID участника викторины, а не users.id.
+        schema: {type: integer, format: int64}
+    responses:
+      '204': {description: Участник удалён; ответ без тела.}
+      '401': {description: Нет действующего Staff JWT; User и Device JWT не допускаются.}
+      '403': {description: Недостаточно прав; только оператор или администратор.}
+      '404': {description: Сессия или участник не найдены либо участник относится к другой сессии.}
+      '422': {description: Некорректный идентификатор.}
+
 session-team-captain:
   put:
     tags: [Викторина - Оператор]
@@ -2202,7 +2242,7 @@ player-answer:
 # После подключения и каждого события клиент запрашивает
 # GET /quiz/sessions/active?device_id=...&select=teams&select=participants.
 # Состояние содержит round_count и current_round_question_count.
-# События: participant_joined, participant_team_changed, captain_changed,
+# События: participant_joined, participant_removed, participant_team_changed, captain_changed,
 # team_renamed, answers_update, question_started, question_revealed,
 # timer_paused, timer_resumed, timer_updated, timer_stopped, timer_expired,
 # round_finished (включая последний раунд), session_finished, session_state.

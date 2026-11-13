@@ -398,6 +398,8 @@ paths:
     $ref: './paths/quiz.yaml#/session-team-update'
   /quiz/sessions/{id}/teams/{teamId}/captain:
     $ref: './paths/quiz.yaml#/session-team-captain'
+  /quiz/sessions/{id}/participants/{participantId}:
+    $ref: './paths/quiz.yaml#/session-participant-delete'
   /quiz/sessions/{id}/participants/{participantId}/team:
     $ref: './paths/quiz.yaml#/session-participant-team'
   /quiz/sessions/{id}/next:
@@ -2874,6 +2876,7 @@ components:
           enum:
             - session_state
             - participant_joined
+            - participant_removed
             - participant_team_changed
             - captain_changed
             - team_renamed
