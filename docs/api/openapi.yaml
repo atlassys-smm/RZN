@@ -2837,10 +2837,17 @@ components:
     QuizTimerState:
       description: |
         Состояние таймера текущего вопроса викторины.
-        Для синхронизации используется абсолютный timestamp `ends_at`, а не относительный `remaining`.
-        Клиент вычисляет оставшееся время: remaining = ends_at - now.
+        `remaining_ms` вычисляется сервером при формировании ответа: max(0, ends_at - server_now_ms).
+        На паузе возвращается remaining_at_pause * 1000, при остановленном или отсутствующем таймере — 0.
+        Между ответами клиент отсчитывает прошедший интервал через performance.now(); часы устройства не используются.
       type: object
+      required: [remaining_ms]
       properties:
+        remaining_ms:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Осталось миллисекунд по времени сервера на момент формирования ответа.
         ends_at:
           type: integer
           format: int64
@@ -3255,11 +3262,17 @@ components:
               description: Счётчик успешных join за всю сессию, используемый как общее возможное число голосов. Каждый повторный join тоже увеличивает значение; это не число уникальных или онлайн-зрителей. Голосование без join не увеличивает счётчик.
             timer:
               type: object
+              required: [ends_at, remaining_ms]
               properties:
                 ends_at:
                   type: integer
                   format: int64
-                  description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
+                  description: UNIX timestamp (мс), когда таймер закончится.
+                remaining_ms:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Осталось миллисекунд на момент ответа, max(0, ends_at - server_now_ms).
             votes:
               type: array
               description: Распределение голосов
@@ -3353,11 +3366,17 @@ components:
                     type: string
             timer:
               type: object
+              required: [ends_at, remaining_ms]
               properties:
                 ends_at:
                   type: integer
                   format: int64
-                  description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
+                  description: UNIX timestamp (мс), когда таймер закончится.
+                remaining_ms:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Осталось миллисекунд на момент ответа, max(0, ends_at - server_now_ms).
             already_voted:
               type: boolean
               description: true, если участник уже проголосовал
