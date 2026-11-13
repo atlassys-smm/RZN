@@ -300,6 +300,7 @@ GET `/quiz/sessions/{id}/questions` возвращает вопросы всех
 
 - **Старт вопроса**: `ends_at = now + question.time_limit`, `running = true`
 - **Пауза**: `remaining_at_pause = max(0, ends_at - now)`, `ends_at = null`, `running = false`
+- На паузе ответы принимаются в обоих режимах; время ответа для бонуса за скорость фиксируется на `paused_at`. После остановки (`remaining_at_pause = null`) приём закрыт. Повторная отправка и решающий ответ капитана проверяются как обычно; «все ответили» может закрыть вопрос на паузе.
 - **Возобновление**: `ends_at = now + remaining_at_pause`, `running = true`
 - **Сервер возвращает `timer.remaining_ms`**: если `running` → `max(0, ends_at - server_now_ms)`; на паузе → `remaining_at_pause * 1000`; при остановленном или отсутствующем таймере → `0`. Поле вычисляется для каждого ответа и не хранится в Redis. Между ответами клиент отсчитывает прошедший интервал через `performance.now()`, без обращения к часам устройства.
 
