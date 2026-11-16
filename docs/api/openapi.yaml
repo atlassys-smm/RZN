@@ -2636,7 +2636,7 @@ components:
               answer:
                 type: [object, 'null']
                 additionalProperties: true
-                description: Текущий ответ капитана; null при отсутствии ответа и для Device.
+                description: Текущий ответ капитана, в том числе для Device; null при отсутствии ответа.
         option_counts:
           type: array
           description: |

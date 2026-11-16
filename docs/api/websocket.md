@@ -210,7 +210,7 @@ ws://host/api/quiz/sessions/{sessionId}/ws?token=<jwt>
 `GET /quiz/sessions/{id}?select=answers`. Корневое поле `answers` содержит
 `participant_answers`, `team_answers` и `option_counts`. User в командной игре
 видит голоса своей команды и решающий ответ капитана, StaffUser — все команды,
-Device — общие счётчики и статусы команд без содержимого ответов.
+Device — общие счётчики, статусы команд и ответы капитанов в `team_answers`; `participant_answers` остаётся пустым.
 Без `select=answers` поле отсутствует; до начала и после завершения игры оно `null`.
 Ответ команды берётся из текущего голоса капитана;
 `team_answers[].submitted` становится `true`, когда капитан ответил, независимо от `is_final`.
