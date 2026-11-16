@@ -2,7 +2,7 @@ settings:
   get:
     tags: [Настройки экрана - CMS]
     summary: Получить настройки экрана
-    description: Общий набор настроек. Только активный администратор со Staff JWT (роль 1).
+    description: Общий набор настроек. Доступен активному администратору или оператору со Staff JWT и активному устройству с Device JWT независимо от роли устройства.
     security:
       - bearerAuth: []
     responses:
@@ -11,8 +11,8 @@ settings:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/ScreenSettingsResponse'}
-      '401': {description: Нет действующего Staff JWT; пользователь и устройство не допускаются.}
-      '403': {description: Только для администраторов.}
+      '401': {description: Нет действующего Staff JWT или Device JWT; пользователь не допускается.}
+      '403': {description: Требуется роль администратора или оператора.}
   put:
     tags: [Настройки экрана - CMS]
     summary: Изменить настройки экрана
