@@ -231,6 +231,8 @@ paths:
   # ── Авторизация пользователя ─────────────────────
   /auth/user/guest:
     $ref: './paths/user-auth.yaml#/user-guest'
+  /auth/user/service:
+    $ref: './paths/user-auth.yaml#/user-service'
   /auth/user/refresh:
     $ref: './paths/user-auth.yaml#/user-refresh'
   /auth/user/logout:
@@ -1050,8 +1052,11 @@ components:
           description: 1 — активен, 2 — заблокирован.
     UserInfoResponse:
       type: object
-      required: [id, is_guest, email, first_name, last_name, file, gender, birth_date]
+      required: [id, is_guest, service_user, email, first_name, last_name, file, gender, birth_date]
       properties:
+        service_user:
+          type: [integer, 'null']
+          description: Номер служебного аккаунта; 1–5 — ПрофСтарт, 6–10 — аватар; null — обычный пользователь.
         id:
           type: integer
         is_guest:

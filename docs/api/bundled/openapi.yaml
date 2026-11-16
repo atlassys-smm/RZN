@@ -1167,6 +1167,107 @@ paths:
                   type: boolean
                   enum:
                   - true
+  /auth/user/service:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Получить служебный аккаунт с чистыми результатами
+      description: 'Доступен активному администратору со Staff JWT или активному устройству
+        с Device JWT
+
+        независимо от роли устройства. User JWT, включая гостя и служебного пользователя,
+        не допускается.
+
+        module=1 выбирает users.service_user=1–5 (ПрофСтарт), module=2 — 6–10 (аватар).
+
+        Выбирается активный аккаунт с самой ранней датой последнего входа MAX(auth_sessions.created_at).
+
+        Не использованные ранее идут первыми; при равенстве — по service_user.
+
+        Выдача без блокировки/резервирования пула: вызывающая сторона должна выполнять
+        входы последовательно.
+
+        Сбрасываются профиль, ответы, прохождения, источники рекомендаций, согласия,
+        генерации и аватары.
+
+        Удаляются только файлы прежнего использования, общие исходники шаблонов сохраняются.
+
+        Старые auth-сессии отзываются, но сохраняются для порядка выдачи; их access
+        и refresh недействительны.
+
+        Поздний webhook удалённого задания получает 404 и не восстанавливает результат.
+
+        Возвращается обычный User access JWT; refresh — только в HttpOnly cookie user_refresh.
+
+        Срок auth-сессии — 7 дней, access — максимум 30 минут; следующий вход в этот
+        аккаунт отзывает их.
+
+        Согласие гостевого входа не требуется; аккаунты не являются гостями и не могут
+        привязываться к OAuth.
+
+        Для аватара служебный пользователь подключается к устройству через /device/auth/qr
+        и /device/auth/confirm.
+
+        POST/GET /users/avatar-generations по-прежнему требуют Device JWT с ролью
+        AVATAR и X-Device-Connection-Id.
+
+        Cache-Control — no-store. Отдельная проверка Origin для этого Bearer-защищённого
+        входа не требуется;
+
+        refresh/logout по cookie сохраняют обязательную проверку доверенного Origin/Referer.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - module
+              properties:
+                module:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  description: 1 — ПрофСтарт; 2 — генерация аватара.
+      responses:
+        '201':
+          description: Служебный аккаунт очищен, новая auth-сессия создана.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: user_refresh; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/user.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required:
+                  - user_id
+                  - service_user
+                  properties:
+                    user_id:
+                      type: integer
+                      format: int64
+                    service_user:
+                      type: integer
+                      minimum: 1
+                      maximum: 10
+        '401':
+          description: Нет действительного Staff/Device JWT или передан User JWT.
+        '403':
+          description: Сотрудник не является администратором.
+        '422':
+          description: Неизвестный модуль или лишние поля.
+        '503':
+          description: В выбранном пуле нет активных служебных аккаунтов.
   /auth/user/refresh:
     post:
       tags:
@@ -1339,9 +1440,16 @@ paths:
                   id:
                     type: integer
                     description: ID пользователя
+                  service_user:
+                    type:
+                    - integer
+                    - 'null'
+                    description: Номер служебного аккаунта; 1–5 — ПрофСтарт, 6–10
+                      — аватар; null — обычный пользователь.
                   is_guest:
                     type: boolean
-                    description: true — гость, false — авторизован
+                    description: true — гость, false — OAuth-пользователь или служебный
+                      аккаунт
                   email:
                     type: string
                     nullable: true
@@ -13362,6 +13470,7 @@ components:
       required:
       - id
       - is_guest
+      - service_user
       - email
       - first_name
       - last_name
@@ -13369,6 +13478,12 @@ components:
       - gender
       - birth_date
       properties:
+        service_user:
+          type:
+          - integer
+          - 'null'
+          description: Номер служебного аккаунта; 1–5 — ПрофСтарт, 6–10 — аватар;
+            null — обычный пользователь.
         id:
           type: integer
         is_guest:
