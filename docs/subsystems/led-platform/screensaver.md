@@ -11,6 +11,12 @@
 в `/api/cms/led/screensavers`. Загрузка — через multipart, как у вопросов викторины.
 [Поля, права и форматы запросов](../../entities/led-screensaver.md).
 
+## Настройки экрана
+
+Общие настройки доступны через `GET /api/cms/led/settings` администратору, оператору и активному устройству независимо от роли.
+Изменение через `PUT /api/cms/led/settings` доступно только администратору.
+[Поля и значения по умолчанию](../../entities/screen-settings.md).
+
 ## Вариации контента
 
 ### Видеоплейлист
@@ -36,8 +42,8 @@
 
 **API:**
 - Регистрация устройства (CMS): `POST /cms/devices`
-- Запуск показа оператором/администратором со staff access-токеном: `POST /interactive-video/sessions`
-- Остановка показа оператором/администратором со staff access-токеном: `POST /interactive-video/sessions/{id}/stop`
+- Запуск показа: `POST /interactive-video/sessions` со staff access-токеном оператора/администратора или Device JWT с ролью QUIZ_VIDEO=1. Устройство передаёт собственный `device_id`.
+- Остановка показа: `POST /interactive-video/sessions/{id}/stop` с теми же правами; устройство может остановить только собственную сессию. Чужое устройство или чужая сессия — 403.
 - Получение состояния (для LED): `GET /interactive-video/sessions/{id}/state`
 
 → [Сущности видеосценария](../../entities/video-scenario.md)

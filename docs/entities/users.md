@@ -72,7 +72,7 @@
 | `email` | string, nullable | Email из OAuth-провайдера |
 | `first_name` | string(255), nullable | Имя из OAuth-провайдера или заданное пользователем через `PATCH /api/user/info`; при следующем OAuth-входе может обновиться данными провайдера |
 | `last_name` | string(255), nullable | Фамилия из OAuth-провайдера или заданная пользователем через `PATCH /api/user/info`; при следующем OAuth-входе может обновиться данными провайдера |
-| `media_id` | FK → files.id, nullable | Файл профиля: загруженный пользователем или скачанный при OAuth-входе. В API возвращается объект `file` |
+| `media_id` | FK → files.id, nullable | Файл профиля: загруженный пользователем или скачанный при OAuth-входе только при отсутствии текущего файла. Повторный вход не заменяет установленную фотографию. В API возвращается объект `file` |
 | `gender` | integer, nullable | Пол: `1` — male, `2` — female, `null` — не указан |
 | `birth_date` | date, nullable | Дата рождения из OAuth-провайдера |
 | `status` | integer | Статус: `1` — active, `2` — deactivated |

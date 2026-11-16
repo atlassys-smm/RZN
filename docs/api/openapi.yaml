@@ -199,6 +199,8 @@ tags:
   description: Общие справочные данные CMS
 
 paths:
+  /cms/led/settings:
+    $ref: './paths/screen-settings.yaml#/settings'
   /cms/led/screensavers:
     $ref: './paths/led-screensavers.yaml#/screensavers'
   /cms/led/screensavers/{screensaver_id}:
@@ -396,6 +398,8 @@ paths:
     $ref: './paths/quiz.yaml#/session-team-update'
   /quiz/sessions/{id}/teams/{teamId}/captain:
     $ref: './paths/quiz.yaml#/session-team-captain'
+  /quiz/sessions/{id}/participants/{participantId}:
+    $ref: './paths/quiz.yaml#/session-participant-delete'
   /quiz/sessions/{id}/participants/{participantId}/team:
     $ref: './paths/quiz.yaml#/session-participant-team'
   /quiz/sessions/{id}/next:
@@ -658,6 +662,110 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    ScreenSettingsResponse:
+      type: object
+      required:
+      - carouselDurationSec
+      - selectedCardHoldSec
+      - cardExpandDurationSec
+      - victoryDisplayDurationSec
+      - screensaversPerCycle
+      - initialBackgroundDurationSec
+      - betweenScreensaversDurationSec
+      - screensaverRouletteWaitSec
+      - analyticsDurationSec
+      - professionIntroBackgroundSec
+      - professionFirstCountdownSec
+      - professionNextSpinDelaySec
+      properties:
+        carouselDurationSec:
+          type: number
+          minimum: 0
+          default: 15
+        selectedCardHoldSec:
+          type: number
+          minimum: 0
+          default: 1
+        cardExpandDurationSec:
+          type: number
+          minimum: 0
+          default: 0.8
+        victoryDisplayDurationSec:
+          type: number
+          minimum: 0
+          default: 3
+        screensaversPerCycle:
+          type: integer
+          minimum: 1
+          default: 4
+        initialBackgroundDurationSec:
+          type: number
+          minimum: 0
+          default: 10
+        betweenScreensaversDurationSec:
+          type: number
+          minimum: 0
+          default: 5
+        screensaverRouletteWaitSec:
+          type: number
+          minimum: 0
+          default: 3
+        analyticsDurationSec:
+          type: number
+          minimum: 0
+          default: 60
+        professionIntroBackgroundSec:
+          type: number
+          minimum: 0
+          default: 2
+        professionFirstCountdownSec:
+          type: number
+          minimum: 0
+          default: 15
+        professionNextSpinDelaySec:
+          type: number
+          minimum: 0
+          default: 3
+    ScreenSettingsUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        carouselDurationSec:
+          type: number
+          minimum: 0
+        selectedCardHoldSec:
+          type: number
+          minimum: 0
+        cardExpandDurationSec:
+          type: number
+          minimum: 0
+        victoryDisplayDurationSec:
+          type: number
+          minimum: 0
+        screensaversPerCycle:
+          type: integer
+          minimum: 1
+        initialBackgroundDurationSec:
+          type: number
+          minimum: 0
+        betweenScreensaversDurationSec:
+          type: number
+          minimum: 0
+        screensaverRouletteWaitSec:
+          type: number
+          minimum: 0
+        analyticsDurationSec:
+          type: number
+          minimum: 0
+        professionIntroBackgroundSec:
+          type: number
+          minimum: 0
+        professionFirstCountdownSec:
+          type: number
+          minimum: 0
+        professionNextSpinDelaySec:
+          type: number
+          minimum: 0
     AvatarGenerationWebSocketEvent:
       type: object
       required: [type, payload]
@@ -989,6 +1097,7 @@ components:
         question_type:
           title: Question Type
           type: integer
+          description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
         difficulty:
           title: Difficulty
           type: integer
@@ -1856,6 +1965,12 @@ components:
 
     Organization:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          default: null
         id:
           type: integer
           title: Id
@@ -2157,6 +2272,7 @@ components:
           type: string
         question_type:
           type: integer
+          description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
           enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
         difficulty:
           type: integer
@@ -2319,8 +2435,8 @@ components:
           description: 1 — individual, 2 — team
         status:
           type: integer
-          enum: [1, 2, 3]
-          description: 1 — waiting, 2 — active, 3 — finished
+          enum: [1, 2, 3, 4]
+          description: 1 — waiting, 2 — active, 3 — finished, 4 — results (показ итогов)
         settings:
           type: object
         created_at:
@@ -2385,7 +2501,7 @@ components:
           properties:
             can_start_final_round:
               type: boolean
-              description: true только в active после раскрытия последнего вопроса последнего раунда, если в сессии нет FINAL (9). Вычисляется заново при чтении; после добавления финала всегда false.
+              description: true в active после раскрытия последнего вопроса последнего раунда и в results, если в сессии нет FINAL (9). Вычисляется заново при чтении; после добавления финала всегда false.
             round_count:
               type: integer
               minimum: 0
@@ -2522,15 +2638,16 @@ components:
               answer:
                 type: [object, 'null']
                 additionalProperties: true
-                description: Текущий ответ капитана; null при отсутствии ответа и для Device.
+                description: Текущий ответ капитана, в том числе для Device; null при отсутствии ответа.
         option_counts:
           type: array
           description: |
             Число текущих голосов участников и голосов капитанов команд за вариант.
             Нулевые значения включены. User в командной игре получает счётчики своей команды,
             StaffUser и Device — всей сессии. При множественном выборе каждый участник/команда
-            учитывается один раз на выбранный вариант. Для текста, сопоставления, порядка
-            и распределения ролей возвращается пустой массив.
+            учитывается один раз на выбранный вариант. Счётчики доступны для single-типов
+            1,3,4,8,9,11,14,15,16,17,18 и multiple-типов 2,13. Для matching 5,7,12
+            и sorting 6,10 возвращается пустой массив.
           items:
             type: object
             required: [option_id, participant_count, team_count]
@@ -2613,8 +2730,8 @@ components:
       properties:
         status:
           type: integer
-          enum: [1, 2, 3]
-          description: 1 — waiting, 2 — active, 3 — finished
+          enum: [1, 2, 3, 4]
+          description: 1 — waiting, 2 — active, 3 — finished, 4 — results (показ итогов)
         current_round:
           type: object
           nullable: true
@@ -2644,6 +2761,7 @@ components:
                   type: string
                 question_type:
                   type: integer
+                  description: "Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых типов нет."
                   enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
                 file:
                   anyOf:
@@ -2661,6 +2779,10 @@ components:
                         format: int64
                       text:
                         type: string
+                      side:
+                        type: integer
+                        nullable: true
+                        description: "Сторона сопоставления для matching: 1 — left, 2 — right; для остальных типов null."
                       file:
                         anyOf:
                           - $ref: '#/components/schemas/FileResponse'
@@ -2725,10 +2847,17 @@ components:
     QuizTimerState:
       description: |
         Состояние таймера текущего вопроса викторины.
-        Для синхронизации используется абсолютный timestamp `ends_at`, а не относительный `remaining`.
-        Клиент вычисляет оставшееся время: remaining = ends_at - now.
+        `remaining_ms` вычисляется сервером при формировании ответа: max(0, ends_at - server_now_ms).
+        На паузе возвращается remaining_at_pause * 1000, при остановленном или отсутствующем таймере — 0.
+        Между ответами клиент отсчитывает прошедший интервал через performance.now(); часы устройства не используются.
       type: object
+      required: [remaining_ms]
       properties:
+        remaining_ms:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Осталось миллисекунд по времени сервера на момент формирования ответа.
         ends_at:
           type: integer
           format: int64
@@ -2755,6 +2884,7 @@ components:
           enum:
             - session_state
             - participant_joined
+            - participant_removed
             - participant_team_changed
             - captain_changed
             - team_renamed
@@ -3122,6 +3252,11 @@ components:
                     format: int64
                   text:
                     type: string
+        last_voting_result:
+          description: Последнее завершённое голосование либо null до первого закрытия. Не сбрасывается при открытии следующего голосования.
+          anyOf:
+            - $ref: '#/components/schemas/InteractiveVideoVotingResult'
+            - type: 'null'
         voting_point:
           type: object
           nullable: true
@@ -3138,11 +3273,17 @@ components:
               description: Счётчик успешных join за всю сессию, используемый как общее возможное число голосов. Каждый повторный join тоже увеличивает значение; это не число уникальных или онлайн-зрителей. Голосование без join не увеличивает счётчик.
             timer:
               type: object
+              required: [ends_at, remaining_ms]
               properties:
                 ends_at:
                   type: integer
                   format: int64
-                  description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
+                  description: UNIX timestamp (мс), когда таймер закончится.
+                remaining_ms:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Осталось миллисекунд на момент ответа, max(0, ends_at - server_now_ms).
             votes:
               type: array
               description: Распределение голосов
@@ -3154,6 +3295,43 @@ components:
                     format: int64
                   count:
                     type: integer
+
+    InteractiveVideoVotingResult:
+      description: Снимок последнего завершённого голосования. Сохраняется до завершения следующего голосования, включая переходы и окончание сессии; хранится в Redis.
+      type: object
+      required: [scenario_id, voted_count, votes, winner_branch_id, auto_selected]
+      properties:
+        scenario_id:
+          type: integer
+          format: int64
+          description: Сценарий завершённого голосования.
+        voted_count:
+          type: integer
+          minimum: 0
+          description: Итоговое число голосов.
+        votes:
+          type: array
+          description: Все варианты с итоговыми голосами, включая нулевые; тексты зафиксированы при закрытии.
+          items:
+            type: object
+            required: [branch_id, text, count]
+            properties:
+              branch_id:
+                type: integer
+                format: int64
+              text:
+                type: string
+                nullable: true
+              count:
+                type: integer
+                minimum: 0
+        winner_branch_id:
+          type: integer
+          format: int64
+          description: ID выбранного варианта до разрешения reference_branch_id. При равенстве выбирается случайно среди лидеров.
+        auto_selected:
+          type: boolean
+          description: true при отсутствии голосов, когда вариант выбран автоматически.
 
     InteractiveVideoVoting:
       description: Информация о голосовании для мобильного клиента
@@ -3199,11 +3377,17 @@ components:
                     type: string
             timer:
               type: object
+              required: [ends_at, remaining_ms]
               properties:
                 ends_at:
                   type: integer
                   format: int64
-                  description: UNIX timestamp (мс), когда таймер закончится. Клиент вычисляет remaining = ends_at - now.
+                  description: UNIX timestamp (мс), когда таймер закончится.
+                remaining_ms:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Осталось миллисекунд на момент ответа, max(0, ends_at - server_now_ms).
             already_voted:
               type: boolean
               description: true, если участник уже проголосовал
@@ -3982,6 +4166,11 @@ components:
       - order
       - group_id
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         text:
           type: string
           minLength: 1
@@ -4027,6 +4216,11 @@ components:
       additionalProperties: false
       required: []
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         text:
           type: string
           minLength: 1
@@ -4078,11 +4272,17 @@ components:
       - id
       - question_id
       - text
+      - text_under_age
       - file
       - value
       - order
       - group_id
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -4118,10 +4318,16 @@ components:
       required:
       - id
       - text
+      - text_under_age
       - file
       - value
       - order
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -4151,6 +4357,11 @@ components:
       - text
       - order
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         type:
           type: string
           enum:
@@ -4197,6 +4408,11 @@ components:
       additionalProperties: false
       required: []
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         type:
           type: string
           enum:
@@ -4250,12 +4466,18 @@ components:
       - type
       - axis
       - text
+      - text_under_age
       - file
       - order
       - options
       - created_at
       - updated_at
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -4305,10 +4527,16 @@ components:
       - type
       - axis
       - text
+      - text_under_age
       - file
       - order
       - options
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -5529,7 +5757,7 @@ components:
       properties:
         type:
           type: string
-          enum: [session_started, session_finished]
+          enum: [session_started, results_started, session_finished]
         payload:
           type: object
           required: [device_id, session_id, module]
@@ -5985,6 +6213,13 @@ components:
 
     OrganizationCreateRequest:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          default: null
         name:
           maxLength: 255
           minLength: 1
@@ -6093,6 +6328,13 @@ components:
 
     OrganizationUpdateRequest:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          default: null
         name:
           anyOf:
           - maxLength: 255

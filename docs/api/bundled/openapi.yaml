@@ -257,6 +257,69 @@ tags:
 - name: Справочники
   description: Общие справочные данные CMS
 paths:
+  /cms/led/settings:
+    get:
+      tags:
+      - Настройки экрана - CMS
+      summary: Получить настройки экрана
+      description: Общий набор настроек. Доступен активному администратору или оператору
+        со Staff JWT и активному устройству с Device JWT независимо от роли устройства.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Текущие настройки экрана.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenSettingsResponse'
+        '401':
+          description: Нет действующего Staff JWT или Device JWT; пользователь не
+            допускается.
+        '403':
+          description: Требуется роль администратора или оператора.
+    put:
+      tags:
+      - Настройки экрана - CMS
+      summary: Изменить настройки экрана
+      description: 'Только активный администратор со Staff JWT (роль 1). Изменяются
+        только переданные
+
+        поля; пропущенные сохраняют свои значения. Пустой объект возвращает текущие
+        настройки.
+
+        Длительности — конечные JSON-числа >= 0, screensaversPerCycle — целое число
+        >= 1.
+
+        null, строки, boolean и неизвестные поля не принимаются. Поля передаются в
+        camelCase.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenSettingsUpdateRequest'
+            example:
+              carouselDurationSec: 20
+              cardExpandDurationSec: 0.8
+              screensaversPerCycle: 4
+      responses:
+        '200':
+          description: Полный набор сохранённых настроек экрана.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenSettingsResponse'
+        '401':
+          description: Нет действующего Staff JWT; пользователь и устройство не допускаются.
+        '403':
+          description: Только для администраторов.
+        '422':
+          description: Некорректные значения либо неизвестные поля.
   /cms/led/screensavers:
     get:
       tags:
@@ -1156,10 +1219,12 @@ paths:
         сохранить его ID при авторизации. При существующем OAuth-аккаунте выполняется
         вход в него без объединения истории. Access возвращается в JSON, refresh —
         в HttpOnly cookie. Изображение аватара провайдера скачивается в общее файловое
-        хранилище; users.media_id хранит ID файла. При следующем входе изображение
-        скачивается заново, если оно предоставлено; отсутствующее изображение не стирает
-        текущий файл. Ошибка скачивания возвращает 503 без изменения пользователя
-        и создания сессии. Отсутствующий аватар не стирает прежнюю ссылку.
+        хранилище; users.media_id хранит ID файла. Изображение скачивается и сохраняется
+        только при отсутствии текущего файла (users.media_id IS NULL). Уже установленная
+        фотография, включая загруженную пользователем, сохраняется; обращения к CDN
+        аватара не происходит. Отсутствующий аватар не стирает текущий файл. Если
+        требуется загрузка и она завершается ошибкой, возвращается 503 без изменения
+        пользователя и создания сессии.
       security:
       - {}
       - bearerAuth: []
@@ -4979,6 +5044,9 @@ paths:
                 question_type:
                   title: Question Type
                   type: integer
+                  description: 'Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18;
+                    multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены;
+                    свободных текстовых типов нет.'
                 difficulty:
                   title: Difficulty
                   type: integer
@@ -5171,8 +5239,8 @@ paths:
       - Викторина - CMS
       summary: Обновить вопрос
       description: Требуется staff access-токен редактора контента. Нельзя редактировать
-        вопрос, используемый незавершённой игровой сессией (status `1` — waiting или
-        `2` — active).
+        вопрос, используемый незавершённой игровой сессией (status `1` — waiting,
+        `2` — active или `4` — results).
       parameters:
       - name: id
         in: path
@@ -5330,8 +5398,8 @@ paths:
       - Викторина - CMS
       summary: Удалить вопрос
       description: Требуется staff access-токен редактора контента. Нельзя удалить
-        вопрос, используемый незавершённой игровой сессией (status `1` — waiting или
-        `2` — active).
+        вопрос, используемый незавершённой игровой сессией (status `1` — waiting,
+        `2` — active или `4` — results).
       parameters:
       - name: id
         in: path
@@ -6029,7 +6097,7 @@ paths:
       summary: Создать сессию
       description: 'Создаёт сессию в статусе `1` (waiting). Она привязывается к LED-устройству
         `device_id`; на одном устройстве одновременно может быть только одна сессия
-        со статусом `1` (waiting) или `2` (active).
+        со статусом `1` (waiting), `2` (active) или `4` (results).
 
         После создания в waiting устройство получает session_started в /api/device/sessions/ws
         с payload device_id, session_id и module=quiz.
@@ -6272,27 +6340,29 @@ paths:
       tags:
       - Викторина
       summary: Получить активную сессию
-      description: "Возвращает текущую незавершённую сессию (status=1, waiting или\
-        \ status=2, active) для указанного LED-устройства.\nОператор использует запрос\
-        \ для отображения сессии, уже запущенной на этом устройстве.\nВсегда возвращает\
-        \ `round_count` — общее количество раундов и `current_round_question_count`\
-        \ — количество вопросов в текущем раунде. В статусе waiting счётчик вопросов\
-        \ относится к первому раунду. current_question.revealed показывает реальное\
-        \ раскрытие ответа на этот вопрос для всех ролей, независимо от select; в\
-        \ waiting и finished объекта current_question нет. can_start_final_round показывает\
-        \ возможность добавить финал после раскрытия последнего вопроса; в waiting\
-        \ и при наличии FINAL он false.\nВо время active также возвращает текущий\
-        \ раунд, вопрос и таймер. Сотрудник получает current_question.correct_answer\
+      description: "В results=4 возвращает этап итогов без current_question и timer;\
+        \ рейтинг доступен через /results, finished_at=null. Возвращает текущую незавершённую\
+        \ сессию (status=1 waiting, status=2 active или status=4 results) для указанного\
+        \ LED-устройства.\nОператор использует запрос для отображения сессии, уже\
+        \ запущенной на этом устройстве.\nВсегда возвращает `round_count` — общее\
+        \ количество раундов и `current_round_question_count` — количество вопросов\
+        \ в текущем раунде. В статусе waiting счётчик вопросов относится к первому\
+        \ раунду. current_question.revealed показывает реальное раскрытие ответа на\
+        \ этот вопрос для всех ролей, независимо от select; в waiting/results/finished\
+        \ объекта current_question нет. can_start_final_round показывает возможность\
+        \ добавить финал после раскрытия последнего вопроса, включая этап results;\
+        \ в waiting и при наличии FINAL он false.\nВо время active также возвращает\
+        \ текущий раунд, вопрос и таймер. Сотрудник получает current_question.correct_answer\
         \ сразу; User и Device — только после reveal. Просмотр сотрудником не раскрывает\
         \ ответ для игроков. `select=answers` добавляет корневое поле `answers` с\
         \ голосами участников, решающими ответами и статусами команд, счётчиками по\
-        \ вариантам; без параметра поле отсутствует. До начала и после завершения\
-        \ игры `answers=null`. User в командной игре видит свою команду, StaffUser\
-        \ — все команды, Device — общие счётчики и статусы без содержимого ответов.\
-        \ `select=teams` и `select=participants` добавляют состав команд и участников;\
-        \ несколько значений select передаются повторяющимися параметрами запроса.\n\
-        Если активной сессии нет — возвращает 404.\n Для device-токена требуется роль\
-        \ 1; другая группа устройства — 403."
+        \ вариантам; без параметра поле отсутствует. В waiting, results и finished\
+        \ `answers=null`. User в командной игре видит свою команду, StaffUser — все\
+        \ команды, Device — общие счётчики, статусы команд и ответы капитанов в team_answers;\
+        \ participant_answers остаётся пустым. `select=teams` и `select=participants`\
+        \ добавляют состав команд и участников; несколько значений select передаются\
+        \ повторяющимися параметрами запроса.\nЕсли активной сессии нет — возвращает\
+        \ 404.\n Для device-токена требуется роль 1; другая группа устройства — 403."
       parameters:
       - name: device_id
         in: query
@@ -6339,24 +6409,26 @@ paths:
       tags:
       - Викторина
       summary: Получить сессию
-      description: "Возвращает базовые поля сессии, счётчики round_count/current_round_question_count\
-        \ и вычисляемый can_start_final_round. Во время active также возвращаются\
-        \ текущий раунд, вопрос и таймер. current_question.revealed показывает реальное\
-        \ раскрытие ответа на этот вопрос, независимо от роли и select; в waiting/finished\
+      description: "В results=4 показывает этап итогов без current_question и timer;\
+        \ рейтинг доступен через /results, finished_at=null. Возвращает базовые поля\
+        \ сессии, счётчики round_count/current_round_question_count и вычисляемый\
+        \ can_start_final_round. Во время active также возвращаются текущий раунд,\
+        \ вопрос и таймер. current_question.revealed показывает реальное раскрытие\
+        \ ответа на этот вопрос, независимо от роли и select; в waiting/results/finished\
         \ объекта current_question нет.\n`select=answers` добавляет корневое поле\
         \ `answers` с голосами участников, решающими ответами и статусами команд,\
-        \ счётчиками по вариантам; без параметра поле отсутствует. До начала и после\
-        \ завершения игры `answers=null`. User в командной игре видит свою команду,\
-        \ StaffUser — все команды, Device — общие счётчики и статусы без содержимого\
-        \ ответов. `select=teams` и `select=participants` добавляют состав команд\
-        \ и участников. Несколько значений select передаются повторяющимися параметрами\
-        \ запроса. Для авторизованного капитана `answer_submissions` текущего вопроса\
-        \ содержит ответы его команды; участник определяется по access-токену. Сотрудник\
-        \ получает current_question.correct_answer сразу; User и Device — только после\
-        \ reveal. Просмотр сотрудником не раскрывает ответ для игроков. До раскрытия\
-        \ правильного ответа поля `is_correct` у вариантов и `answer_key` вопроса\
-        \ не возвращаются.\n Для device-токена требуется роль 1; другая группа устройства\
-        \ — 403."
+        \ счётчиками по вариантам; без параметра поле отсутствует. В waiting, results\
+        \ и finished `answers=null`. User в командной игре видит свою команду, StaffUser\
+        \ — все команды, Device — общие счётчики, статусы команд и ответы капитанов\
+        \ в team_answers; participant_answers остаётся пустым. `select=teams` и `select=participants`\
+        \ добавляют состав команд и участников. Несколько значений select передаются\
+        \ повторяющимися параметрами запроса. Для авторизованного капитана `answer_submissions`\
+        \ текущего вопроса содержит ответы его команды; участник определяется по access-токену.\
+        \ Сотрудник получает current_question.correct_answer сразу; User и Device\
+        \ — только после reveal. Просмотр сотрудником не раскрывает ответ для игроков.\
+        \ До раскрытия правильного ответа поля `is_correct` у вариантов и `answer_key`\
+        \ вопроса не возвращаются.\n Для device-токена требуется роль 1; другая группа\
+        \ устройства — 403."
       parameters:
       - name: id
         in: path
@@ -6509,8 +6581,9 @@ paths:
         Начальные 3–8 раундов дополняются одним финальным: после 8 основных допустимо
         9 раундов.
 
-        Статус остаётся active; ID сессии, участники, команды, настройки и набранные
-        баллы сохраняются.
+        Доступно из active после раскрытия последнего ответа и из results. Статус
+        становится active; ID сессии, участники, команды, настройки и набранные баллы
+        сохраняются.
 
         Повторный или параллельный запрос не добавляет второй финал: существующий
         FINAL в любом месте сессии даёт 409.
@@ -6527,8 +6600,9 @@ paths:
         В финале действуют обычные переходы, ответы и final_multiplier. После последнего
         вопроса финала
 
-        клиент завершает игру через /finish без повторного предложения финала. Сервер
-        не добавляет новые задержки или временные метки.
+        клиент вызывает /next или /led/next для показа results, затем /finish без
+        повторного предложения финала. Сервер не добавляет новые задержки или временные
+        метки.
 
         '
       parameters:
@@ -6583,15 +6657,18 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Завершить сессию
-      description: После раскрытия последнего вопроса последнего раунда переносит
-        счётчики личных правильных ответов из Redis в quiz/answers одной транзакцией
-        со статусом сессии. Повторный finish не начисляет повторно; досрочный finish
-        не начисляет ответы. Завершить сессию. Статус меняется на `3` (finished).
-        Возвращает состояние завершённой сессии. После первого завершения устройство
-        получает session_finished в /api/device/sessions/ws с module=quiz. Для индивидуального
-        режима SESSION_FINISHED аналитики содержит results[{participant_id,user_id,total_score}]
-        — снимок сохранённых личных баллов, включая нули, отправляемый после commit;
-        повтор finish не создаёт событие. Командный payload не меняется.
+      description: Доступно оператору/администратору со staff access-токеном и активному
+        LED с Device JWT и ролью QUIZ_VIDEO=1. LED завершает только собственную сессию;
+        чужая сессия или неподходящая роль устройства — 403, User JWT — 401. После
+        раскрытия последнего вопроса последнего раунда переносит счётчики личных правильных
+        ответов из Redis в quiz/answers одной транзакцией со статусом сессии. Повторный
+        finish не начисляет повторно; досрочный finish не начисляет ответы. Завершить
+        сессию. Статус меняется на `3` (finished). Возвращает состояние завершённой
+        сессии. После первого завершения устройство получает session_finished в /api/device/sessions/ws
+        с module=quiz. Для индивидуального режима SESSION_FINISHED аналитики содержит
+        results[{participant_id,user_id,total_score}] — снимок сохранённых личных
+        баллов, включая нули, отправляемый после commit; повтор finish не создаёт
+        событие. Командный payload не меняется.
       parameters:
       - name: id
         in: path
@@ -6604,6 +6681,8 @@ paths:
           description: Отсутствующий, истёкший или недействительный токен
         '403':
           description: Нет доступа к сессии или операция недоступна роли
+        '404':
+          description: Сессия не найдена
         '200':
           description: Сессия завершена
           content:
@@ -6657,6 +6736,31 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Назначить капитана команды
+      description: 'Принимает действующий User/Staff access JWT через общую проверку
+        get_current_identity.
+
+        Оператор и администратор могут назначить капитана команды. Пользователь может
+
+        передать роль только если сейчас является капитаном именно этой команды.
+
+        Это проверяется в сервисе после блокировки сессии и чтения актуального captain_id.
+
+        Новый капитан должен быть участником той же команды и сессии; participant_id
+        —
+
+        идентификатор участника викторины, а не users.id. Прежний капитан после передачи
+
+        теряет право менять капитана этой команды. Device JWT не допускается.
+
+        Смена доступна и во время игры; ограничения по статусу сессии не добавлены.
+
+        Сохранённые ответы и отметка решающего ответа команды не сбрасываются.
+
+        Отправляется событие captain_changed; формат успешного ответа не меняется.
+
+        '
+      security:
+      - bearerAuth: []
       parameters:
       - name: id
         in: path
@@ -6686,7 +6790,8 @@ paths:
         '401':
           description: Отсутствующий, истёкший или недействительный токен
         '403':
-          description: Нет доступа к сессии или операция недоступна роли
+          description: Пользователь не является текущим капитаном этой команды либо
+            роль сотрудника не допускается.
         '200':
           description: Капитан назначен
           content:
@@ -6695,6 +6800,84 @@ paths:
                 $ref: '#/components/schemas/QuizTeam'
         '404':
           description: Сессия, команда или участник не найдены
+  /quiz/sessions/{id}/participants/{participantId}:
+    delete:
+      tags:
+      - Викторина - Оператор
+      summary: Удалить участника из викторины
+      description: 'Только оператор или администратор со Staff access JWT. Работает
+        в индивидуальном
+
+        и командном режиме, в том числе во время игры. Удаляется запись участника
+        сессии;
+
+        учётная запись пользователя и его файлы сохраняются. Участник исключается
+        из состава,
+
+        текущих ответов и индивидуального рейтинга. Повторное подключение через join
+        не блокируется.
+
+        При удалении капитана выбирается случайный оставшийся участник той же команды;
+
+        если команда опустела, captain_id=null. Пустая команда сохраняется, но не
+        участвует
+
+        в проверке «все ответили». Уже начисленные очки команды и история оценённых
+        ответов сохраняются.
+
+        Если приём ответов ещё открыт (включая паузу) и ответ не раскрыт, у команды
+        удалённого
+
+        капитана снимается отметка решающего ответа текущего вопроса, чтобы новый
+        капитан мог ответить.
+
+        После удаления заново проверяется «все ответили» по оставшемуся составу. Если
+        все ответили,
+
+        приём закрывается существующей логикой: при числовом auto_reveal_delay раскрывается
+        ответ,
+
+        при null ожидается ручное действие. Пустой состав не считается «все ответили».
+
+        Операция сериализуется блокировкой сессии с приёмом ответов и сменой капитана.
+
+        События сокета: participant_removed, при смене капитана captain_changed, затем
+
+        answers_update и session_state; при досрочном закрытии также all_answered
+        и обычные
+
+        события раскрытия ответа. Повторное удаление возвращает 404 без повторных
+        событий.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: participantId
+        in: path
+        required: true
+        description: ID участника викторины, а не users.id.
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Участник удалён; ответ без тела.
+        '401':
+          description: Нет действующего Staff JWT; User и Device JWT не допускаются.
+        '403':
+          description: Недостаточно прав; только оператор или администратор.
+        '404':
+          description: Сессия или участник не найдены либо участник относится к другой
+            сессии.
+        '422':
+          description: Некорректный идентификатор.
   /quiz/sessions/{id}/participants/{participantId}/team:
     patch:
       tags:
@@ -6769,10 +6952,18 @@ paths:
         Если вопросов в раунде больше нет — ручной запуск следующего раунда. Задержки
         отсчитывает клиент перед вызовом LED endpoint /led/next.
 
-        После последнего вопроса последнего раунда сессия остаётся в статусе `2` (active);
-        /next больше не продвигает игру. После раскрытия ответа can_start_final_round=true
-        позволяет оператору выбрать /finish или /final-round. Если FINAL (9) уже есть,
-        доступно только завершение через /finish.
+        После раскрытия ответа на последний вопрос последнего раунда следующий /next
+        переводит сессию в статус 4 (results): показ итогов до завершения. До раскрытия
+        последнего ответа возвращает 400.
+
+        Отправляются results_started и session_state в сокет сессии; сокет устройства
+        получает results_started с module=quiz.
+
+        В results повторный /next возвращает текущее состояние без повторных событий.
+        Сессия остаётся доступной через /active; рейтинг загружается через /results.
+
+        Если can_start_final_round=true, оператор может добавить /final-round с возвратом
+        в active. /finish завершает сессию и переводит её в finished.
 
         '
       parameters:
@@ -6810,11 +7001,11 @@ paths:
                   value:
                     error: session_finished
                     message: Сессия уже завершена
-                no_more_questions:
-                  summary: Нет следующих вопросов
+                last_answer_not_revealed:
+                  summary: Последний ответ ещё не раскрыт
                   value:
-                    error: no_more_questions
-                    message: Это последний вопрос, используйте finish для завершения
+                    error: last_answer_not_revealed
+                    message: Сначала раскройте ответ на последний вопрос
   /quiz/sessions/{id}/reveal:
     post:
       tags:
@@ -6870,7 +7061,8 @@ paths:
       tags:
       - Викторина - Оператор
       summary: Пауза таймера
-      description: Поставить на паузу таймер текущего вопроса
+      description: Поставить на паузу таймер текущего вопроса. На паузе ответы продолжают
+        приниматься; время ответа для бонуса за скорость фиксируется на моменте паузы.
       parameters:
       - name: id
         in: path
@@ -7024,9 +7216,11 @@ paths:
         Сервер не проверяет время этих задержек и не сохраняет дополнительные временные
         метки. После ручной остановки при положительном auto_reveal_delay клиент вызывает
         reveal по окончании задержки. После раскрытия последнего вопроса последнего
-        раунда оператор выбирает finish или final-round по can_start_final_round;
-        после финала вызывает только finish. Для device-токена требуется роль 1; другая
-        группа устройства — 403.
+        раунда следующий вызов переводит сессию в results=4 и отправляет results_started
+        и session_state. Повторный вызов в results не завершает сессию и не повторяет
+        события. Для завершения вызывается /finish; оператор также может запустить
+        /final-round, если can_start_final_round=true. Для device-токена требуется
+        роль 1; другая группа устройства — 403.
       parameters:
       - name: id
         in: path
@@ -7192,6 +7386,18 @@ paths:
       description: 'User access-токен обязателен. Участник определяется по пользователю
         и сессии.
 
+        На паузе таймера ответы принимаются в обоих режимах: running=false и remaining_at_pause
+        не null.
+
+        После остановки (remaining_at_pause=null), раскрытия ответа или завершения
+        сессии ответы не принимаются.
+
+        Время ответа для бонуса за скорость на паузе рассчитывается до paused_at;
+        длительность паузы не учитывается.
+
+        Правила повторной отправки, решающего ответа капитана и закрытия по условию
+        «все ответили» сохраняются.
+
         Ответ на текущий вопрос. Поведение зависит от режима и роли:
 
         - Individual mode: ответ засчитывается
@@ -7235,8 +7441,9 @@ paths:
               properties:
                 answer:
                   type: object
-                  description: JSON-ответ согласно типу вопроса; форматы описаны в
-                    entities/quiz.md
+                  description: Single — option_id, multiple и sorting — option_ids,
+                    matching — pairs. Поле text сохранено как дополнительное пояснение,
+                    но не проверяется. Текстовых типов нет; форматы описаны в entities/quiz.md
                   additionalProperties: true
                 is_final:
                   type: boolean
@@ -7916,8 +8123,11 @@ paths:
       tags:
       - Профессии в действии - Оператор
       summary: Запустить показ
-      description: 'Запустить показ видеосценариев на LED-экране. Требуется staff
-        access-токен оператора или администратора.
+      description: 'Запустить показ видеосценариев на LED-экране. Доступ: staff access-токен
+        оператора/администратора или Device JWT активного устройства с ролью QUIZ_VIDEO=1.
+
+        Для Device JWT обязательный `device_id` должен совпадать с ID устройства из
+        токена; чужой ID возвращает 403.
 
         В `settings` передаётся либо `scenario_ids` (ручной выбор), либо `profession_count`
         (случайный выбор N сценариев).
@@ -7943,8 +8153,8 @@ paths:
                 device_id:
                   type: integer
                   format: int64
-                  description: Идентификатор LED-устройства, на котором запускается
-                    показ
+                  description: Идентификатор LED-устройства; для Device JWT должен
+                    совпадать с устройством из токена
                 settings:
                   type: object
                   required:
@@ -7973,9 +8183,10 @@ paths:
                       description: Длительность показа результата в секундах
       responses:
         '401':
-          description: Отсутствующий или недействительный staff access-токен
+          description: Отсутствующий или недействительный токен; User JWT не допускается
         '403':
-          description: Требуется роль оператора или администратора
+          description: Недостаточно прав сотрудника/устройства или попытка управления
+            чужим устройством
         '201':
           description: Показ запущен
           content:
@@ -8006,7 +8217,8 @@ paths:
       summary: Получить активную сессию
       description: Доступ с действующим User JWT (включая гостя), staff access-токеном
         сотрудника любой роли или Device JWT с ролью QUIZ_VIDEO=1. Возвращает активную
-        сессию показа с полным состоянием. Для пользователя и сотрудника device_id
+        сессию показа с полным состоянием. Включает last_voting_result — итог последнего
+        закрытого голосования, либо null. Для пользователя и сотрудника device_id
         выбирает устройство; без device_id возвращается любая активная сессия. User
         JWT не требует предварительного присоединения к показу или QR-привязки. Для
         Device JWT используется устройство из токена; чужой device_id возвращает 403.
@@ -8039,9 +8251,11 @@ paths:
       tags:
       - Профессии в действии - Оператор
       summary: Остановить показ
-      description: Остановить показ и вернуть LED-экран в режим ожидания. После первого
+      description: 'Остановить показ и вернуть LED-экран в режим ожидания. После первого
         завершения устройство получает session_finished в /api/device/sessions/ws
-        с module=interactive_video. Требуется staff access-токен оператора или администратора.
+        с module=interactive_video. Доступ: staff access-токен оператора/администратора
+        или Device JWT активного устройства с ролью QUIZ_VIDEO=1. Устройство может
+        остановить только собственную сессию; чужая сессия возвращает 403.'
       parameters:
       - name: id
         in: path
@@ -8051,9 +8265,10 @@ paths:
           format: int64
       responses:
         '401':
-          description: Отсутствующий или недействительный staff access-токен
+          description: Отсутствующий или недействительный токен; User JWT не допускается
         '403':
-          description: Требуется роль оператора или администратора
+          description: Недостаточно прав сотрудника/устройства или попытка управления
+            чужим устройством
         '204':
           description: Показ остановлен
         '404':
@@ -8064,8 +8279,12 @@ paths:
       - Профессии в действии - LED
       summary: Получить состояние показа
       description: 'Доступен с device-токеном устройства этой сессии либо staff access-токеном
-        оператора. Возвращает состояние показа: текущее видео, голосование и результаты.
-        Для device-токена требуется роль 1; другая группа устройства — 403.'
+        оператора. Возвращает состояние показа: текущее видео, голосование и last_voting_result
+        — снимок последнего завершённого голосования с итоговыми счётчиками и выбранной
+        веткой. До первого закрытия null; сохраняется при playing, новом голосовании
+        и завершении сессии до следующего закрытия. Снимок хранится в Redis; потеря
+        Redis удаляет его. Для device-токена требуется роль 1; другая группа устройства
+        — 403.'
       parameters:
       - name: id
         in: path
@@ -10034,7 +10253,10 @@ paths:
       description: User JWT или Device JWT с ролью 3 и действующей QR-привязкой; для
         устройства обязателен X-Device-Connection-Id. Следующий неотвеченный вопрос
         текущей in_progress сессии. Повтор GET возвращает тот же вопрос до сохранения
-        ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409.
+        ответа. Архивную версию можно продолжать. Если текущей сессии нет — 409. Для
+        пользователей до 15 лет поле text вопроса и каждого варианта берётся из text_under_age,
+        если оно задано. Возраст определяется по User.birth_date на дату запроса (Europe/Moscow).
+        Без даты рождения используется обычный текст.
       x-implementation-status: implemented
       parameters:
       - $ref: '#/components/parameters/DeviceConnectionId'
@@ -12814,6 +13036,110 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    ScreenSettingsResponse:
+      type: object
+      required:
+      - carouselDurationSec
+      - selectedCardHoldSec
+      - cardExpandDurationSec
+      - victoryDisplayDurationSec
+      - screensaversPerCycle
+      - initialBackgroundDurationSec
+      - betweenScreensaversDurationSec
+      - screensaverRouletteWaitSec
+      - analyticsDurationSec
+      - professionIntroBackgroundSec
+      - professionFirstCountdownSec
+      - professionNextSpinDelaySec
+      properties:
+        carouselDurationSec:
+          type: number
+          minimum: 0
+          default: 15
+        selectedCardHoldSec:
+          type: number
+          minimum: 0
+          default: 1
+        cardExpandDurationSec:
+          type: number
+          minimum: 0
+          default: 0.8
+        victoryDisplayDurationSec:
+          type: number
+          minimum: 0
+          default: 3
+        screensaversPerCycle:
+          type: integer
+          minimum: 1
+          default: 4
+        initialBackgroundDurationSec:
+          type: number
+          minimum: 0
+          default: 10
+        betweenScreensaversDurationSec:
+          type: number
+          minimum: 0
+          default: 5
+        screensaverRouletteWaitSec:
+          type: number
+          minimum: 0
+          default: 3
+        analyticsDurationSec:
+          type: number
+          minimum: 0
+          default: 60
+        professionIntroBackgroundSec:
+          type: number
+          minimum: 0
+          default: 2
+        professionFirstCountdownSec:
+          type: number
+          minimum: 0
+          default: 15
+        professionNextSpinDelaySec:
+          type: number
+          minimum: 0
+          default: 3
+    ScreenSettingsUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        carouselDurationSec:
+          type: number
+          minimum: 0
+        selectedCardHoldSec:
+          type: number
+          minimum: 0
+        cardExpandDurationSec:
+          type: number
+          minimum: 0
+        victoryDisplayDurationSec:
+          type: number
+          minimum: 0
+        screensaversPerCycle:
+          type: integer
+          minimum: 1
+        initialBackgroundDurationSec:
+          type: number
+          minimum: 0
+        betweenScreensaversDurationSec:
+          type: number
+          minimum: 0
+        screensaverRouletteWaitSec:
+          type: number
+          minimum: 0
+        analyticsDurationSec:
+          type: number
+          minimum: 0
+        professionIntroBackgroundSec:
+          type: number
+          minimum: 0
+        professionFirstCountdownSec:
+          type: number
+          minimum: 0
+        professionNextSpinDelaySec:
+          type: number
+          minimum: 0
     AvatarGenerationWebSocketEvent:
       type: object
       required:
@@ -13267,6 +13593,9 @@ components:
         question_type:
           title: Question Type
           type: integer
+          description: 'Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple:
+            2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых
+            типов нет.'
         difficulty:
           title: Difficulty
           type: integer
@@ -14126,6 +14455,12 @@ components:
           format: date-time
     Organization:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          default: null
         id:
           type: integer
           title: Id
@@ -14439,6 +14774,9 @@ components:
           type: string
         question_type:
           type: integer
+          description: 'Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18; multiple:
+            2,13; matching: 5,7,12; sorting: 6,10. ID сохранены; свободных текстовых
+            типов нет.'
           enum:
           - 1
           - 2
@@ -14662,7 +15000,8 @@ components:
           - 1
           - 2
           - 3
-          description: 1 — waiting, 2 — active, 3 — finished
+          - 4
+          description: 1 — waiting, 2 — active, 3 — finished, 4 — results (показ итогов)
         settings:
           type: object
         created_at:
@@ -14732,9 +15071,9 @@ components:
         properties:
           can_start_final_round:
             type: boolean
-            description: true только в active после раскрытия последнего вопроса последнего
-              раунда, если в сессии нет FINAL (9). Вычисляется заново при чтении;
-              после добавления финала всегда false.
+            description: true в active после раскрытия последнего вопроса последнего
+              раунда и в results, если в сессии нет FINAL (9). Вычисляется заново
+              при чтении; после добавления финала всегда false.
           round_count:
             type: integer
             minimum: 0
@@ -14921,8 +15260,8 @@ components:
                 - object
                 - 'null'
                 additionalProperties: true
-                description: Текущий ответ капитана; null при отсутствии ответа и
-                  для Device.
+                description: Текущий ответ капитана, в том числе для Device; null
+                  при отсутствии ответа.
         option_counts:
           type: array
           description: 'Число текущих голосов участников и голосов капитанов команд
@@ -14933,10 +15272,11 @@ components:
 
             StaffUser и Device — всей сессии. При множественном выборе каждый участник/команда
 
-            учитывается один раз на выбранный вариант. Для текста, сопоставления,
-            порядка
+            учитывается один раз на выбранный вариант. Счётчики доступны для single-типов
 
-            и распределения ролей возвращается пустой массив.
+            1,3,4,8,9,11,14,15,16,17,18 и multiple-типов 2,13. Для matching 5,7,12
+
+            и sorting 6,10 возвращается пустой массив.
 
             '
           items:
@@ -15037,7 +15377,8 @@ components:
           - 1
           - 2
           - 3
-          description: 1 — waiting, 2 — active, 3 — finished
+          - 4
+          description: 1 — waiting, 2 — active, 3 — finished, 4 — results (показ итогов)
         current_round:
           type: object
           nullable: true
@@ -15078,6 +15419,9 @@ components:
                   type: string
                 question_type:
                   type: integer
+                  description: 'Формат по ID — single: 1,3,4,8,9,11,14,15,16,17,18;
+                    multiple: 2,13; matching: 5,7,12; sorting: 6,10. ID сохранены;
+                    свободных текстовых типов нет.'
                   enum:
                   - 1
                   - 2
@@ -15113,6 +15457,11 @@ components:
                         format: int64
                       text:
                         type: string
+                      side:
+                        type: integer
+                        nullable: true
+                        description: 'Сторона сопоставления для matching: 1 — left,
+                          2 — right; для остальных типов null.'
                       file:
                         anyOf:
                         - $ref: '#/components/schemas/FileResponse'
@@ -15182,14 +15531,26 @@ components:
     QuizTimerState:
       description: 'Состояние таймера текущего вопроса викторины.
 
-        Для синхронизации используется абсолютный timestamp `ends_at`, а не относительный
-        `remaining`.
+        `remaining_ms` вычисляется сервером при формировании ответа: max(0, ends_at
+        - server_now_ms).
 
-        Клиент вычисляет оставшееся время: remaining = ends_at - now.
+        На паузе возвращается remaining_at_pause * 1000, при остановленном или отсутствующем
+        таймере — 0.
+
+        Между ответами клиент отсчитывает прошедший интервал через performance.now();
+        часы устройства не используются.
 
         '
       type: object
+      required:
+      - remaining_ms
       properties:
+        remaining_ms:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Осталось миллисекунд по времени сервера на момент формирования
+            ответа.
         ends_at:
           type: integer
           format: int64
@@ -15222,6 +15583,7 @@ components:
           enum:
           - session_state
           - participant_joined
+          - participant_removed
           - participant_team_changed
           - captain_changed
           - team_renamed
@@ -15617,6 +15979,12 @@ components:
                     format: int64
                   text:
                     type: string
+        last_voting_result:
+          description: Последнее завершённое голосование либо null до первого закрытия.
+            Не сбрасывается при открытии следующего голосования.
+          anyOf:
+          - $ref: '#/components/schemas/InteractiveVideoVotingResult'
+          - type: 'null'
         voting_point:
           type: object
           nullable: true
@@ -15639,12 +16007,20 @@ components:
                 не увеличивает счётчик.
             timer:
               type: object
+              required:
+              - ends_at
+              - remaining_ms
               properties:
                 ends_at:
                   type: integer
                   format: int64
-                  description: UNIX timestamp (мс), когда таймер закончится. Клиент
-                    вычисляет remaining = ends_at - now.
+                  description: UNIX timestamp (мс), когда таймер закончится.
+                remaining_ms:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Осталось миллисекунд на момент ответа, max(0, ends_at
+                    - server_now_ms).
             votes:
               type: array
               description: Распределение голосов
@@ -15656,6 +16032,53 @@ components:
                     format: int64
                   count:
                     type: integer
+    InteractiveVideoVotingResult:
+      description: Снимок последнего завершённого голосования. Сохраняется до завершения
+        следующего голосования, включая переходы и окончание сессии; хранится в Redis.
+      type: object
+      required:
+      - scenario_id
+      - voted_count
+      - votes
+      - winner_branch_id
+      - auto_selected
+      properties:
+        scenario_id:
+          type: integer
+          format: int64
+          description: Сценарий завершённого голосования.
+        voted_count:
+          type: integer
+          minimum: 0
+          description: Итоговое число голосов.
+        votes:
+          type: array
+          description: Все варианты с итоговыми голосами, включая нулевые; тексты
+            зафиксированы при закрытии.
+          items:
+            type: object
+            required:
+            - branch_id
+            - text
+            - count
+            properties:
+              branch_id:
+                type: integer
+                format: int64
+              text:
+                type: string
+                nullable: true
+              count:
+                type: integer
+                minimum: 0
+        winner_branch_id:
+          type: integer
+          format: int64
+          description: ID выбранного варианта до разрешения reference_branch_id. При
+            равенстве выбирается случайно среди лидеров.
+        auto_selected:
+          type: boolean
+          description: true при отсутствии голосов, когда вариант выбран автоматически.
     InteractiveVideoVoting:
       description: Информация о голосовании для мобильного клиента
       type: object
@@ -15711,12 +16134,20 @@ components:
                     type: string
             timer:
               type: object
+              required:
+              - ends_at
+              - remaining_ms
               properties:
                 ends_at:
                   type: integer
                   format: int64
-                  description: UNIX timestamp (мс), когда таймер закончится. Клиент
-                    вычисляет remaining = ends_at - now.
+                  description: UNIX timestamp (мс), когда таймер закончится.
+                remaining_ms:
+                  type: integer
+                  format: int64
+                  minimum: 0
+                  description: Осталось миллисекунд на момент ответа, max(0, ends_at
+                    - server_now_ms).
             already_voted:
               type: boolean
               description: true, если участник уже проголосовал
@@ -16531,6 +16962,11 @@ components:
       - order
       - group_id
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         text:
           type: string
           minLength: 1
@@ -16578,6 +17014,11 @@ components:
       additionalProperties: false
       required: []
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         text:
           type: string
           minLength: 1
@@ -16630,11 +17071,17 @@ components:
       - id
       - question_id
       - text
+      - text_under_age
       - file
       - value
       - order
       - group_id
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -16670,10 +17117,16 @@ components:
       required:
       - id
       - text
+      - text_under_age
       - file
       - value
       - order
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -16703,6 +17156,11 @@ components:
       - text
       - order
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         type:
           type: string
           enum:
@@ -16750,6 +17208,11 @@ components:
       additionalProperties: false
       required: []
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         type:
           type: string
           enum:
@@ -16804,12 +17267,18 @@ components:
       - type
       - axis
       - text
+      - text_under_age
       - file
       - order
       - options
       - created_at
       - updated_at
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -16859,10 +17328,16 @@ components:
       - type
       - axis
       - text
+      - text_under_age
       - file
       - order
       - options
       properties:
+        text_under_age:
+          type:
+          - string
+          - 'null'
+          minLength: 1
         id:
           type: integer
           format: int64
@@ -18116,6 +18591,7 @@ components:
           type: string
           enum:
           - session_started
+          - results_started
           - session_finished
         payload:
           type: object
@@ -18568,6 +19044,13 @@ components:
       title: IndustryUpdateRequest
     OrganizationCreateRequest:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          default: null
         name:
           maxLength: 255
           minLength: 1
@@ -18675,6 +19158,13 @@ components:
       title: OrganizationType
     OrganizationUpdateRequest:
       properties:
+        short_name:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          default: null
         name:
           anyOf:
           - maxLength: 255
