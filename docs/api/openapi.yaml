@@ -1169,6 +1169,13 @@ components:
     QuestionUpdateRequest:
       additionalProperties: false
       properties:
+        answer_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerOptionUpdate'
+          description: 'Полный список вариантов: id сохраняет вариант, без id создаётся новый;
+            отсутствующие варианты удаляются. Пропущенное поле сохраняет список, [] очищает
+            его.'
         text:
           anyOf:
           - type: string
@@ -1245,6 +1252,57 @@ components:
           default: null
           title: File Description
       title: QuestionUpdateRequest
+      type: object
+    AnswerOptionUpdate:
+      additionalProperties: false
+      properties:
+        id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        is_correct:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Is Correct
+        order:
+          anyOf:
+          - minimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Order
+        side:
+          anyOf:
+          - maximum: 2
+            minimum: 1
+            type: integer
+          - type: 'null'
+          default: null
+          title: Side
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: AnswerOptionUpdate
       type: object
     AnswerOptionCreate:
       additionalProperties: false
