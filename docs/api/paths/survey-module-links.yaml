@@ -1,0 +1,80 @@
+links:
+  get:
+    tags: [Обратная связь — CMS]
+    summary: Связи типов анкет с модулями
+    description: |
+      Чтение для администратора, контент-редактора и аналитика. Возвращает
+      конфигурацию по типам, независимо от наличия опубликованной анкеты.
+      Порядок по module_id, затем survey_type. Без совпадений — пустой массив.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: module_id
+        in: query
+        required: false
+        schema: {$ref: '#/components/schemas/SurveyModuleType'}
+      - name: survey_type
+        in: query
+        required: false
+        schema: {$ref: '#/components/schemas/SurveyType'}
+    responses:
+      '200':
+        description: Массив связей, Cache-Control no-store.
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/SurveyModuleLinkResponse'}
+      '401': {description: Требуется действующий Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '422': {description: Неизвестный код модуля или типа анкеты.}
+
+link:
+  put:
+    tags: [Обратная связь — CMS]
+    summary: Привязать тип анкеты к модулю
+    description: |
+      Только администратор и контент-редактор. Идемпотентное добавление пары:
+      повторный запрос возвращает ту же связь без дубликата. Тело не требуется.
+      Настройка относится ко всем версиям типа анкеты, не к survey_id.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: module_id
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/SurveyModuleType'}
+      - name: survey_type
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/SurveyType'}
+    responses:
+      '200':
+        description: Связь добавлена или уже существует, Cache-Control no-store.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SurveyModuleLinkResponse'}
+      '401': {description: Требуется действующий Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '422': {description: Неизвестный код модуля или типа анкеты.}
+  delete:
+    tags: [Обратная связь — CMS]
+    summary: Удалить привязку типа анкеты к модулю
+    description: Только администратор и контент-редактор. Анкеты, версии и ответы сохраняются.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: module_id
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/SurveyModuleType'}
+      - name: survey_type
+        in: path
+        required: true
+        schema: {$ref: '#/components/schemas/SurveyType'}
+    responses:
+      '204': {description: Связь удалена, ответ без тела, Cache-Control no-store.}
+      '401': {description: Требуется действующий Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '404': {description: Связь не найдена.}
+      '422': {description: Неизвестный код модуля или типа анкеты.}

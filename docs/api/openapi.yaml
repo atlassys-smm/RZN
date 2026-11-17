@@ -564,6 +564,10 @@ paths:
   # ── Обратная связь — CMS ─────────────────────────
   /cms/surveys:
     $ref: ./paths/surveys.yaml#/cms-surveys
+  /cms/surveys/module-links:
+    $ref: ./paths/survey-module-links.yaml#/links
+  /cms/surveys/module-links/{module_id}/{survey_type}:
+    $ref: ./paths/survey-module-links.yaml#/link
   /cms/surveys/responses:
     $ref: ./paths/surveys.yaml#/cms-survey-responses
   /cms/surveys/{survey_id}:
@@ -5873,6 +5877,18 @@ components:
           - string
           - 'null'
           description: Идентификатор текущего подключения; null, если пользователя нет.
+    SurveyModuleType:
+      type: integer
+      enum: [1, 2, 3, 4, 6]
+      description: '1 — индивидуальная викторина, 2 — командная викторина, 3 — профессии в действии, 4 — ПрофСтарт, 6 — аватар профессий.'
+    SurveyModuleLinkResponse:
+      type: object
+      required: [module_id, survey_type]
+      properties:
+        module_id:
+          $ref: '#/components/schemas/SurveyModuleType'
+        survey_type:
+          $ref: '#/components/schemas/SurveyType'
     SurveyType:
       type: integer
       enum:

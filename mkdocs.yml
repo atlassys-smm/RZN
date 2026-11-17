@@ -104,6 +104,7 @@ nav:
   - Архитектура подсистем:
     - Обзор: subsystems.md
     - Развёртывание проекта с нуля: subsystems/deployment.md
+    - Данные в каталогах сервера: subsystems/deployment-host-storage.md
     - Идентификация и регистрация: subsystems/identification.md
     - Авторизация и сессии: subsystems/auth-sessions.md
     - LED-медиаплатформа:

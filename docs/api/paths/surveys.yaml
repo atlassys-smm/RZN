@@ -3,8 +3,13 @@ cms-surveys:
     tags:
     - Обратная связь - CMS
     summary: Список анкет
+    description: Необязательный module_id фильтрует по привязанным типам; total считается после фильтрации, до пагинации.
     operationId: list_surveys_api_cms_surveys_get
     parameters:
+    - name: module_id
+      in: query
+      required: false
+      schema: {$ref: '#/components/schemas/SurveyModuleType'}
     - name: type
       in: query
       required: false
