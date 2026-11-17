@@ -5150,6 +5150,14 @@ paths:
       description: Требуется staff access-токен редактора контента или оператора.
         Получить список вопросов викторины с фильтрацией и пагинацией
       parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Поиск по подстроке текста вопроса без учёта регистра; пробелы
+          по краям удаляются. Пустой query не фильтрует. Символы % и _ ищутся буквально.
+          Фильтр учитывается в total до пагинации.
       - name: question_type
         in: query
         schema:
