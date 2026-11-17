@@ -248,6 +248,7 @@ nav:
     - Обзор: changelog/index.md
     - Документация:
       - Обзор: changelog/docs/index.md
+      - Версия 1.52: changelog/docs/v1.52.md
       - Версия 1.51: changelog/docs/v1.51.md
       - Версия 1.50: changelog/docs/v1.50.md
       - Версия 1.49: changelog/docs/v1.49.md
