@@ -11337,8 +11337,15 @@ paths:
       tags:
       - Обратная связь - CMS
       summary: Список анкет
+      description: Необязательный module_id фильтрует по привязанным типам; total
+        считается после фильтрации, до пагинации.
       operationId: list_surveys_api_cms_surveys_get
       parameters:
+      - name: module_id
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/SurveyModuleType'
       - name: type
         in: query
         required: false
@@ -11414,6 +11421,117 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - bearerAuth: []
+  /cms/surveys/module-links:
+    get:
+      tags:
+      - Обратная связь — CMS
+      summary: Связи типов анкет с модулями
+      description: 'Чтение для администратора, контент-редактора и аналитика. Возвращает
+
+        конфигурацию по типам, независимо от наличия опубликованной анкеты.
+
+        Порядок по module_id, затем survey_type. Без совпадений — пустой массив.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: module_id
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/SurveyModuleType'
+      - name: survey_type
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/SurveyType'
+      responses:
+        '200':
+          description: Массив связей, Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurveyModuleLinkResponse'
+        '401':
+          description: Требуется действующий Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '422':
+          description: Неизвестный код модуля или типа анкеты.
+  /cms/surveys/module-links/{module_id}/{survey_type}:
+    put:
+      tags:
+      - Обратная связь — CMS
+      summary: Привязать тип анкеты к модулю
+      description: 'Только администратор и контент-редактор. Идемпотентное добавление
+        пары:
+
+        повторный запрос возвращает ту же связь без дубликата. Тело не требуется.
+
+        Настройка относится ко всем версиям типа анкеты, не к survey_id.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: module_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SurveyModuleType'
+      - name: survey_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SurveyType'
+      responses:
+        '200':
+          description: Связь добавлена или уже существует, Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyModuleLinkResponse'
+        '401':
+          description: Требуется действующий Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '422':
+          description: Неизвестный код модуля или типа анкеты.
+    delete:
+      tags:
+      - Обратная связь — CMS
+      summary: Удалить привязку типа анкеты к модулю
+      description: Только администратор и контент-редактор. Анкеты, версии и ответы
+        сохраняются.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: module_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SurveyModuleType'
+      - name: survey_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SurveyType'
+      responses:
+        '204':
+          description: Связь удалена
+          ответ без тела: null
+          Cache-Control no-store.: null
+        '401':
+          description: Требуется действующий Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '404':
+          description: Связь не найдена.
+        '422':
+          description: Неизвестный код модуля или типа анкеты.
   /cms/surveys/responses:
     get:
       tags:
@@ -12310,13 +12428,22 @@ paths:
       description: Получить активные анкеты с вопросами и вариантами ответов. Требуется
         User JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства
         обязателен X-Device-Connection-Id. Черновики и неактивные версии не возвращаются.
-        total содержит общее число активных анкет. Общий Redis-кэш на 86400 секунд
-        без продления при чтении; публикация новой версии инвалидирует кэш. Подписанные
-        URL формируются заново. При сбое Redis выполняется чтение БД. Авторизация
-        проверяется на каждом запросе.
+        Необязательный module_id фильтрует по привязанным типам анкет; total считается
+        после фильтрации, до limit/offset. Без параметра возвращаются все активные
+        анкеты. Фильтр применяется до пагинации. Общий Redis-кэш на 86400 секунд без
+        продления при чтении; публикация новой версии или изменение привязок инвалидирует
+        кэш. Подписанные URL формируются заново. При сбое Redis выполняется чтение
+        БД. Авторизация проверяется на каждом запросе.
       security:
       - bearerAuth: []
       parameters:
+      - name: module_id
+        in: query
+        required: false
+        description: Фильтр по модулю; без параметра возвращаются все анкеты в рамках
+          текущего доступа.
+        schema:
+          $ref: '#/components/schemas/SurveyModuleType'
       - $ref: '#/components/parameters/DeviceConnectionId'
       - name: limit
         in: query
@@ -12342,7 +12469,8 @@ paths:
         '403':
           description: Недостаточная роль устройства или пользователь не подключён
         '422':
-          description: Неверная пагинация или не передан заголовок подключения устройства
+          description: Неизвестный module_id, неверная пагинация или не передан заголовок
+            подключения устройства
   /feedback/surveys/{survey_id}:
     get:
       tags:
@@ -18794,6 +18922,26 @@ components:
           - 'null'
           description: Идентификатор текущего подключения; null, если пользователя
             нет.
+    SurveyModuleType:
+      type: integer
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 6
+      description: 1 — индивидуальная викторина, 2 — командная викторина, 3 — профессии
+        в действии, 4 — ПрофСтарт, 6 — аватар профессий.
+    SurveyModuleLinkResponse:
+      type: object
+      required:
+      - module_id
+      - survey_type
+      properties:
+        module_id:
+          $ref: '#/components/schemas/SurveyModuleType'
+        survey_type:
+          $ref: '#/components/schemas/SurveyType'
     SurveyType:
       type: integer
       enum:
