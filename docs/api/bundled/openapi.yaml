@@ -974,6 +974,115 @@ paths:
         '422':
           description: limit меньше 1 либо offset меньше 0.
   /staff/{staff_id}:
+    patch:
+      tags:
+      - Сотрудник
+      summary: Изменить сотрудника
+      description: 'Только активный администратор со Staff JWT, роль 1. Частично обновляет
+
+        first_name, last_name, email, role и status сотрудника по staff_id.
+
+        Хотя бы одно поле обязательно; пропущенные поля сохраняются, null
+
+        и неизвестные поля не принимаются. Пробелы по краям строк удаляются;
+
+        email приводится к нижнему регистру и должен быть уникальным.
+
+        Новая роль учитывается со следующего запроса с ранее выданным токеном.
+
+        При блокировке отзываются все сессии сотрудника: access/refresh больше
+
+        не работают, в том числе после разблокировки; необходим новый вход.
+
+        Разблокировка выполняется status=1. Администратор может менять свои
+
+        имя, фамилию и email, но не может понизить собственную роль или
+
+        заблокировать собственный аккаунт. Пароль этим запросом не меняется.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: staff_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                first_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                last_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                role:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  description: 1 — администратор, 2 — оператор, 3 — аналитик, 4 —
+                    контент-редактор.
+                status:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+                  description: 1 — активен, 2 — заблокирован.
+            example:
+              first_name: Анна
+              last_name: Иванова
+              email: anna@example.com
+              role: 3
+      responses:
+        '200':
+          description: Обновлённый профиль сотрудника без пароля и токенов.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            Pragma:
+              schema:
+                type: string
+                enum:
+                - no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffInfoResponse'
+        '401':
+          description: Нет действующего Staff JWT; пользователь и устройство не допускаются.
+        '403':
+          description: Только для администраторов.
+        '404':
+          description: Сотрудник не найден.
+        '409':
+          description: Email уже используется; нельзя понизить собственную роль или
+            заблокировать себя.
+        '422':
+          description: Некорректный staff_id; пустой объект
+          null: null
+          неверный формат или длина строк: null
+          неизвестная роль или статус: null
+          лишние поля.: null
     delete:
       tags:
       - Сотрудник
