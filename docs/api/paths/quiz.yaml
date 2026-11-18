@@ -277,7 +277,18 @@ cms-questions-update:
   put:
     tags: [Викторина - CMS]
     summary: Обновить вопрос
-    description: Требуется staff access-токен редактора контента. Нельзя редактировать вопрос, используемый незавершённой игровой сессией (status `1` — waiting, `2` — active или `4` — results).
+    description: |
+      Требуется staff access-токен администратора или редактора контента.
+      Поле answer_options — JSON-массив полного желаемого списка вариантов.
+      С id обновляется вариант этого вопроса с сохранением ID и пропущенных полей;
+      без id добавляется новый вариант с обязательным text. Отсутствующие в массиве
+      варианты удаляются. Пропущенный answer_options сохраняет список, [] очищает.
+      Файлы answer_option_files[n] и answer_option_file_previews[n] относятся
+      к индексам переданного массива; без массива — к прежним индексам из GET.
+      Для matching одновременно обновите answer_key, если удаляются варианты,
+      на которые ссылаются пары. null в answer_key позволяет очистить эталон.
+      Связанные файлы физически не удаляются. Операция выполняется одной транзакцией.
+      Вопрос незавершённой сессии (status 1, 2 или 4) редактировать нельзя (409).
     parameters:
       - name: id
         in: path
@@ -293,9 +304,13 @@ cms-questions-update:
             additionalProperties: false
             properties:
               profession_id:
-                type: [integer, 'null']
+                type:
+                - integer
+                - 'null'
                 minimum: 1
-                description: Необязательная привязка к активной профессии. Пустое поле или строка null снимает привязку при PUT; отсутствие поля сохраняет её.
+                description: Необязательная привязка к активной профессии. Пустое поле
+                  или строка null снимает привязку при PUT; отсутствие поля сохраняет
+                  её.
               text:
                 anyOf:
                 - type: string
@@ -378,13 +393,77 @@ cms-questions-update:
                 - type: 'null'
                 default: null
                 title: File Description
+              answer_options:
+                type:
+                - string
+                - 'null'
+                title: Answer Options
+                description: JSON-массив полного списка вариантов; id — обновление, без
+                  id — добавление; пропущенное поле сохраняет варианты, [] удаляет все.
+                contentMediaType: application/json
+                contentSchema:
+                  items:
+                    additionalProperties: false
+                    properties:
+                      id:
+                        anyOf:
+                        - exclusiveMinimum: 0
+                          type: integer
+                        - type: 'null'
+                        default: null
+                        title: Id
+                      text:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: Text
+                      is_correct:
+                        anyOf:
+                        - type: boolean
+                        - type: 'null'
+                        default: null
+                        title: Is Correct
+                      order:
+                        anyOf:
+                        - minimum: 0
+                          type: integer
+                        - type: 'null'
+                        default: null
+                        title: Order
+                      side:
+                        anyOf:
+                        - maximum: 2
+                          minimum: 1
+                          type: integer
+                        - type: 'null'
+                        default: null
+                        title: Side
+                      file_title:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Title
+                      file_description:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        default: null
+                        title: File Description
+                    title: AnswerOptionUpdate
+                    type: object
+                  title: Answer Options
+                  type: array
               file:
                 type: string
                 format: binary
               file_preview:
                 type: string
                 format: binary
-                description: Превью файла. При обновлении можно передать отдельно для существующего вложения. Для нового видео без превью создаётся первый кадр.
+                description: Превью файла. При обновлении можно передать отдельно для
+                  существующего вложения. Для нового видео без превью создаётся первый
+                  кадр.
               answer_option_files[0]:
                 type: string
                 format: binary
@@ -392,7 +471,8 @@ cms-questions-update:
               answer_option_file_previews[0]:
                 type: string
                 format: binary
-                description: Превью файла варианта с индексом 0. При обновлении можно передать отдельно для существующего файла варианта.
+                description: Превью файла варианта с индексом 0. При обновлении можно
+                  передать отдельно для существующего файла варианта.
             title: QuestionUpdateRequest
             type: object
             patternProperties:
@@ -403,12 +483,16 @@ cms-questions-update:
                 type: string
                 format: binary
           encoding:
+            answer_options:
+              contentType: text/plain
             answer_key:
               contentType: text/plain
             tags:
               style: form
               explode: true
     responses:
+      '422':
+        description: Некорректные поля, чужие или повторные ID, неверные файловые индексы, ссылки matching-пар на удаляемые варианты.
       '403':
         description: Недостаточно прав
       '401':

@@ -5463,9 +5463,29 @@ paths:
       tags:
       - Викторина - CMS
       summary: Обновить вопрос
-      description: Требуется staff access-токен редактора контента. Нельзя редактировать
-        вопрос, используемый незавершённой игровой сессией (status `1` — waiting,
-        `2` — active или `4` — results).
+      description: 'Требуется staff access-токен администратора или редактора контента.
+
+        Поле answer_options — JSON-массив полного желаемого списка вариантов.
+
+        С id обновляется вариант этого вопроса с сохранением ID и пропущенных полей;
+
+        без id добавляется новый вариант с обязательным text. Отсутствующие в массиве
+
+        варианты удаляются. Пропущенный answer_options сохраняет список, [] очищает.
+
+        Файлы answer_option_files[n] и answer_option_file_previews[n] относятся
+
+        к индексам переданного массива; без массива — к прежним индексам из GET.
+
+        Для matching одновременно обновите answer_key, если удаляются варианты,
+
+        на которые ссылаются пары. null в answer_key позволяет очистить эталон.
+
+        Связанные файлы физически не удаляются. Операция выполняется одной транзакцией.
+
+        Вопрос незавершённой сессии (status 1, 2 или 4) редактировать нельзя (409).
+
+        '
       parameters:
       - name: id
         in: path
@@ -5570,6 +5590,69 @@ paths:
                   - type: 'null'
                   default: null
                   title: File Description
+                answer_options:
+                  type:
+                  - string
+                  - 'null'
+                  title: Answer Options
+                  description: JSON-массив полного списка вариантов; id — обновление,
+                    без id — добавление; пропущенное поле сохраняет варианты, [] удаляет
+                    все.
+                  contentMediaType: application/json
+                  contentSchema:
+                    items:
+                      additionalProperties: false
+                      properties:
+                        id:
+                          anyOf:
+                          - exclusiveMinimum: 0
+                            type: integer
+                          - type: 'null'
+                          default: null
+                          title: Id
+                        text:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: Text
+                        is_correct:
+                          anyOf:
+                          - type: boolean
+                          - type: 'null'
+                          default: null
+                          title: Is Correct
+                        order:
+                          anyOf:
+                          - minimum: 0
+                            type: integer
+                          - type: 'null'
+                          default: null
+                          title: Order
+                        side:
+                          anyOf:
+                          - maximum: 2
+                            minimum: 1
+                            type: integer
+                          - type: 'null'
+                          default: null
+                          title: Side
+                        file_title:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: File Title
+                        file_description:
+                          anyOf:
+                          - type: string
+                          - type: 'null'
+                          default: null
+                          title: File Description
+                      title: AnswerOptionUpdate
+                      type: object
+                    title: Answer Options
+                    type: array
                 file:
                   type: string
                   format: binary
@@ -5598,12 +5681,17 @@ paths:
                   type: string
                   format: binary
             encoding:
+              answer_options:
+                contentType: text/plain
               answer_key:
                 contentType: text/plain
               tags:
                 style: form
                 explode: true
       responses:
+        '422':
+          description: Некорректные поля, чужие или повторные ID, неверные файловые
+            индексы, ссылки matching-пар на удаляемые варианты.
         '403':
           description: Недостаточно прав
         '401':
@@ -12608,6 +12696,104 @@ paths:
           description: Источник или ответы не совпадают с сохранённым прохождением
         '422':
           description: Анкета не активна, оценка некорректна или вопрос чужой/повторный
+  /cms/files/cdn-manifest:
+    get:
+      tags:
+      - Файлы
+      summary: Получить подписанные ссылки для прогрева CDN
+      operationId: getCdnFileManifest
+      description: 'Только для администратора. Основной API возвращает text/plain:
+        относительный
+
+        подписанный путь /api/files/... на каждой строке. Включает только файлы
+
+        с 90-дневной политикой: ttl=7776000 и срок ссылок 90 дней от создания. Файлы
+        с
+
+        module=avatars, avatar_generation_inputs исключаются
+
+        независимо от связей с контентом.
+
+        Запрос ничего не скачивает и не изменяет БД/Redis. На CDN-сервере список
+
+        обрабатывает CDN/warmup.sh. Оригиналы и текущие превью с v включаются всегда;
+
+        sizes добавляет уменьшенные варианты изображений и превью. Общие UUID
+
+        объединяются. Файлы включаются только по связям с активным контентом;
+
+        профили пользователей и неиспользуемые загрузки отдельно не перебираются.
+
+        ПрофСтарт выбирается по статусу ACTIVE, анкеты по is_active; профессии,
+
+        организации — без deleted_at. Фильтр avatars совместим, но суточные
+
+        файлы шаблонов не выдаются. У вопросов викторины,
+
+        заставок и видеосценариев нет статуса активности, выбирается весь контент.
+
+        Без modules включаются все поддерживаемые модули. Нужен FILE_SIGNING_SECRET.
+
+        '
+      parameters:
+      - name: modules
+        in: query
+        description: Модули контента. Можно передать несколько параметров modules.
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - quiz
+            - profstart
+            - screensavers
+            - video
+            - surveys
+            - professions
+            - organizations
+            - avatars
+        style: form
+        explode: true
+      - name: sizes
+        in: query
+        description: Дополнительные размеры вида 320x180, каждая сторона 1–2048. Можно
+          повторить.
+        schema:
+          type: array
+          items:
+            type: string
+            pattern: ^[0-9]+x[0-9]+$
+        style: form
+        explode: true
+      responses:
+        '200':
+          description: Список ссылок; пустая строка, если подходящих файлов нет.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                - no-store
+            X-File-Count:
+              description: Число уникальных файлов.
+              schema:
+                type: integer
+            X-URL-Count:
+              description: Число URL с учётом превью и размеров.
+              schema:
+                type: integer
+          content:
+            text/plain:
+              schema:
+                type: string
+        '401':
+          description: Недействительный или отсутствующий access JWT.
+        '403':
+          description: Требуется роль администратора.
+        '422':
+          description: Неизвестный модуль или недопустимый размер.
+        '503':
+          description: Не настроен отдельный ключ подписи файлов.
   /files/{file_uuid}:
     get:
       tags:
@@ -12626,6 +12812,57 @@ paths:
 
         в формате исходного изображения. Размеры можно дописать к уже подписанному
         URL.
+
+        Политика срока ссылки и TTL CDN — 1 день для files.module из списка avatars,
+
+        avatar_generation_inputs и 90 дней для остальных значений.
+
+        Каждая ссылка получает собственный полный срок от создания: 1 или 90 дней.
+
+        При одинаковых параметрах файла sig и expires сохраняются между запросами.
+
+        Суточная ссылка обновляется при остатке часа или меньше, 90-дневная — дня
+
+        или меньше. Старая действует до своего expires. Сроки хранятся в памяти
+
+        процесса API; после перезапуска первая выдача создаёт новую ссылку.
+
+        Замена версии превью, политики срока или ключа подписи меняет ссылку сразу.
+
+        Новые ссылки содержат ttl (86400 или 7776000), включённый в подпись;
+
+        срок при скачивании берётся из проверенной подписи, без ttl — 1 день.
+
+        Модуль определяет срок при создании ссылки, его изменение не вызывает
+
+        отказа по ранее выданной действующей ссылке. Старые ссылки без ttl
+
+        сохраняют прежний срок и суточный кэш. Поля file.url и file.preview_url содержат
+        только
+
+        относительные пути /api/files/... с параметрами подписи и срока; домен CDN
+
+        подставляет фронтенд. Новые ссылки подписываются отдельным ключом
+
+        FILE_SIGNING_SECRET. Ранее выданные прямые ссылки основного API
+
+        сохраняют действие до истечения срока. Новые ссылки на превью содержат v —
+
+        SHA-256 уникального пути превью. Версия входит в подпись и ключ кэша CDN;
+
+        после замены API возвращает новую ссылку. На основном API запрос старой
+
+        версии возвращает 404. Старые ссылки без v разрешаются в текущее превью
+
+        и выдаются CDN без кэширования. CDN проверяет подпись и при попадании в кэш.
+
+        Успешные ответы CDN (200, 206, 304) разрешают браузерный кэш:
+
+        Cache-Control: private, max-age=N, must-revalidate. N ограничен остатком
+
+        срока ссылки и подписанным ttl (без ttl — 1 день). Ошибки имеют no-store.
+
+        Превью без v получают max-age=0 и требуют перепроверки при каждом использовании.
 
         '
       parameters:
@@ -12647,6 +12884,21 @@ paths:
         schema:
           type: string
         description: HMAC-подпись
+      - name: ttl
+        in: query
+        description: Срок кэширования в секундах, включённый в подпись. У новых ссылок
+          обязателен.
+        schema:
+          type: integer
+          enum:
+          - 86400
+          - 7776000
+      - name: v
+        in: query
+        description: Версия превью, включённая в подпись ссылки. Для новых preview_url.
+        schema:
+          type: string
+          pattern: ^[0-9a-f]{64}$
       - name: width
         in: query
         description: Максимальная ширина изображения в пикселях.
@@ -13879,6 +14131,13 @@ components:
     QuestionUpdateRequest:
       additionalProperties: false
       properties:
+        answer_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerOptionUpdate'
+          description: 'Полный список вариантов: id сохраняет вариант, без id создаётся
+            новый; отсутствующие варианты удаляются. Пропущенное поле сохраняет список,
+            [] очищает его.'
         text:
           anyOf:
           - type: string
@@ -13955,6 +14214,57 @@ components:
           default: null
           title: File Description
       title: QuestionUpdateRequest
+      type: object
+    AnswerOptionUpdate:
+      additionalProperties: false
+      properties:
+        id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        is_correct:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Is Correct
+        order:
+          anyOf:
+          - minimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Order
+        side:
+          anyOf:
+          - maximum: 2
+            minimum: 1
+            type: integer
+          - type: 'null'
+          default: null
+          title: Side
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: AnswerOptionUpdate
       type: object
     AnswerOptionCreate:
       additionalProperties: false
