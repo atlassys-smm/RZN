@@ -12813,6 +12813,12 @@ paths:
         в формате исходного изображения. Размеры можно дописать к уже подписанному
         URL.
 
+        Имя основного файла для скачивания берётся из files.title. Если нужного
+
+        расширения в имени нет, оно берётся из files.file_path или определяется
+
+        по MIME-типу, когда путь не содержит расширения.
+
         Политика срока ссылки и TTL CDN — 1 день для files.module из списка avatars,
 
         avatar_generation_inputs и 90 дней для остальных значений.
@@ -12916,6 +12922,11 @@ paths:
       responses:
         '200':
           description: Файл
+          headers:
+            Content-Disposition:
+              description: attachment с именем скачиваемого файла.
+              schema:
+                type: string
           content:
             application/octet-stream:
               schema:
