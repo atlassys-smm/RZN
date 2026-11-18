@@ -177,8 +177,6 @@ tags:
 - name: Профессии в действии
   description: Получение активного показа
   x-displayName: Профессии в действии - Состояние
-- name: Обратная связь - LED
-  description: Получение активной анкеты для устройства
 - name: Обратная связь - CMS
   description: Управление анкетами, вопросами и просмотр ответов
 - name: Обратная связь - Пользователь
@@ -564,6 +562,10 @@ paths:
   # ── Обратная связь — CMS ─────────────────────────
   /cms/surveys:
     $ref: ./paths/surveys.yaml#/cms-surveys
+  /cms/surveys/types:
+    $ref: ./paths/survey-types.yaml#/types
+  /cms/surveys/types/{type_id}:
+    $ref: ./paths/survey-types.yaml#/type-detail
   /cms/surveys/module-links:
     $ref: ./paths/survey-module-links.yaml#/links
   /cms/surveys/module-links/{module_id}/{survey_type}:
@@ -586,10 +588,6 @@ paths:
     $ref: ./paths/surveys.yaml#/cms-survey-options
   /cms/surveys/{survey_id}/questions/{question_id}/options/{option_id}:
     $ref: ./paths/surveys.yaml#/cms-survey-option
-  # ── Обратная связь — LED ────────────────────────
-  /feedback/surveys/type/{type}:
-    $ref: ./paths/surveys.yaml#/feedback-survey
-
   # ── Обратная связь — Пользователь ────────────────
   /feedback/me/completed:
     $ref: './paths/feedback.yaml#/completion'
@@ -1178,6 +1176,13 @@ components:
     QuestionUpdateRequest:
       additionalProperties: false
       properties:
+        answer_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerOptionUpdate'
+          description: 'Полный список вариантов: id сохраняет вариант, без id создаётся
+            новый; отсутствующие варианты удаляются. Пропущенное поле сохраняет список,
+            [] очищает его.'
         text:
           anyOf:
           - type: string
@@ -1254,6 +1259,57 @@ components:
           default: null
           title: File Description
       title: QuestionUpdateRequest
+      type: object
+    AnswerOptionUpdate:
+      additionalProperties: false
+      properties:
+        id:
+          anyOf:
+          - exclusiveMinimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Id
+        text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: Text
+        is_correct:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: null
+          title: Is Correct
+        order:
+          anyOf:
+          - minimum: 0
+            type: integer
+          - type: 'null'
+          default: null
+          title: Order
+        side:
+          anyOf:
+          - maximum: 2
+            minimum: 1
+            type: integer
+          - type: 'null'
+          default: null
+          title: Side
+        file_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Title
+        file_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: null
+          title: File Description
+      title: AnswerOptionUpdate
       type: object
     AnswerOptionCreate:
       additionalProperties: false
@@ -1470,14 +1526,14 @@ components:
       - options
       title: FeedbackQuestionResponse
 
-    PaginatedResponse_FeedbackSurveyResponse_:
+    PaginatedResponse_FeedbackUserSurveyResponse_:
       type: object
       required: [items, total]
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/FeedbackSurveyResponse'
+            $ref: '#/components/schemas/FeedbackUserSurveyResponse'
         total:
           type: integer
     FeedbackSurveyResponse:
@@ -1508,6 +1564,15 @@ components:
       - name
       - description
       title: FeedbackSurveyResponse
+    FeedbackUserSurveyResponse:
+      allOf:
+        - $ref: '#/components/schemas/FeedbackSurveyResponse'
+        - type: object
+          required: [completed]
+          properties:
+            completed:
+              type: boolean
+              description: Пользователь отправил ответ на эту версию анкеты.
 
     FileResponse:
       properties:
@@ -3477,9 +3542,6 @@ components:
           $ref: '#/components/schemas/CmsSurvey'
           nullable: true
           description: Анкета, на которую дан ответ
-
-    FeedbackSurvey:
-      $ref: '#/components/schemas/FeedbackSurveyResponse'
 
     FeedbackStartRequest:
       type: object
@@ -5893,10 +5955,35 @@ components:
           $ref: '#/components/schemas/SurveyType'
     SurveyType:
       type: integer
-      enum:
-      - 1
       title: SurveyType
-      description: 'Тип анкеты (IntEnum): 1 — QUALITY_ASSESSMENT, оценка качества.'
+      description: ID записи survey_types; 1 — Оценка качества. Новые типы создаются через CMS.
+    SurveyTypeRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Название; пробелы по краям удаляются, пустая строка недопустима.
+    SurveyTypeResponse:
+      type: object
+      required: [id, name, deleted_at]
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        deleted_at:
+          type: [string, 'null']
+          format: date-time
+    PaginatedResponse_SurveyTypeResponse_:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/SurveyTypeResponse'}
+        total: {type: integer}
 
     SurveyAnswerOptionRequest:
       properties:

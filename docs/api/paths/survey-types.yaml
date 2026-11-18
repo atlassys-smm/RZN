@@ -1,0 +1,103 @@
+types:
+  get:
+    tags: [Обратная связь — CMS]
+    summary: Список типов анкет
+    description: |
+      Администратор, контент-редактор и аналитик. По умолчанию только неудалённые типы.
+      include_deleted=true включает историю. Порядок по id; фильтр применяется до пагинации.
+      Ответы справочника содержат Cache-Control no-store.
+    security: [{bearerAuth: []}]
+    parameters:
+      - name: include_deleted
+        in: query
+        schema: {type: boolean, default: false}
+      - name: limit
+        in: query
+        schema: {type: integer, minimum: 1, default: 20}
+      - name: offset
+        in: query
+        schema: {type: integer, minimum: 0, default: 0}
+    responses:
+      '200':
+        description: Список типов и total до пагинации.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PaginatedResponse_SurveyTypeResponse_'}
+      '401': {description: Требуется Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '422': {description: Неверные параметры.}
+  post:
+    tags: [Обратная связь — CMS]
+    summary: Создать тип анкеты
+    description: Администратор и контент-редактор. ID генерируется сервером, deleted_at=null.
+    security: [{bearerAuth: []}]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/SurveyTypeRequest'}
+    responses:
+      '201':
+        description: Созданный тип, Cache-Control no-store.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SurveyTypeResponse'}
+      '401': {description: Требуется Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '422': {description: Неверное название или лишние поля.}
+
+type-detail:
+  parameters:
+    - name: type_id
+      in: path
+      required: true
+      schema: {$ref: '#/components/schemas/SurveyType'}
+  get:
+    tags: [Обратная связь — CMS]
+    summary: Получить тип анкеты
+    description: Администратор, контент-редактор и аналитик. Включает удалённые типы для чтения истории.
+    security: [{bearerAuth: []}]
+    responses:
+      '200':
+        description: Тип анкеты, Cache-Control no-store.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SurveyTypeResponse'}
+      '401': {description: Требуется Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '404': {description: Тип не найден.}
+  put:
+    tags: [Обратная связь — CMS]
+    summary: Изменить название типа анкеты
+    description: Администратор и контент-редактор. ID и ссылки анкет сохраняются. Удалённый тип не редактируется.
+    security: [{bearerAuth: []}]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/SurveyTypeRequest'}
+    responses:
+      '200':
+        description: Обновлённый тип, Cache-Control no-store.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SurveyTypeResponse'}
+      '401': {description: Требуется Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '404': {description: Тип не найден или удалён.}
+      '422': {description: Неверное название или лишние поля.}
+  delete:
+    tags: [Обратная связь — CMS]
+    summary: Удалить тип анкеты
+    description: |
+      Администратор и контент-редактор. Устанавливает deleted_at; запись, старые анкеты,
+      ответы и привязки к модулям сохраняются. Наличие активной анкеты запрещает удаление.
+      Удаление и публикация сериализованы блокировкой записи типа.
+      Удалённый тип нельзя использовать для новых анкет, копирования, публикации или новых связей.
+    security: [{bearerAuth: []}]
+    responses:
+      '204': {description: Тип помечен удалённым, Cache-Control no-store.}
+      '401': {description: Требуется Staff JWT.}
+      '403': {description: Недостаточно прав.}
+      '404': {description: Тип не найден или уже удалён.}
+      '409': {description: У типа есть активная анкета.}

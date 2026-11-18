@@ -63,6 +63,7 @@ cms-surveys:
     tags:
     - Обратная связь - CMS
     summary: Создать анкету
+    description: type — ID существующего неудалённого типа из survey_types; иначе 404.
     operationId: create_survey_api_cms_surveys_post
     requestBody:
       required: true
@@ -77,6 +78,7 @@ cms-surveys:
           application/json:
             schema:
               $ref: '#/components/schemas/SurveyResponse'
+      '404': {description: Тип анкеты не найден или удалён.}
       '422':
         description: Ошибка валидации
         content:
@@ -295,7 +297,7 @@ cms-survey-copy:
         description: Анкета или вопрос не найдены
     security:
     - bearerAuth: []
-    description: Создать черновик того же type. Копируются вопросы, варианты и ссылки на профессии; ID вопросов,
+    description: Создать черновик того же type; удалённый тип запрещает копирование (404). Копируются вопросы, варианты и ссылки на профессии; ID вопросов,
       вариантов и parent_id пересоздаются для новой версии.
 cms-survey-publish:
   post:
@@ -327,7 +329,7 @@ cms-survey-publish:
         description: Анкета или вопрос не найдены
     security:
     - bearerAuth: []
-    description: Опубликовать анкету. Предыдущая активная версия с тем же type автоматически деактивируется. Вопросы
+    description: Удалённый тип запрещает публикацию (404). Предыдущая активная версия с тем же type автоматически деактивируется. Вопросы
       с выбором должны содержать хотя бы один вариант. Начатые прохождения старой версии можно завершить по её survey_id
       и response_id.
 cms-survey-questions:
@@ -700,39 +702,6 @@ cms-survey-question-detail:
     - bearerAuth: []
     description: Изменения доступны редактору контента только у неактивной анкеты без прохождений. У активной или
       уже начатой версии создайте копию анкеты.
-feedback-survey:
-  get:
-    description: Требуется device-токен активного устройства с ролью 4. type=1 — оценка качества. Возвращает вопросы
-      с options; у TEXT и RATING_SCALE список options пуст.
-    tags:
-    - Обратная связь - LED
-    summary: Активная анкета по типу
-    operationId: get_survey_by_type_api_feedback_surveys_type__type__get
-    parameters:
-    - name: type
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/SurveyType'
-    responses:
-      '403':
-        description: Недостаточно прав устройства или сотрудника.
-      '200':
-        description: Успешный ответ
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FeedbackSurveyResponse'
-      '422':
-        description: Ошибка валидации
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HTTPValidationError'
-      '404':
-        description: Анкета или вопрос не найдены
-    security:
-    - bearerAuth: []
 cms-survey-options:
   get:
     tags:

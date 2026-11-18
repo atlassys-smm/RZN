@@ -236,8 +236,6 @@ tags:
 - name: Профессии в действии
   description: Получение активного показа
   x-displayName: Профессии в действии - Состояние
-- name: Обратная связь - LED
-  description: Получение активной анкеты для устройства
 - name: Обратная связь - CMS
   description: Управление анкетами, вопросами и просмотр ответов
 - name: Обратная связь - Пользователь
@@ -11495,6 +11493,8 @@ paths:
       tags:
       - Обратная связь - CMS
       summary: Создать анкету
+      description: type — ID существующего неудалённого типа из survey_types; иначе
+        404.
       operationId: create_survey_api_cms_surveys_post
       requestBody:
         required: true
@@ -11509,6 +11509,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SurveyResponse'
+        '404':
+          description: Тип анкеты не найден или удалён.
         '422':
           description: Ошибка валидации
           content:
@@ -11517,6 +11519,166 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - bearerAuth: []
+  /cms/surveys/types:
+    get:
+      tags:
+      - Обратная связь — CMS
+      summary: Список типов анкет
+      description: 'Администратор, контент-редактор и аналитик. По умолчанию только
+        неудалённые типы.
+
+        include_deleted=true включает историю. Порядок по id; фильтр применяется до
+        пагинации.
+
+        Ответы справочника содержат Cache-Control no-store.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: include_deleted
+        in: query
+        schema:
+          type: boolean
+          default: false
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Список типов и total до пагинации.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_SurveyTypeResponse_'
+        '401':
+          description: Требуется Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '422':
+          description: Неверные параметры.
+    post:
+      tags:
+      - Обратная связь — CMS
+      summary: Создать тип анкеты
+      description: Администратор и контент-редактор. ID генерируется сервером, deleted_at=null.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyTypeRequest'
+      responses:
+        '201':
+          description: Созданный тип, Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyTypeResponse'
+        '401':
+          description: Требуется Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '422':
+          description: Неверное название или лишние поля.
+  /cms/surveys/types/{type_id}:
+    parameters:
+    - name: type_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/SurveyType'
+    get:
+      tags:
+      - Обратная связь — CMS
+      summary: Получить тип анкеты
+      description: Администратор, контент-редактор и аналитик. Включает удалённые
+        типы для чтения истории.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Тип анкеты, Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyTypeResponse'
+        '401':
+          description: Требуется Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '404':
+          description: Тип не найден.
+    put:
+      tags:
+      - Обратная связь — CMS
+      summary: Изменить название типа анкеты
+      description: Администратор и контент-редактор. ID и ссылки анкет сохраняются.
+        Удалённый тип не редактируется.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurveyTypeRequest'
+      responses:
+        '200':
+          description: Обновлённый тип, Cache-Control no-store.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SurveyTypeResponse'
+        '401':
+          description: Требуется Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '404':
+          description: Тип не найден или удалён.
+        '422':
+          description: Неверное название или лишние поля.
+    delete:
+      tags:
+      - Обратная связь — CMS
+      summary: Удалить тип анкеты
+      description: 'Администратор и контент-редактор. Устанавливает deleted_at; запись,
+        старые анкеты,
+
+        ответы и привязки к модулям сохраняются. Наличие активной анкеты запрещает
+        удаление.
+
+        Удаление и публикация сериализованы блокировкой записи типа.
+
+        Удалённый тип нельзя использовать для новых анкет, копирования, публикации
+        или новых связей.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Тип помечен удалённым
+          Cache-Control no-store.: null
+        '401':
+          description: Требуется Staff JWT.
+        '403':
+          description: Недостаточно прав.
+        '404':
+          description: Тип не найден или уже удалён.
+        '409':
+          description: У типа есть активная анкета.
   /cms/surveys/module-links:
     get:
       tags:
@@ -11556,7 +11718,7 @@ paths:
         '403':
           description: Недостаточно прав.
         '422':
-          description: Неизвестный код модуля или типа анкеты.
+          description: Неверный код модуля или формат типа анкеты.
   /cms/surveys/module-links/{module_id}/{survey_type}:
     put:
       tags:
@@ -11568,6 +11730,8 @@ paths:
         повторный запрос возвращает ту же связь без дубликата. Тело не требуется.
 
         Настройка относится ко всем версиям типа анкеты, не к survey_id.
+
+        Тип должен существовать в survey_types и не быть удалённым; иначе 404.
 
         '
       security:
@@ -11594,8 +11758,10 @@ paths:
           description: Требуется действующий Staff JWT.
         '403':
           description: Недостаточно прав.
+        '404':
+          description: Тип анкеты не найден или удалён.
         '422':
-          description: Неизвестный код модуля или типа анкеты.
+          description: Неверный код модуля или формат типа анкеты.
     delete:
       tags:
       - Обратная связь — CMS
@@ -11627,7 +11793,7 @@ paths:
         '404':
           description: Связь не найдена.
         '422':
-          description: Неизвестный код модуля или типа анкеты.
+          description: Неверный код модуля или формат типа анкеты.
   /cms/surveys/responses:
     get:
       tags:
@@ -11838,8 +12004,9 @@ paths:
           description: Анкета или вопрос не найдены
       security:
       - bearerAuth: []
-      description: Создать черновик того же type. Копируются вопросы, варианты и ссылки
-        на профессии; ID вопросов, вариантов и parent_id пересоздаются для новой версии.
+      description: Создать черновик того же type; удалённый тип запрещает копирование
+        (404). Копируются вопросы, варианты и ссылки на профессии; ID вопросов, вариантов
+        и parent_id пересоздаются для новой версии.
   /cms/surveys/{survey_id}/publish:
     post:
       tags:
@@ -11870,9 +12037,10 @@ paths:
           description: Анкета или вопрос не найдены
       security:
       - bearerAuth: []
-      description: Опубликовать анкету. Предыдущая активная версия с тем же type автоматически
-        деактивируется. Вопросы с выбором должны содержать хотя бы один вариант. Начатые
-        прохождения старой версии можно завершить по её survey_id и response_id.
+      description: Удалённый тип запрещает публикацию (404). Предыдущая активная версия
+        с тем же type автоматически деактивируется. Вопросы с выбором должны содержать
+        хотя бы один вариант. Начатые прохождения старой версии можно завершить по
+        её survey_id и response_id.
   /cms/surveys/{survey_id}/questions:
     post:
       tags:
@@ -12448,40 +12616,6 @@ paths:
       description: Требуется редактор контента. Изменения разрешены только у неактивной
         анкеты без прохождений. Варианты поддерживают SINGLE_CHOICE, MULTIPLE_CHOICE
         и PROFESSION_CHOICE; profession_id обязателен только для последнего.
-  /feedback/surveys/type/{type}:
-    get:
-      description: Требуется device-токен активного устройства с ролью 4. type=1 —
-        оценка качества. Возвращает вопросы с options; у TEXT и RATING_SCALE список
-        options пуст.
-      tags:
-      - Обратная связь - LED
-      summary: Активная анкета по типу
-      operationId: get_survey_by_type_api_feedback_surveys_type__type__get
-      parameters:
-      - name: type
-        in: path
-        required: true
-        schema:
-          $ref: '#/components/schemas/SurveyType'
-      responses:
-        '403':
-          description: Недостаточно прав устройства или сотрудника.
-        '200':
-          description: Успешный ответ
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FeedbackSurveyResponse'
-        '422':
-          description: Ошибка валидации
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-        '404':
-          description: Анкета или вопрос не найдены
-      security:
-      - bearerAuth: []
   /feedback/me/completed:
     get:
       tags:
@@ -12524,22 +12658,28 @@ paths:
       description: Получить активные анкеты с вопросами и вариантами ответов. Требуется
         User JWT либо Device JWT с ролью 4 и действующей QR-привязкой. Для устройства
         обязателен X-Device-Connection-Id. Черновики и неактивные версии не возвращаются.
-        Необязательный module_id фильтрует по привязанным типам анкет; total считается
-        после фильтрации, до limit/offset. Без параметра возвращаются все активные
-        анкеты. Фильтр применяется до пагинации. Общий Redis-кэш на 86400 секунд без
-        продления при чтении; публикация новой версии или изменение привязок инвалидирует
-        кэш. Подписанные URL формируются заново. При сбое Redis выполняется чтение
-        БД. Авторизация проверяется на каждом запросе.
+        Необязательный type фильтрует по ID типа анкеты, module_id — по привязкам
+        к модулю. При передаче обоих действуют оба фильтра. total считается после
+        фильтрации до limit/offset. completed показывает, отправил ли текущий пользователь
+        ответ на эту версию анкеты. Статус считывается отдельно от общего кеша на
+        каждом запросе. Общий Redis-кэш на 86400 секунд без продления при чтении;
+        публикация новой версии или изменение привязок инвалидирует кэш. Подписанные
+        URL формируются заново. При сбое Redis выполняется чтение БД. Авторизация
+        проверяется на каждом запросе.
       security:
       - bearerAuth: []
       parameters:
       - name: module_id
         in: query
         required: false
-        description: Фильтр по модулю; без параметра возвращаются все анкеты в рамках
-          текущего доступа.
+        description: Фильтр по модулю, к которому привязан тип анкеты.
         schema:
           $ref: '#/components/schemas/SurveyModuleType'
+      - name: type
+        in: query
+        description: Фильтр по ID типа анкеты.
+        schema:
+          $ref: '#/components/schemas/SurveyType'
       - $ref: '#/components/parameters/DeviceConnectionId'
       - name: limit
         in: query
@@ -12555,17 +12695,22 @@ paths:
           default: 0
       responses:
         '200':
-          description: Список активных анкет с вопросами
+          description: Список активных анкет со статусами прохождения
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResponse_FeedbackSurveyResponse_'
+                $ref: '#/components/schemas/PaginatedResponse_FeedbackUserSurveyResponse_'
         '401':
           description: Требуется действующий токен пользователя или устройства
         '403':
           description: Недостаточная роль устройства или пользователь не подключён
         '422':
-          description: Неизвестный module_id, неверная пагинация или не передан заголовок
+          description: Неверный module_id, type или пагинация, либо не передан заголовок
             подключения устройства
   /feedback/surveys/{survey_id}:
     get:
@@ -12575,10 +12720,12 @@ paths:
       description: Получить активную анкету по её survey_id с вопросами и вариантами
         ответов. Требуется User JWT либо Device JWT с ролью 4 и действующей QR-привязкой.
         Для устройства обязателен X-Device-Connection-Id. Отсутствующая или неактивная
-        анкета возвращает 404. survey_id — ID анкеты, а не её type. Общий Redis-кэш
-        на 86400 секунд без продления при чтении; публикация новой версии инвалидирует
-        кэш. Подписанные URL формируются заново. При сбое Redis выполняется чтение
-        БД. Авторизация проверяется на каждом запросе.
+        анкета возвращает 404. survey_id — ID анкеты, а не её type. completed показывает,
+        отправил ли текущий пользователь ответ на эту версию анкеты. Статус считывается
+        отдельно от общего кеша на каждом запросе. Общий Redis-кэш на 86400 секунд
+        без продления при чтении; публикация новой версии инвалидирует кэш. Подписанные
+        URL формируются заново. При сбое Redis выполняется чтение БД. Авторизация
+        проверяется на каждом запросе.
       security:
       - bearerAuth: []
       parameters:
@@ -12591,11 +12738,16 @@ paths:
           format: int64
       responses:
         '200':
-          description: Активная анкета с вопросами
+          description: Активная анкета со статусом прохождения
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeedbackSurveyResponse'
+                $ref: '#/components/schemas/FeedbackUserSurveyResponse'
         '401':
           description: Требуется действующий токен пользователя или устройства
         '403':
@@ -14506,7 +14658,7 @@ components:
       - scale_max
       - options
       title: FeedbackQuestionResponse
-    PaginatedResponse_FeedbackSurveyResponse_:
+    PaginatedResponse_FeedbackUserSurveyResponse_:
       type: object
       required:
       - items
@@ -14515,7 +14667,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/FeedbackSurveyResponse'
+            $ref: '#/components/schemas/FeedbackUserSurveyResponse'
         total:
           type: integer
     FeedbackSurveyResponse:
@@ -14546,6 +14698,16 @@ components:
       - name
       - description
       title: FeedbackSurveyResponse
+    FeedbackUserSurveyResponse:
+      allOf:
+      - $ref: '#/components/schemas/FeedbackSurveyResponse'
+      - type: object
+        required:
+        - completed
+        properties:
+          completed:
+            type: boolean
+            description: Пользователь отправил ответ на эту версию анкеты.
     FileResponse:
       properties:
         url:
@@ -16767,8 +16929,6 @@ components:
           $ref: '#/components/schemas/CmsSurvey'
           nullable: true
           description: Анкета, на которую дан ответ
-    FeedbackSurvey:
-      $ref: '#/components/schemas/FeedbackSurveyResponse'
     FeedbackStartRequest:
       type: object
       additionalProperties: false
@@ -19290,10 +19450,48 @@ components:
           $ref: '#/components/schemas/SurveyType'
     SurveyType:
       type: integer
-      enum:
-      - 1
       title: SurveyType
-      description: 'Тип анкеты (IntEnum): 1 — QUALITY_ASSESSMENT, оценка качества.'
+      description: ID записи survey_types; 1 — Оценка качества. Новые типы создаются
+        через CMS.
+    SurveyTypeRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Название; пробелы по краям удаляются, пустая строка недопустима.
+    SurveyTypeResponse:
+      type: object
+      required:
+      - id
+      - name
+      - deleted_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        deleted_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    PaginatedResponse_SurveyTypeResponse_:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyTypeResponse'
+        total:
+          type: integer
     SurveyAnswerOptionRequest:
       properties:
         text:
