@@ -12798,9 +12798,16 @@ paths:
     get:
       tags:
       - Файлы
-      summary: Скачать файл
-      description: 'Скачать основной файл или превью по подписанной ссылке. Идентификатор
-        превью
+      summary: Получить файл
+      description: 'Получить основной файл или превью по подписанной ссылке. По умолчанию
+
+        Content-Disposition равен inline для открытия в браузере. Параметр
+
+        type=download переключает его на attachment для скачивания. Параметр
+
+        не входит в подпись. CDN хранит одну копию для обоих режимов и меняет
+
+        заголовок при выдаче для скачивания. Идентификатор превью
 
         — UUID основного файла с суффиксом _preview. Для растровых изображений width
 
@@ -12919,12 +12926,21 @@ paths:
           type: integer
           minimum: 1
           maximum: 2048
+      - name: type
+        in: query
+        description: Укажите download для скачивания. Без параметра файл открывается
+          в браузере, если формат поддерживается.
+        schema:
+          type: string
+          enum:
+          - download
       responses:
         '200':
           description: Файл
           headers:
             Content-Disposition:
-              description: attachment с именем скачиваемого файла.
+              description: inline по умолчанию или attachment при type=download. Оба
+                значения содержат имя файла.
               schema:
                 type: string
           content:
@@ -12943,7 +12959,8 @@ paths:
         '415':
           description: Для уменьшения нужен файл в поддерживаемом растровом формате
         '422':
-          description: Недопустимые размеры или изображение не удалось уменьшить
+          description: Недопустимое значение type, недопустимые размеры или изображение
+            не удалось уменьшить
   /me/avatars:
     get:
       security:
