@@ -41,8 +41,21 @@ cms-devices:
   get:
     tags: [Устройства]
     summary: Список устройств
-    description: Требуется staff access-токен оператора. Получить список зарегистрированных устройств
+    description: |
+      Требуется staff access-токен администратора или оператора. Возвращает
+      зарегистрированные устройства от новых к старым по дате создания.
+      Необязательный is_active=true выбирает только активные устройства,
+      is_active=false — только неактивные. Без параметра возвращаются все.
+    parameters:
+      - name: is_active
+        in: query
+        required: false
+        description: Фильтр по активности; без параметра — все устройства.
+        schema:
+          type: boolean
     responses:
+      '422':
+        description: is_active не распознаётся как логическое значение.
       '403':
         description: Недостаточно прав
       '401':

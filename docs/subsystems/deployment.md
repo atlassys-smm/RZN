@@ -4,6 +4,12 @@
 
 Проверка выполнена 30.10.2026 на отдельном Compose-проекте с новыми контейнерами, сетью, томами и `.env`. Рабочее окружение не использовалось. Подробности проверки и ограничения приведены в конце страницы.
 
+Для нового Linux-сервера можно сохранить сервисы в контейнерах, а постоянные
+данные разместить в каталогах хоста. Пошаговая инструкция: [контейнеры и данные
+на сервере](deployment-host-storage.md). Этот вариант выбирается до первого
+старта и использует дополнительный Compose-файл; перенос существующей установки
+он не выполняет.
+
 ## 1. Что разворачивается
 
 | Сервис | Назначение | Постоянные данные |
@@ -11,7 +17,7 @@
 | `api` | FastAPI, REST `/api`, WebSocket, фоновые обработчики | `storage/uploads` → `/data/uploads`; `storage/infra` → `/app/storage/infra` |
 | `db` | PostgreSQL 16: основная БД и отдельная служебная БД Metabase | Том `db_data` |
 | `redis` | Redis 7: состояние игр и видеосценариев | В штатном Compose постоянного тома нет |
-| `clickhouse` | События и представления аналитики | Том `clickhouse_data` |
+| `clickhouse` | События и представления аналитики | Том `clickhouse_data` либо каталог `CLICKHOUSE_DATA_PATH` |
 | `metabase` | Вопросы, дашборды и встраиваемые графики | БД `metabase` в PostgreSQL |
 | `adminer` | Необязательный интерфейс PostgreSQL | Собственного хранилища нет |
 | `cdn` | Необязательный Nginx + njs для подписанных файлов; профиль `cdn` | Тома `cdn_cache` и `cdn_cache_long` |
@@ -186,6 +192,7 @@ nano .env
 | `CLICKHOUSE_READER_USER`, `ANALYTICS_CLICKHOUSE_USER` | `analytics_reader`, `analytics_writer`: такие пользователи создаются штатной SQL-миграцией |
 | `ANALYTICS_CLICKHOUSE_PASSWORD` | Оставить ссылку `${CLICKHOUSE_WRITER_PASSWORD}`, не задавать другой пароль |
 | `CLICKHOUSE_PORT`, `METABASE_PORT` | `8124`, `3001`; при параллельной проверке `18124`, `13001` |
+| `CLICKHOUSE_DATA_PATH` | Необязательный абсолютный каталог хоста; пустое значение сохраняет том `clickhouse_data`. Путь задаётся после подготовки и переноса данных |
 | `MB_DB_TYPE`, `MB_DB_HOST`, `MB_DB_PORT` | `postgres`, `db`, `5432` |
 | `MB_DB_DBNAME`, `MB_DB_USER` | `metabase`, `metabase`: именно эту конфигурацию поддерживает `initialize_database.py` |
 | `MB_DB_PASS` | Сгенерированный отдельный пароль |

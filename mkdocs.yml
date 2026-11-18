@@ -104,6 +104,7 @@ nav:
   - Архитектура подсистем:
     - Обзор: subsystems.md
     - Развёртывание проекта с нуля: subsystems/deployment.md
+    - Данные в каталогах сервера: subsystems/deployment-host-storage.md
     - Идентификация и регистрация: subsystems/identification.md
     - Авторизация и сессии: subsystems/auth-sessions.md
     - LED-медиаплатформа:
@@ -248,6 +249,8 @@ nav:
     - Обзор: changelog/index.md
     - Документация:
       - Обзор: changelog/docs/index.md
+      - Версия 1.53: changelog/docs/v1.53.md
+      - Версия 1.52: changelog/docs/v1.52.md
       - Версия 1.51: changelog/docs/v1.51.md
       - Версия 1.50: changelog/docs/v1.50.md
       - Версия 1.49: changelog/docs/v1.49.md
@@ -301,6 +304,7 @@ nav:
       - Версия 1.0: changelog/docs/v1.0.md
     - Бэкенд:
       - Обзор: changelog/back/index.md
+      - Версия 0.38: changelog/back/v0.38.md
       - Версия 0.37: changelog/back/v0.37.md
       - Версия 0.35: changelog/back/v0.35.md
       - Версия 0.34: changelog/back/v0.34.md

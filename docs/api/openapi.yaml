@@ -231,6 +231,8 @@ paths:
   # ── Авторизация пользователя ─────────────────────
   /auth/user/guest:
     $ref: './paths/user-auth.yaml#/user-guest'
+  /auth/user/service:
+    $ref: './paths/user-auth.yaml#/user-service'
   /auth/user/refresh:
     $ref: './paths/user-auth.yaml#/user-refresh'
   /auth/user/logout:
@@ -562,6 +564,10 @@ paths:
   # ── Обратная связь — CMS ─────────────────────────
   /cms/surveys:
     $ref: ./paths/surveys.yaml#/cms-surveys
+  /cms/surveys/module-links:
+    $ref: ./paths/survey-module-links.yaml#/links
+  /cms/surveys/module-links/{module_id}/{survey_type}:
+    $ref: ./paths/survey-module-links.yaml#/link
   /cms/surveys/responses:
     $ref: ./paths/surveys.yaml#/cms-survey-responses
   /cms/surveys/{survey_id}:
@@ -1052,8 +1058,11 @@ components:
           description: 1 — активен, 2 — заблокирован.
     UserInfoResponse:
       type: object
-      required: [id, is_guest, email, first_name, last_name, file, gender, birth_date]
+      required: [id, is_guest, service_user, email, first_name, last_name, file, gender, birth_date]
       properties:
+        service_user:
+          type: [integer, 'null']
+          description: Номер служебного аккаунта; 1–5 — ПрофСтарт, 6–10 — аватар; null — обычный пользователь.
         id:
           type: integer
         is_guest:
@@ -5928,6 +5937,18 @@ components:
           - string
           - 'null'
           description: Идентификатор текущего подключения; null, если пользователя нет.
+    SurveyModuleType:
+      type: integer
+      enum: [1, 2, 3, 4, 6]
+      description: '1 — индивидуальная викторина, 2 — командная викторина, 3 — профессии в действии, 4 — ПрофСтарт, 6 — аватар профессий.'
+    SurveyModuleLinkResponse:
+      type: object
+      required: [module_id, survey_type]
+      properties:
+        module_id:
+          $ref: '#/components/schemas/SurveyModuleType'
+        survey_type:
+          $ref: '#/components/schemas/SurveyType'
     SurveyType:
       type: integer
       enum:
