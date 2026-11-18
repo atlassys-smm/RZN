@@ -2247,6 +2247,15 @@ components:
           type: string
           format: date-time
 
+    ProfessionAvatarListItem:
+      allOf:
+        - $ref: '#/components/schemas/ProfessionAvatar'
+        - type: object
+          required: [profession]
+          properties:
+            profession:
+              $ref: '#/components/schemas/Profession'
+
     UserAvatar:
       description: Сгенерированный аватар пользователя
       type: object
