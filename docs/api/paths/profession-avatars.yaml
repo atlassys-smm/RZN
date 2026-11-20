@@ -4,12 +4,17 @@
 
 avatars:
   get:
-    description: "Требуется действующий токен пользователя, сотрудника или активного устройства. Для device-токена требуется роль 2; другая группа устройства — 403. Список и total включают существующие шаблоны мягко удалённых профессий."
+    description: "Требуется действующий токен пользователя, сотрудника или активного устройства. Для device-токена требуется роль 2; другая группа устройства — 403. Список и total включают существующие шаблоны мягко удалённых профессий. В каждом элементе возвращается объект profession."
     tags: [Аватары профессий]
     summary: Список аватаров профессий
     security:
     - bearerAuth: []
     parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+        description: Поиск по части полного названия профессии без учёта регистра. Пробелы по краям убираются. Пустое значение игнорируется. Поиск применяется до подсчёта total и пагинации.
       - name: limit
         in: query
         schema:
@@ -35,7 +40,7 @@ avatars:
                 items:
                   type: array
                   items:
-                    $ref: '#/components/schemas/ProfessionAvatar'
+                    $ref: '#/components/schemas/ProfessionAvatarListItem'
                 total:
                   type: integer
   post:

@@ -14,6 +14,12 @@ cms-scenarios:
           type: integer
           format: int64
         description: Фильтр по профессии
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Поиск по части названия без учёта регистра. Пробелы по краям убираются. Пустое значение игнорируется. Фильтр применяется вместе с profession_id до подсчёта total и пагинации.
       - name: select
         in: query
         required: false

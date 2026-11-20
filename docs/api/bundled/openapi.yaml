@@ -4889,12 +4889,20 @@ paths:
       description: Требуется действующий токен пользователя, сотрудника или активного
         устройства. Для device-токена требуется роль 2; другая группа устройства —
         403. Список и total включают существующие шаблоны мягко удалённых профессий.
+        В каждом элементе возвращается объект profession.
       tags:
       - Аватары профессий
       summary: Список аватаров профессий
       security:
       - bearerAuth: []
       parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+        description: Поиск по части полного названия профессии без учёта регистра.
+          Пробелы по краям убираются. Пустое значение игнорируется. Поиск применяется
+          до подсчёта total и пагинации.
       - name: limit
         in: query
         schema:
@@ -4920,7 +4928,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProfessionAvatar'
+                      $ref: '#/components/schemas/ProfessionAvatarListItem'
                   total:
                     type: integer
     post:
@@ -8026,6 +8034,14 @@ paths:
           type: integer
           format: int64
         description: Фильтр по профессии
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Поиск по части названия без учёта регистра. Пробелы по краям
+          убираются. Пустое значение игнорируется. Фильтр применяется вместе с profession_id
+          до подсчёта total и пагинации.
       - name: select
         in: query
         required: false
@@ -15373,6 +15389,15 @@ components:
         updated_at:
           type: string
           format: date-time
+    ProfessionAvatarListItem:
+      allOf:
+      - $ref: '#/components/schemas/ProfessionAvatar'
+      - type: object
+        required:
+        - profession
+        properties:
+          profession:
+            $ref: '#/components/schemas/Profession'
     UserAvatar:
       description: Сгенерированный аватар пользователя
       type: object
