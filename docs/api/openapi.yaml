@@ -554,6 +554,8 @@ paths:
     $ref: './paths/analytics.yaml#/visitor-profiles'
   /analytics/embed-tokens:
     $ref: './paths/analytics.yaml#/embed-tokens'
+  /analytics/external/events:
+    $ref: './paths/analytics.yaml#/external-events'
 
   # ── CMS ──────────────────────────────────────────
   /cms/references:

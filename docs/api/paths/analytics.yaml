@@ -199,3 +199,108 @@ visitor-profiles:
         description: Недостаточно прав сотрудника или у устройства нет роли QUIZ_VIDEO
       '422':
         description: Некорректный список ID
+
+external-events:
+  post:
+    tags: [Аналитика]
+    summary: Принять внешнее событие аналитики
+    operationId: receiveExternalAnalyticsEvent
+    description: |
+      Принимает одно событие «Древа профессий» (module_id 7) или «Конструктора
+      карьеры» (module_id 16). Для event_id принимаются целые числа от 0 до 65535
+      по типу поля ClickHouse. Маршрут принимает запросы без авторизации.
+      Устройство создаёт UUID session_id один раз на прохождение. Сервер сохраняет
+      его в analytics.events.external_session_id и payload.session_id.
+      Каждый принятый запрос создаёт событие с новым серверным UUID.
+      Повторная отправка того же запроса создаёт ещё одно событие.
+      Числовая колонка analytics.events.session_id для внешних событий имеет
+      значение NULL. Необязательный user_id сохраняется в колонке
+      analytics.events.user_id. Если пользователь неизвестен, поле можно
+      пропустить или передать null.
+      Запись в ClickHouse выполняется в фоне через общую очередь аналитики.
+      Ответ 202 означает приём в очередь без гарантии сохранения в ClickHouse.
+      Для «Древа профессий» используйте 1 для начала сеанса, 11 для открытия
+      карточки и 4 для подтверждённого завершения. Передавайте sessionId из
+      WebGL как session_id. Для события 11 передавайте professionCode из WebGL
+      в payload.profession_code. Сервер находит активную профессию в справочнике
+      и добавляет в payload её profession_id и profession_name. При отсутствии
+      однозначного сопоставления сохраняется событие с исходным кодом.
+      Для событий 1 и 4 допустим пустой payload.
+      «Конструктор карьеры» отправляет старт (1), завершение с результатом (4),
+      ответ (6) и прерывание (9). Код 6 отправляется один раз за подтверждённый
+      этап. При изменении этапа отправляется новый факт с теми же session_id
+      и stage_id и увеличенным stage_revision.
+      В payload старта передавайте версии сборки и каталога. В ответе этапа
+      передавайте stage_id, stage_revision и массив answers. Каждый элемент
+      answers содержит question_id и option_ids либо числовое value.
+      Этапы идут в порядке visitor_category, interests, motives, strengths,
+      self_assessment и rhythm. Самооценка передаёт 8 значений, ритм работы 5.
+      Для завершения передавайте duration_ms, result_revision и professions
+      со списком id, name, position и score.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [module_id, event_id, session_id, occurred_at, payload]
+            properties:
+              module_id:
+                type: integer
+                enum: [7, 16]
+              event_id:
+                type: integer
+                minimum: 0
+                maximum: 65535
+              session_id:
+                type: string
+                format: uuid
+              user_id:
+                type: [integer, 'null']
+                format: int64
+                minimum: 1
+                maximum: 9223372036854775807
+              occurred_at:
+                type: string
+                format: date-time
+              payload:
+                type: object
+                additionalProperties: true
+          examples:
+            treeProfession:
+              summary: Открытие профессии в «Древе профессий»
+              value:
+                module_id: 7
+                event_id: 11
+                session_id: 1314510c-2fe8-4f3e-85a7-fba4a4e1ab43
+                user_id: 42
+                occurred_at: '2026-11-20T10:00:00+03:00'
+                payload:
+                  profession_code: architect
+            constructorStage:
+              summary: Ответы этапа «Конструктора карьеры»
+              value:
+                module_id: 16
+                event_id: 6
+                session_id: bbb05e9e-862d-4e27-9919-16d34ec9411a
+                occurred_at: '2026-11-20T10:00:00+03:00'
+                payload:
+                  stage_id: rhythm
+                  stage_revision: 1
+                  answers:
+                    - {question_id: rhythm.schedule, value: 0.25}
+                    - {question_id: rhythm.workplace, value: 0.5}
+                    - {question_id: rhythm.team, value: 1}
+                    - {question_id: rhythm.pace, value: 0.75}
+                    - {question_id: rhythm.workload, value: 0}
+    responses:
+      '202':
+        description: Событие принято в фоновую очередь аналитики
+      '413':
+        description: Размер записи после сериализации превышает 64 000 байт
+      '422':
+        description: Некорректное событие
+      '503':
+        description: Очередь аналитики заполнена или недоступна
