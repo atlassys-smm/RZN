@@ -206,9 +206,15 @@ external-events:
     summary: Принять внешнее событие аналитики
     operationId: receiveExternalAnalyticsEvent
     description: |
-      Принимает одно событие «Древа профессий» (module_id 7) или «Конструктора
-      карьеры» (module_id 16). Для event_id принимаются целые числа от 0 до 65535
-      по типу поля ClickHouse. Маршрут принимает запросы без авторизации.
+      Принимает одно событие «Древа профессий» (module_id 7), «Интерактивной
+      карты региона» (module_id 8), «Профбаттла» (module_id 9) или
+      «Конструктора карьеры» (module_id 16).
+      Для event_id принимаются целые числа от 0 до 65535
+      по типу поля ClickHouse. Требуется staff access-токен ADMIN или Device JWT
+      активного устройства с ролью EXTERNAL_APPS (5). Передавайте токен
+      в заголовке Authorization: Bearer <token>.
+      Сервер заполняет analytics.events.device_id по проверенному Device JWT.
+      При авторизации администратором device_id равен NULL.
       Устройство создаёт UUID session_id один раз на прохождение. Сервер сохраняет
       его в analytics.events.external_session_id и payload.session_id.
       Каждый принятый запрос создаёт событие с новым серверным UUID.
@@ -226,6 +232,18 @@ external-events:
       и добавляет в payload её profession_id и profession_name. При отсутствии
       однозначного сопоставления сохраняется событие с исходным кодом.
       Для событий 1 и 4 допустим пустой payload.
+      Интерактивная карта отправляет старт (1), подтверждённое завершение (4),
+      открытие объекта (16) и выбор территории (17). Для события 16 передавайте
+      object_code и category_code в payload. Сервер сохраняет категорию как
+      числовой object_category и её название. Для работодателей и учебных
+      заведений сервер также добавляет organization_id, organization_name и
+      organization_type при однозначном совпадении со справочником.
+      Для события 17 передавайте payload.territory_code. Сервер добавляет
+      числовой territory_id и название territory_name.
+      «Профбаттл» отправляет старт кейса (1) и первое появление экрана
+      результата (4). В обоих событиях передавайте payload.mode (individual
+      или group) и payload.case_code из каталога Unity. В payload сохраняются
+      эти поля и session_id.
       «Конструктор карьеры» отправляет старт (1), завершение с результатом (4),
       ответ (6) и прерывание (9). Код 6 отправляется один раз за подтверждённый
       этап. При изменении этапа отправляется новый факт с теми же session_id
@@ -237,7 +255,8 @@ external-events:
       self_assessment и rhythm. Самооценка передаёт 8 значений, ритм работы 5.
       Для завершения передавайте duration_ms, result_revision и professions
       со списком id, name, position и score.
-    security: []
+    security:
+      - bearerAuth: []
     requestBody:
       required: true
       content:
@@ -249,7 +268,7 @@ external-events:
             properties:
               module_id:
                 type: integer
-                enum: [7, 16]
+                enum: [7, 8, 9, 16]
               event_id:
                 type: integer
                 minimum: 0
@@ -279,6 +298,36 @@ external-events:
                 occurred_at: '2026-11-20T10:00:00+03:00'
                 payload:
                   profession_code: architect
+            mapObject:
+              summary: Открытие организации на интерактивной карте
+              value:
+                module_id: 8
+                event_id: 16
+                session_id: 1314510c-2fe8-4f3e-85a7-fba4a4e1ab43
+                occurred_at: '2026-11-23T10:00:00+03:00'
+                payload:
+                  object_code: grpz
+                  category_code: employer
+            mapTerritory:
+              summary: Выбор территории на интерактивной карте
+              value:
+                module_id: 8
+                event_id: 17
+                session_id: 1314510c-2fe8-4f3e-85a7-fba4a4e1ab43
+                occurred_at: '2026-11-23T10:00:00+03:00'
+                payload:
+                  territory_code: ryazan
+            profbattleStart:
+              summary: Начало прохождения кейса Профбаттла
+              value:
+                module_id: 9
+                event_id: 1
+                session_id: 1314510c-2fe8-4f3e-85a7-fba4a4e1ab43
+                user_id: 42
+                occurred_at: '2026-11-23T10:00:00+03:00'
+                payload:
+                  case_code: it-school
+                  mode: individual
             constructorStage:
               summary: Ответы этапа «Конструктора карьеры»
               value:
@@ -298,6 +347,10 @@ external-events:
     responses:
       '202':
         description: Событие принято в фоновую очередь аналитики
+      '401':
+        description: Требуется действующий staff access-токен или Device JWT активного устройства
+      '403':
+        description: У сотрудника нет роли ADMIN или у устройства нет роли EXTERNAL_APPS
       '413':
         description: Размер записи после сериализации превышает 64 000 байт
       '422':
