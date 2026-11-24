@@ -20,7 +20,8 @@ settings:
       Только активный администратор со Staff JWT (роль 1). Изменяются только переданные
       поля; пропущенные сохраняют свои значения. Пустой объект возвращает текущие настройки.
       Длительности — конечные JSON-числа >= 0, screensaversPerCycle — целое число >= 1.
-      null, строки, boolean и неизвестные поля не принимаются. Поля передаются в camelCase.
+      runVideoScenario принимает только JSON-значения true и false.
+      null, строки и неизвестные поля не принимаются. Поля передаются в camelCase.
     security:
       - bearerAuth: []
     requestBody:
@@ -28,7 +29,7 @@ settings:
       content:
         application/json:
           schema: {$ref: '#/components/schemas/ScreenSettingsUpdateRequest'}
-          example: {carouselDurationSec: 20, cardExpandDurationSec: 0.8, screensaversPerCycle: 4}
+          example: {carouselDurationSec: 20, cardExpandDurationSec: 0.8, screensaversPerCycle: 4, runVideoScenario: false}
     responses:
       '200':
         description: Полный набор сохранённых настроек экрана.

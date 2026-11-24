@@ -289,8 +289,9 @@ paths:
         Длительности — конечные JSON-числа >= 0, screensaversPerCycle — целое число
         >= 1.
 
-        null, строки, boolean и неизвестные поля не принимаются. Поля передаются в
-        camelCase.
+        runVideoScenario принимает только JSON-значения true и false.
+
+        null, строки и неизвестные поля не принимаются. Поля передаются в camelCase.
 
         '
       security:
@@ -305,6 +306,7 @@ paths:
               carouselDurationSec: 20
               cardExpandDurationSec: 0.8
               screensaversPerCycle: 4
+              runVideoScenario: false
       responses:
         '200':
           description: Полный набор сохранённых настроек экрана.
@@ -13944,6 +13946,7 @@ components:
       - professionIntroBackgroundSec
       - professionFirstCountdownSec
       - professionNextSpinDelaySec
+      - runVideoScenario
       properties:
         carouselDurationSec:
           type: number
@@ -13993,6 +13996,9 @@ components:
           type: number
           minimum: 0
           default: 3
+        runVideoScenario:
+          type: boolean
+          default: true
     ScreenSettingsUpdateRequest:
       type: object
       additionalProperties: false
@@ -14033,6 +14039,8 @@ components:
         professionNextSpinDelaySec:
           type: number
           minimum: 0
+        runVideoScenario:
+          type: boolean
     AvatarGenerationWebSocketEvent:
       type: object
       required:

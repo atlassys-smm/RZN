@@ -683,6 +683,7 @@ components:
       - professionIntroBackgroundSec
       - professionFirstCountdownSec
       - professionNextSpinDelaySec
+      - runVideoScenario
       properties:
         carouselDurationSec:
           type: number
@@ -732,6 +733,9 @@ components:
           type: number
           minimum: 0
           default: 3
+        runVideoScenario:
+          type: boolean
+          default: true
     ScreenSettingsUpdateRequest:
       type: object
       additionalProperties: false
@@ -772,6 +776,8 @@ components:
         professionNextSpinDelaySec:
           type: number
           minimum: 0
+        runVideoScenario:
+          type: boolean
     AvatarGenerationWebSocketEvent:
       type: object
       required: [type, payload]
