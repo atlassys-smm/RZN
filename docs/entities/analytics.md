@@ -24,7 +24,7 @@ ID подтверждённого устройства в `device_id`. Для з
 | `module_id` | UInt8 | Функциональный модуль из `ModuleType(IntEnum)` |
 | `device_id` | Nullable(Int64) | Конкретное устройство |
 | `user_id` | Nullable(Int64) | Пользователь действия, если известен |
-| `is_guest` | Nullable(Bool) | Снимок статуса пользователя в момент события: true — гость, false — OAuth, NULL — неизвестен или нет user_id |
+| `is_guest` | Nullable(Bool) | Снимок статуса пользователя в момент события. `true` — гость, `false` — OAuth-пользователь, авторизованный демо-пользователь или служебный аккаунт, `NULL` — статус неизвестен или отсутствует `user_id` |
 | `session_id` | Nullable(Int64) | Числовой ID внутреннего сеанса |
 | `external_session_id` | Nullable(UUID) | UUID сеанса внешнего модуля |
 | `occurred_at` | DateTime64(3, UTC) | Время действия |
@@ -127,6 +127,18 @@ ANSWER_EVALUATED не меняется.
 Правильность — correct/evaluated; завершённость — completed/started.
 Средняя длительность и её распределение — только completed с известным временем.
 Нулевой знаменатель — null. Без окончания игра не объявляется автоматически прерванной.
+
+### Профессии в действии
+
+| Событие для `module_id=3` | Когда записывается | Payload |
+|---|---|---|
+| `SESSION_STARTED (1)` | При создании сессии показа | `scenario_ids` |
+| `PARTICIPANT_JOINED (2)` | При подключении участника | `participant_id` |
+| `SESSION_FINISHED (4)` | После последнего сценария или при ручной остановке | `duration_ms`, `participant_count` |
+
+События содержат `session_id` и `device_id`. При подключении также
+записываются `user_id` и снимок `is_guest`. Отчёт по сессиям учитывает обе
+причины завершения как окончание показа. [Демо-прохождение](../interfaces/operator-tablet/professions.md).
 
 ### Аватар профессий
 

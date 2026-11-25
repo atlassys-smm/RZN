@@ -1276,6 +1276,63 @@ paths:
                   type: boolean
                   enum:
                   - true
+  /auth/user/demo:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Создать авторизованного демо-пользователя
+      operationId: createDemoUser
+      description: 'Требуется staff access-токен администратора и доверенный Origin.
+
+        Создаёт отдельный аккаунт с is_guest=false, записывает согласие и
+
+        выдаёт обычную пользовательскую сессию. Refresh-токен устанавливается
+
+        как HttpOnly cookie user_refresh.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - consent_version_id
+              - consent_accepted
+              properties:
+                consent_version_id:
+                  type: integer
+                  minimum: 1
+                consent_accepted:
+                  type: boolean
+                  const: true
+      responses:
+        '201':
+          description: Аккаунт и сессия созданы
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required:
+                  - user_id
+                  - is_guest
+                  properties:
+                    user_id:
+                      type: integer
+                    is_guest:
+                      type: boolean
+                      const: false
+        '401':
+          description: Требуется действующий staff access-токен
+        '403':
+          description: Недопустимый Origin или недостаточно прав
+        '422':
+          description: Согласие не принято или версия не существует
   /auth/user/service:
     post:
       tags:
@@ -1574,8 +1631,8 @@ paths:
                       пользователя null.
                   is_guest:
                     type: boolean
-                    description: true — гость, false — OAuth-пользователь или служебный
-                      аккаунт
+                    description: true — гость, false — OAuth-пользователь, служебный
+                      или демо-аккаунт
                   email:
                     type: string
                     nullable: true
@@ -11354,15 +11411,17 @@ paths:
 
         и включает выбранную дату.
 
-        Список участников определяется по действиям за выбранный период
+        ClickHouse выбирает пользователей, у которых за период было хотя бы одно
 
-        в ClickHouse analytics.visitor_activity. Для каждого активного участника
+        событие с is_guest = false в analytics.visitor_activity.
 
-        берётся последняя сохранённая подборка независимо от даты её обновления.
+        Затем PostgreSQL оставляет пользователей без номера служебного аккаунта.
 
-        Учитываются обычные и гостевые пользователи с положительными баллами профессий.
+        Для каждого активного участника берётся последняя сохранённая подборка
 
-        Служебные аккаунты исключаются. Охват равен доле уникальных участников,
+        независимо от даты её обновления. Учитываются положительные баллы
+
+        профессий. Охват равен доле уникальных участников,
 
         доля маршрутов учитывает нормализованные баллы профессий. Вес профессии
 
@@ -11640,7 +11699,9 @@ paths:
 
         analytics.events.user_id. Если пользователь неизвестен, поле можно
 
-        пропустить или передать null.
+        пропустить или передать null. Если пользователь с таким ID существует,
+
+        его признак is_guest сохраняется в отдельной колонке ClickHouse.
 
         Запись в ClickHouse выполняется в фоне через общую очередь аналитики.
 

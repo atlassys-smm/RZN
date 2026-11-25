@@ -229,6 +229,8 @@ paths:
   # ── Авторизация пользователя ─────────────────────
   /auth/user/guest:
     $ref: './paths/user-auth.yaml#/user-guest'
+  /auth/user/demo:
+    $ref: './paths/user-auth.yaml#/user-demo'
   /auth/user/service:
     $ref: './paths/user-auth.yaml#/user-service'
   /auth/user/refresh:
