@@ -1769,7 +1769,7 @@ paths:
     get:
       tags:
       - Рекомендации пользователя
-      summary: Общий профиль рекомендаций текущего пользователя
+      summary: Общий профиль рекомендаций пользователя
       operationId: user_recommendations_get
       description: 'Дополнительный источник quiz/answers пополняется при полном завершении
         викторины: group_scores содержит profession_id/answers_count, оценки — 100
@@ -1780,31 +1780,28 @@ paths:
         прибавление событий [updated_at, начало выборки). Счётчики в group_scores,
         оценки в profession_scores — 100 × просмотры / максимум. Пустой views не участвует
         в расчёте; views необязателен для is_complete и не входит в missing_sources.
-        Ошибка ClickHouse сохраняет прежние данные и updated_at. User JWT или Device
-        JWT с ролью 3 и действующей QR-привязкой; для устройства обязателен X-Device-Connection-Id.
+        Ошибка ClickHouse сохраняет прежние данные и updated_at. User JWT, Device
+        JWT с ролью 3 и действующей QR-привязкой или Staff JWT с ролью ADMIN или ANALYST.
+        Сотрудник указывает user_id. Для устройства обязателен X-Device-Connection-Id.
         Профиль с максимум тремя профессиями и вкладами источников. Каждая профессия
         содержит description — текущее описание из справочника или null, а также file:
         собственный файл; при пустом media_id — male_photo_file_id шаблона аватара;
         без обоих — null. Название и баллы сохраняют значения из снимков источников.
         До первого сохранённого источника — JSON null. В расчёте участвуют только
-        источники с положительным весом в SOURCE_WEIGHTS. Итоговая подборка кэшируется
-        в Redis на 86400 секунд без продления при чтении. Ключ привязан к user_id
-        и ID последнего сохранённого источника profstart (0 при его отсутствии), весам
-        и версии справочников. Новый результат ПрофСтарта учитывается сразу после
-        commit; завершение викторины и просмотры не сбрасывают кэш и учитываются при
-        следующем пересчёте. Проверка шестичасового интервала источника просмотров
-        выполняется только при пересчёте. Правки карточек и связей справочников инвалидируют
-        кэш после commit. Подписанные URL формируются заново; при недоступности Redis
-        расчёт выполняется через БД. Итог не сохраняется в PostgreSQL. Мягкое удаление
-        профессии (`deleted_at`) не исключает её из ранее сохранённых рекомендаций:
-        ID, название и исходные баллы берутся из снимка источника. При новом прохождении
-        подбираются только активные профессии по активным связям. По максимум трём
-        профессиям из итогового рейтинга рассчитываются три отдельных списка: `employers`
-        (до 5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2)
-        и `education_programs` (до 5 направлений подготовки). Работодатели определяются
-        через profession_employers, учебные заведения — через profession_education_programs
-        → education_programs → organization_education_programs → organizations. Направления
-        подбираются непосредственно через profession_education_programs → education_programs,
+        источники с положительным весом в SOURCE_WEIGHTS. Последняя подборка хранится
+        в PostgreSQL. Следующий запрос пересчитывает её при изменении ID или updated_at
+        любого источника, при изменении весов или версии справочников, а также по
+        истечении суток. Проверка шестичасового интервала источника просмотров выполняется
+        при пересчёте. Подписанные URL формируются при выдаче. Мягкое удаление профессии
+        (`deleted_at`) не исключает её из ранее сохранённых рекомендаций: ID, название
+        и исходные баллы берутся из снимка источника. При новом прохождении подбираются
+        только активные профессии по активным связям. По максимум трём профессиям
+        из итогового рейтинга рассчитываются три отдельных списка: `employers` (до
+        5 работодателей типа 1), `educations` (до 5 учебных заведений типа 2) и `education_programs`
+        (до 5 направлений подготовки). Работодатели определяются через profession_employers,
+        учебные заведения — через profession_education_programs → education_programs
+        → organization_education_programs → organizations. Направления подбираются
+        непосредственно через profession_education_programs → education_programs,
         независимо от наличия организаций. В каждом списке сначала идут записи с большим
         числом различных совпавших профессий, затем с меньшим ID. Несколько программ
         одной профессии не увеличивают её вклад в рейтинг организации. Элементы списков
@@ -1814,28 +1811,40 @@ paths:
         duration, base_class, created_at, updated_at; остальные поля совпадают. Общее
         направление возвращается один раз независимо от числа его организаций. Профессии,
         связи, программы и организации с deleted_at участвуют в расчёте для сохранённых
-        рекомендаций. Данные и связи читаются в текущем состоянии при каждом GET;
-        снимки этих трёх списков не сохраняются. При отсутствии профессий или соответствующих
-        связей массивы пустые; до создания профиля ответ остаётся null. Правило покрытия
-        применяется отдельно к каждому из трёх списков: employers, educations, education_programs.
-        Сначала формируется топ-5 по числу различных совпавших профессий DESC и ID
-        организации или направления ASC. Затем проверяется покрытие каждой выбранной
-        профессии. Если для неё есть связанные записи, но ни одна не попала в топ-5,
-        лучшая из них заменяет последнюю запись, удаление которой не лишает покрытия
-        другие профессии. Одна запись может покрывать несколько профессий. После замен
-        сохраняется сортировка по рейтингу; лимит — 5 уникальных записей в каждом
-        списке. Если соответствующих связей нет, покрытие этой профессии в данном
-        списке не требуется.'
+        рекомендаций. Данные и связи читаются в текущем состоянии при пересчёте. Три
+        списка сохраняются вместе с рейтингом профессий. При отсутствии профессий
+        или соответствующих связей массивы пустые; до создания профиля ответ остаётся
+        null. Правило покрытия применяется отдельно к каждому из трёх списков: employers,
+        educations, education_programs. Сначала формируется топ-5 по числу различных
+        совпавших профессий DESC и ID организации или направления ASC. Затем проверяется
+        покрытие каждой выбранной профессии. Если для неё есть связанные записи, но
+        ни одна не попала в топ-5, лучшая из них заменяет последнюю запись, удаление
+        которой не лишает покрытия другие профессии. Одна запись может покрывать несколько
+        профессий. После замен сохраняется сортировка по рейтингу; лимит — 5 уникальных
+        записей в каждом списке. Если соответствующих связей нет, покрытие этой профессии
+        в данном списке не требуется.'
       security:
       - bearerAuth: []
       parameters:
       - $ref: '#/components/parameters/DeviceConnectionId'
+      - name: user_id
+        in: query
+        required: false
+        description: ID пользователя. Обязателен для ADMIN и ANALYST. При User JWT
+          и Device JWT пользователь определяется по токену или QR-привязке.
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
       responses:
         '403':
           description: Недостаточная роль устройства или пользователь не подключён
             к этому устройству.
+        '404':
+          description: Указанный сотрудником пользователь не найден.
         '422':
-          description: Некорректные параметры; для Device JWT обязателен X-Device-Connection-Id.
+          description: Некорректные параметры. Для ADMIN и ANALYST нужен user_id,
+            для Device JWT нужен X-Device-Connection-Id.
         '200':
           description: Профиль рекомендаций или null
           content:
@@ -3502,32 +3511,32 @@ paths:
       - Организации
       summary: Рекомендации организаций и направлений по выбранным профессиям
       description: 'Требуется действующий Bearer JWT пользователя (включая гостя),
-        сотрудника любой роли или активного устройства. Принимает от 1 до 3 различных
-        ID профессий повторяемым query-параметром profession_ids. Ответ содержит employers,
-        educations и education_programs в том же формате и с теми же правилами ранжирования,
-        что и /users/me/recommendations: до пяти организаций каждого типа и отдельно
-        до пяти направлений. Выше больше различных совпавших профессий, затем ID организации
-        или направления по возрастанию. Направления выбираются по прямым связям с
-        профессиями, независимо от организаций; поле education_program содержит полные
-        данные направления, рядом возвращаются profession_ids, profession_count и
-        position. Учитываются профессии, связи, программы и организации с deleted_at.
-        Результат кэшируется в Redis на 86400 секунд без продления при чтении. Ключ
-        включает отсортированный список profession_ids (перестановки используют общую
-        запись), текущие SOURCE_WEIGHTS и версию справочников; веса не являются параметром
-        маршрута, ранжирование не меняется. Правки справочников инвалидируют кэш после
-        commit. Подписанные URL формируются заново, ошибки не кэшируются. При недоступности
-        Redis выполняется расчёт из БД. Результат не сохраняется в PostgreSQL. Правило
-        покрытия применяется отдельно к каждому из трёх списков: employers, educations,
-        education_programs. Сначала формируется топ-5 по числу различных совпавших
-        профессий DESC и ID организации или направления ASC. Затем проверяется покрытие
-        каждой выбранной профессии. Если для неё есть связанные записи, но ни одна
-        не попала в топ-5, лучшая из них заменяет последнюю запись, удаление которой
-        не лишает покрытия другие профессии. Одна запись может покрывать несколько
-        профессий. После замен сохраняется сортировка по рейтингу; лимит — 5 уникальных
-        записей в каждом списке. Если соответствующих связей нет, покрытие этой профессии
-        в данном списке не требуется. Профиль пользователя и результаты тестов не
-        требуются. Если соответствующих связей нет, массивы пустые. Любой неизвестный
-        ID профессии возвращает 404.'
+        сотрудника любой роли (включая аналитика) или активного устройства. Принимает
+        от 1 до 3 различных ID профессий повторяемым query-параметром profession_ids.
+        Ответ содержит employers, educations и education_programs в том же формате
+        и с теми же правилами ранжирования, что и /users/me/recommendations: до пяти
+        организаций каждого типа и отдельно до пяти направлений. Выше больше различных
+        совпавших профессий, затем ID организации или направления по возрастанию.
+        Направления выбираются по прямым связям с профессиями, независимо от организаций;
+        поле education_program содержит полные данные направления, рядом возвращаются
+        profession_ids, profession_count и position. Учитываются профессии, связи,
+        программы и организации с deleted_at. Результат кэшируется в Redis на 86400
+        секунд без продления при чтении. Ключ включает отсортированный список profession_ids
+        (перестановки используют общую запись), текущие SOURCE_WEIGHTS и версию справочников;
+        веса не являются параметром маршрута, ранжирование не меняется. Правки справочников
+        инвалидируют кэш после commit. Подписанные URL формируются заново, ошибки
+        не кэшируются. При недоступности Redis выполняется расчёт из БД. Результат
+        не сохраняется в PostgreSQL. Правило покрытия применяется отдельно к каждому
+        из трёх списков: employers, educations, education_programs. Сначала формируется
+        топ-5 по числу различных совпавших профессий DESC и ID организации или направления
+        ASC. Затем проверяется покрытие каждой выбранной профессии. Если для неё есть
+        связанные записи, но ни одна не попала в топ-5, лучшая из них заменяет последнюю
+        запись, удаление которой не лишает покрытия другие профессии. Одна запись
+        может покрывать несколько профессий. После замен сохраняется сортировка по
+        рейтингу; лимит — 5 уникальных записей в каждом списке. Если соответствующих
+        связей нет, покрытие этой профессии в данном списке не требуется. Профиль
+        пользователя и результаты тестов не требуются. Если соответствующих связей
+        нет, массивы пустые. Любой неизвестный ID профессии возвращает 404.'
       security:
       - bearerAuth: []
       parameters:
@@ -11329,6 +11338,144 @@ paths:
             дата
         '503':
           description: ClickHouse или определения карточек Metabase недоступны
+  /analytics/recommendations:
+    get:
+      tags:
+      - Аналитика
+      summary: Карьерные маршруты по сохранённым рекомендациям
+      operationId: getRecommendationAnalytics
+      description: 'Рейтинги профессий, отраслей, работодателей и учебных заведений.
+
+        Выбранный период начинается в понедельник или первого числа месяца по МСК
+
+        и включает выбранную дату.
+
+        Список участников определяется по действиям за выбранный период
+
+        в ClickHouse analytics.visitor_activity. Для каждого активного участника
+
+        берётся последняя сохранённая подборка независимо от даты её обновления.
+
+        Учитываются обычные и гостевые пользователи с положительными баллами профессий.
+
+        Служебные аккаунты исключаются. Охват равен доле уникальных участников,
+
+        доля маршрутов учитывает нормализованные баллы профессий. Вес профессии
+
+        делится между организациями, связанными с ней в сохранённой подборке,
+
+        отдельно для обучения и работы. salary_ranges содержит доли маршрутов
+
+        по зарплатным диапазонам из справочника за выбранный период. Зарплаты
+
+        ниже 50 тыс. ₽ попадают в under_50, от 50 до 100 тыс. ₽ включительно
+
+        в 50_to_100, свыше 100 тыс. ₽ в over_100. Для вилки берётся середина,
+
+        для одной известной границы её значение. Отсутствующая зарплата
+
+        попадает в unknown. У каждой профессии salary_range содержит исходные
+
+        границы min и max в тыс. ₽, с null для отсутствующей границы.
+
+        Отчёт PDF использует те же значения. Ответ Cache-Control: no-store.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: query
+        name: period
+        required: true
+        schema:
+          type: string
+          enum:
+          - week
+          - month
+      - in: query
+        name: date
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: Агрегированные рекомендации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationReport'
+        '401':
+          description: Отсутствует действующий токен
+        '403':
+          description: Доступ только для администратора и аналитика
+        '422':
+          description: Недопустимый период или дата
+        '503':
+          description: ClickHouse или PostgreSQL недоступен
+  /analytics/recommendations/report:
+    get:
+      tags:
+      - Аналитика
+      summary: PDF-отчёт по карьерным маршрутам
+      operationId: getRecommendationAnalyticsPdf
+      description: 'Границы выбранного периода и агрегаты совпадают с GET /analytics/recommendations.
+
+        PDF содержит рейтинги отраслей и десяти ведущих профессий, лидеров среди
+
+        учебных заведений и работодателей.
+
+        В приложении для каждой профессии перечислены все связанные с ней
+
+        учебные заведения и работодатели из подборок.
+
+        В карточке профессии показаны исходные границы зарплаты из salary_range.
+
+        Ответ содержит attachment и Cache-Control: no-store.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: query
+        name: period
+        required: true
+        schema:
+          type: string
+          enum:
+          - week
+          - month
+      - in: query
+        name: date
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: PDF-отчёт
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: 'attachment с русским именем файла в filename*=UTF-8.
+
+                Например, «Карьерный трек за месяц - 01.11.2026 - 25.11.2026.pdf».
+
+                '
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Отсутствует действующий токен
+        '403':
+          description: Доступ только для администратора и аналитика
+        '422':
+          description: Недопустимый период или дата
+        '503':
+          description: ClickHouse или PostgreSQL недоступен
   /analytics/visitors/profiles:
     post:
       tags:
@@ -13932,6 +14079,143 @@ components:
       in: cookie
       name: user_refresh
   schemas:
+    RecommendationRank:
+      type: object
+      required:
+      - id
+      - name
+      - participants
+      - coverage_percent
+      - route_percent
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+        name:
+          type: string
+        participants:
+          type: integer
+        coverage_percent:
+          type: number
+        route_percent:
+          type: number
+    RecommendationProfessionRank:
+      allOf:
+      - $ref: '#/components/schemas/RecommendationRank'
+      - type: object
+        required:
+        - industry_id
+        - min_salary
+        - max_salary
+        - salary_range
+        - educations
+        - employers
+        properties:
+          industry_id:
+            type: integer
+            format: int64
+            nullable: true
+          min_salary:
+            type: integer
+            nullable: true
+            description: Нижняя граница зарплаты в тыс. ₽
+          max_salary:
+            type: integer
+            nullable: true
+            description: Верхняя граница зарплаты в тыс. ₽
+          salary_range:
+            $ref: '#/components/schemas/RecommendationProfessionSalaryRange'
+          educations:
+            type: array
+            items:
+              $ref: '#/components/schemas/RecommendationRank'
+          employers:
+            type: array
+            items:
+              $ref: '#/components/schemas/RecommendationRank'
+    RecommendationProfessionSalaryRange:
+      type: object
+      required:
+      - min
+      - max
+      properties:
+        min:
+          type: integer
+          nullable: true
+          description: Нижняя граница из справочника в тыс. ₽
+        max:
+          type: integer
+          nullable: true
+          description: Верхняя граница из справочника в тыс. ₽
+    RecommendationSalaryRange:
+      type: object
+      required:
+      - code
+      - route_percent
+      properties:
+        code:
+          type: string
+          enum:
+          - under_50
+          - 50_to_100
+          - over_100
+          - unknown
+        route_percent:
+          type: number
+    RecommendationReportPeriod:
+      type: object
+      required:
+      - date_from
+      - date_to
+      - participants
+      - professions
+      - industries
+      - educations
+      - employers
+      - salary_ranges
+      properties:
+        date_from:
+          type: string
+          format: date
+        date_to:
+          type: string
+          format: date
+        participants:
+          type: integer
+        professions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationProfessionRank'
+        industries:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationRank'
+        educations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationRank'
+        employers:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationRank'
+        salary_ranges:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecommendationSalaryRange'
+    RecommendationReport:
+      type: object
+      required:
+      - period
+      - current
+      properties:
+        period:
+          type: string
+          enum:
+          - week
+          - month
+        current:
+          $ref: '#/components/schemas/RecommendationReportPeriod'
     ScreenSettingsResponse:
       type: object
       required:
