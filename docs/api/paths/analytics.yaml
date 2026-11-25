@@ -104,6 +104,85 @@ report:
         description: Отсутствует period или date, недопустимые значения либо будущая дата
       '503':
         description: ClickHouse или определения карточек Metabase недоступны
+recommendations:
+  get:
+    tags: [Аналитика]
+    summary: Карьерные маршруты по сохранённым рекомендациям
+    operationId: getRecommendationAnalytics
+    description: |
+      Рейтинги профессий, отраслей, работодателей и учебных заведений.
+      Выбранный период начинается в понедельник или первого числа месяца по МСК
+      и включает выбранную дату.
+      Список участников определяется по действиям за выбранный период
+      в ClickHouse analytics.visitor_activity. Для каждого активного участника
+      берётся последняя сохранённая подборка независимо от даты её обновления.
+      Учитываются обычные и гостевые пользователи с положительными баллами профессий.
+      Служебные аккаунты исключаются. Охват равен доле уникальных участников,
+      доля маршрутов учитывает нормализованные баллы профессий. Вес профессии
+      делится между организациями, связанными с ней в сохранённой подборке,
+      отдельно для обучения и работы. salary_ranges содержит доли маршрутов
+      по зарплатным диапазонам из справочника за выбранный период. Зарплаты
+      ниже 50 тыс. ₽ попадают в under_50, от 50 до 100 тыс. ₽ включительно
+      в 50_to_100, свыше 100 тыс. ₽ в over_100. Для вилки берётся середина,
+      для одной известной границы её значение. Отсутствующая зарплата
+      попадает в unknown. У каждой профессии salary_range содержит исходные
+      границы min и max в тыс. ₽, с null для отсутствующей границы.
+      Отчёт PDF использует те же значения. Ответ Cache-Control: no-store.
+    security:
+      - bearerAuth: []
+    parameters: &recommendationReportParameters
+      - in: query
+        name: period
+        required: true
+        schema: {type: string, enum: [week, month]}
+      - in: query
+        name: date
+        required: true
+        schema: {type: string, format: date}
+    responses:
+      '200':
+        description: Агрегированные рекомендации
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationReport'
+      '401': {description: Отсутствует действующий токен}
+      '403': {description: Доступ только для администратора и аналитика}
+      '422': {description: Недопустимый период или дата}
+      '503': {description: ClickHouse или PostgreSQL недоступен}
+recommendations-report:
+  get:
+    tags: [Аналитика]
+    summary: PDF-отчёт по карьерным маршрутам
+    operationId: getRecommendationAnalyticsPdf
+    description: |
+      Границы выбранного периода и агрегаты совпадают с GET /analytics/recommendations.
+      PDF содержит рейтинги отраслей и десяти ведущих профессий, лидеров среди
+      учебных заведений и работодателей.
+      В приложении для каждой профессии перечислены все связанные с ней
+      учебные заведения и работодатели из подборок.
+      В карточке профессии показаны исходные границы зарплаты из salary_range.
+      Ответ содержит attachment и Cache-Control: no-store.
+    security:
+      - bearerAuth: []
+    parameters: *recommendationReportParameters
+    responses:
+      '200':
+        description: PDF-отчёт
+        headers:
+          Content-Disposition:
+            schema:
+              type: string
+            description: |
+              attachment с русским именем файла в filename*=UTF-8.
+              Например, «Карьерный трек за месяц - 01.11.2026 - 25.11.2026.pdf».
+        content:
+          application/pdf:
+            schema: {type: string, format: binary}
+      '401': {description: Отсутствует действующий токен}
+      '403': {description: Доступ только для администратора и аналитика}
+      '422': {description: Недопустимый период или дата}
+      '503': {description: ClickHouse или PostgreSQL недоступен}
 embed-tokens:
   post:
     tags: [Аналитика]
