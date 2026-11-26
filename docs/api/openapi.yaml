@@ -231,6 +231,10 @@ paths:
     $ref: './paths/user-auth.yaml#/user-guest'
   /auth/user/demo:
     $ref: './paths/user-auth.yaml#/user-demo'
+  /auth/user/demo/session:
+    $ref: './paths/user-auth.yaml#/demo-session'
+  /auth/user/demo/session/logout:
+    $ref: './paths/user-auth.yaml#/demo-session-logout'
   /auth/user/service:
     $ref: './paths/user-auth.yaml#/user-service'
   /auth/user/refresh:

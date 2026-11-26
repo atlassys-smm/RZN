@@ -1333,6 +1333,82 @@ paths:
           description: Недопустимый Origin или недостаточно прав
         '422':
           description: Согласие не принято или версия не существует
+  /auth/user/demo/session:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Открыть демо-сессию существующего пользователя
+      operationId: openDemoUserSession
+      description: 'Требуется staff access-токен администратора и доверенный Origin.
+
+        Выдаёт токен на срок до 30 минут для HTTP-операций демо-прогона
+
+        активного авторизованного пользователя. Токен привязан к сессии
+
+        администратора. Поддерживается закрытие через demo/session/logout.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - user_id
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+                  minimum: 1
+      responses:
+        '201':
+          description: Создана отдельная демо-сессия без refresh-токена
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthTokenResponse'
+                - type: object
+                  required:
+                  - user_id
+                  - is_guest
+                  properties:
+                    user_id:
+                      type: integer
+                    is_guest:
+                      type: boolean
+                      const: false
+        '401':
+          description: Требуется действующий staff access-токен
+        '403':
+          description: Недопустимый Origin или недостаточно прав
+        '404':
+          description: Пользователь не найден
+        '409':
+          description: Пользователь является гостем, служебным аккаунтом или неактивен
+        '422':
+          description: Некорректный ID пользователя
+  /auth/user/demo/session/logout:
+    post:
+      tags:
+      - Авторизация пользователей
+      summary: Закрыть демо-сессию
+      operationId: closeDemoUserSession
+      description: Закрывает сессию указанных демо-учётных данных. Требуется доверенный
+        Origin.
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Демо-сессия закрыта
+        '401':
+          description: Требуется действующий токен демо-сессии
+        '403':
+          description: Недопустимый Origin
   /auth/user/service:
     post:
       tags:
